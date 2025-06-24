@@ -1,0 +1,191 @@
+Objetivo: Desenvolvimento de um sistema para automatizar o processo de atendimento aos pacientes.
+
+Overview do fluxo do processo:
+  - O processo inicia com a inclusão de um Paciente na agenda para receber a 1ª consulta espiritual.
+  - Para a 1ª consulta, no momento do Check-in, a atendente irá cadastrar o paciente no sistema.
+  - Para os pacientes já agendados, a atendente irá efetuar somente o Check-in.
+  - A cada check-in realizado na agenda, o sistema irá atualizar automaticamente a lista de consulta/tratamento espiritual e a lista de banho de luz/ bastão. Para sequenciar as listas de atendimentos, o sistema irá considerar as recomendações registradas nos apontamentos de cada paciente, assim como irá aplicar as regras de prioridades e a ordem do check-in .
+  - Após cada consulta espiritual, a atendente irá checar e se necessário irá atualizar o cadastro do paciente com a inclusão de novas recomendações.
+  - A cada atualização no cadastro do paciente o sistema irá automaticamente as agendas.
+
+Módulos do sistema:
+  1. Pacientes
+    - Manutenção de Cadastro
+    - Histórico de atendimentos
+
+  2. Agenda
+    - Consulta espiritual
+    - Banho de Luz / bastão
+
+  3. Lista de atendimentos
+    - Consulta espiritual
+    - Banho de Luz / bastão
+
+1. Modulo pacientes
+  - Este módulo tem como objetivo registrar os dados do paciente e as recomendações.
+  - Este módulo permite a inclusão de um novo paciente, consultar e alterar dados de cadastro dos pacientes.
+  - A aba de inclusão irá disponibilizar na tela os campos para o preenchimento.
+  - As abas de consulta / alteração irão disponibilizar a lista de pacientes cadastrados, permitindo a pesquisa pela primeira(s) letra(s) , nome , etc.
+  - O sistema irá manter na manutenção de cadastro somente o último atendimento ou o paciente em atendimento.
+  - Sempre que iniciar um novo tratamento, o sistema irá mover o tratamento anterior para o histórico, disponibilizando a consulta quando necessário.
+
+  O módulo Pacientes será composto por dois submódulos com as opções abaixo:
+    - Manutenção de Cadastro
+    - Aba de Inclusão
+    - Aba de Alteração
+    - Aba de Consulta
+    - Histórico de atendimentos
+    - Consulta
+
+  Os dados cadastrais do paciente serão compostos pelas seguintes informações:
+    - Número do registro
+    - Nome
+    - Data de nascimento
+    - Telefone para contato
+    - Prioridade
+
+  As informações relacionadas a tratamentos, migrarão para o histórico sempre que o paciente iniciar um novo atendimento ou receber alta do tratamento anterior.
+
+  As informações relacionadas a tratamentos serão compostos pelas seguintes informações:
+    - Principal Queixa
+
+    - Status
+
+    - Consulta espiritual:
+      - Data de início
+      - Data da próxima consulta
+      - Data da alta
+      - Recomendações:
+        - Alimentação
+        - Água
+        - Banho de luz
+        - Bastão
+
+    - Banho de luz
+      - Local(n):
+        - Data início
+        - Data de término
+        - Cor
+        - Tempo
+        - Quantidade
+
+    - Bastão
+      - Local(n):
+        - Data início
+        - Data de término
+        - Quantidade
+        
+    - Comparecimentos
+      - Data 		Status
+      - Data 		Status
+      - Data 		Status
+      - Data 		Status
+
+  Preenchimento dos campos da tela de cadastramento:
+    - Número do registro:
+      - Número sequencial gerado pelo sistema
+    
+    - Nome
+      - Digitar o Nome completo do paciente
+    
+    - Data de nascimento
+      - Formato DD/MM/AAAA
+      - Selecionar a data pelo calendário ou incluir manualmente
+    
+    - Telefone para contato
+      - Digitar no formato: (DDD)- 99999-9999
+    
+    - Prioridade
+      - O sistema irá calcular a idade e mover “I” para idade maior que (xx) anos
+      - Selecionar no PopUp as opções (I)doso ou (E)exceção ou (N) tira prioridade
+    
+    - Principal Queixa:
+      - Digitar manualmente a queixa do paciente
+    
+    - Status
+      - Selecionar no PopUp as opões (T) em tratamento ou (A)Alta ou (F) faltas
+      - A opção alta irá preencher a data da alta com a data corrente
+    
+    - Consulta espiritual
+      - Data de início: Data da primeira consulta espiritual
+      - Data da próxima consulta: preenchido automaticamente pelo sistema de acordo com o agendamento
+      - Data da alta: preenchido automaticamente quando alterado o status para Alta
+      - Recomendações
+        - Alimentação: digitar a recomendação alimentar
+        - Água: digitar a recomendação
+        - Pomada: digitar conforme recomendação
+        - Banho de luz: Selecionar no PopUp (S)Sim ou (N)Não
+        - Bastão: Selecionar no PopUp (S)Sim ou (N)Não
+        - Tratamento espiritual: Selecionar PopUp (S)Sim ou (N)Não
+        - Data de retorno: digitar a quantidade de semanas recomendada para retorno da consulta espiritual
+          - O sistema deverá calcular a data da nova consulta com base na data corrente e a quantidade de semanas para retorno. O sistema deverá automaticamente agendar a consulta na data calculada.
+    
+    - Banho de luz
+      - Local (1): Selecionar PopUp de locais do corpo
+        - Data início: Selecionar data no calendário no primeiro banho de luz
+        - Data de término: O sistema deverá calcular a data do último banho de luz
+        - Cor: Selecionar a cor no PopUp de cores
+        - Tempo: informar 1,2,..... (1 = 7 min, 2=14min...., 3 = 21 min)
+        - Quantidade: informar a quantidade de banho de luz
+      - Local (n): o paciente poderá receber banho de luz em locais diferentes, assim como tempos, quantidades e cores diferentes
+    
+    - Bastão
+      - Local (1): Selecionar PopUp de locais do corpo
+        - Data início: Selecionar data no calendário no primeiro banho de luz
+        - Data de término: O sistema deverá calcular a data do último banho de luz
+        - Quantidade: informar a quantidade de bastão
+      - Local (n): o paciente poderá receber tratamento de bastão em locais diferentes e quantidades diferentes.
+
+    O sistema irá preencher as datas e status de comparecimento automaticamente de acordo com a agenda e check-in: 
+
+    Comparecimentos
+      - Data(1): Data da agenda  	Status: OK ou Faltou
+      - Data(2): 			            Status
+      - Data(3): 			            Status
+      - Data(n): 		             	Status
+
+2. Modulo agendamento
+  Com exceção do primeiro agendamento, o preenchimento da agenda será gerado pelo sistema com base nas informações parametrizadas no cadastro do paciente.
+  Para o primeiro agendamento, o sistema irá disponibilizar uma opção na aba Consulta espiritual para incluir manualmente o nome do novo paciente.
+  Para verificar as agendas de “Consulta espiritual” e “Banho de luz”/ “bastão”, o sistema irá disponibilizar um calendário no PopUp de cada agenda para selecionar a data da agenda e realizar a consulta.
+
+  Agenda
+    - Consulta espiritual
+      - 1º agendamento
+    - Banho de Luz / bastão
+
+  O sistema deverá gerar a agenda com as seguintes regras:
+    - Agendamento somente às terças-feiras, exceto nos feriados e na última quinzena de dezembro.
+    - Deverá ser aberto duas agendas, uma para consulta/tratamento espiritual e outra para o banho de luz / bastão
+    - Selecionar os pacientes em atendimento (status=T) com os campos Tratamento espiritual = “S” e/ou Banho de luz/bastão = “S”
+    - Se o tratamento espiritual for igual a “S” preencher somente a data da próxima agenda
+    - Se o banho de luz e/ou bastão igual a “S”, calcular conforme segue:
+      - Se o paciente tiver somente um local, agendar o paciente até a data de término
+      - Se o paciente tiver mais que um local agendar o paciente com a maior data de término.
+    - Opções no agendamento:
+      - Permitir check-in do paciente com data menor ou igual a data corrente
+        - Atualiza a lista de atendimento das consultas/tratamento espiritual e banho de luz/ bastão
+      - Encerramento da agenda
+        - Atualiza o status do paciente com OK ou Faltou
+        - O sistema deverá reagendar o banho de luz na ausência do paciente após a última data de banho pré-agendada.
+        - Duas faltas consecutivas do paciente, limpar as agendas do banho de luz/bastão, mover a última data de banho de luz / bastão na data de término e cancelar o agendamento do atendimento espiritual.
+
+  Observações:
+    - Quando a ausência é comunicada antecipadamente, após duas faltas consecutivas o paciente deverá solicitar um agendamento para uma nova consulta espiritual.
+    - Quando as ausências não são comunicadas, após a segunda falta, o paciente deverá retornar para o atendimento de quinta-feira para receber um encaminhamento para os tratamentos de terça-feira.
+
+3. Modulo lista de atendimentos na terça-feira
+  Este módulo tem como objetivo gerar uma lista para o sequenciamento do banho de luz / bastão e uma lista para consulta/tratamento espiritual.
+
+  A lista de atendimento será gerada automaticamente pelo sistema considerando a relação de pacientes da agenda, as prioridades e a sequência de chegada registrada no check-in de cada paciente.
+
+    - Atendimento
+      - Consulta espiritual
+      - Banho de Luz/ bastão
+
+    As regras de cada módulo serão especificadas a seguir:
+
+      - As listas são atualizadas quando é efetuado o check-in do paciente.
+      - Os pacientes com prioridade “E” (Exceção) tem prioridade em relação a “I” (Idoso) e os demais
+      - O paciente que recebe banho de luz e tratamento espiritual tem prioridade na lista do banho de luz/bastão.
+
