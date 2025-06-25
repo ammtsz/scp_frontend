@@ -9,7 +9,7 @@ export interface Patient {
   status: 'T' | 'A' | 'F' | 'N' | 'I';
   spiritualConsultation: SpiritualConsultation;
   lightBaths: LightBath[];
-  staffs: Staff[];
+  rods: Rod[];
   attendances: Attendance[];
   history: TreatmentHistory[];
 }
@@ -40,7 +40,7 @@ export interface LightBath {
   quantity: number;
 }
 
-export interface Staff {
+export interface Rod {
   location: string;
   startDate: string;
   endDate: string;

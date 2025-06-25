@@ -1,7 +1,7 @@
 export interface AttendanceList {
   id: string;
   date: string;
-  type: 'spiritual' | 'lightBath' | 'staff';
+  type: 'spiritual' | 'lightBath' | 'rod';
   patients: string[]; // patient IDs in order
 }
 

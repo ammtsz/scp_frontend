@@ -10,7 +10,7 @@ const initialRecommendations: Recommendations = {
   water: "",
   ointment: "",
   lightBath: false,
-  staff: false,
+  rod: false,
   spiritualTreatment: false,
   returnWeeks: 0,
 };
@@ -31,7 +31,7 @@ const initialPatient: Omit<Patient, "id" | "registrationNumber" | "history"> = {
   status: "T",
   spiritualConsultation: initialSpiritualConsultation,
   lightBaths: [],
-  staffs: [],
+  rods: [],
   attendances: [],
 };
 
@@ -200,35 +200,47 @@ const PatientForm: React.FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <input
-            name="recommendations.food"
-            value={patient.spiritualConsultation.recommendations.food}
-            onChange={handleChange}
-            className="input"
-            placeholder="Alimentação"
-          />
-          <input
-            name="recommendations.water"
-            value={patient.spiritualConsultation.recommendations.water}
-            onChange={handleChange}
-            className="input"
-            placeholder="Água"
-          />
-          <input
-            name="recommendations.ointment"
-            value={patient.spiritualConsultation.recommendations.ointment}
-            onChange={handleChange}
-            className="input"
-            placeholder="Pomada"
-          />
-          <input
-            name="recommendations.returnWeeks"
-            type="number"
-            value={patient.spiritualConsultation.recommendations.returnWeeks}
-            onChange={handleChange}
-            className="input"
-            placeholder="Semanas para retorno"
-          />
+          <div>
+            <label className={labelClass}>Alimentação</label>
+            <input
+              name="recommendations.food"
+              value={patient.spiritualConsultation.recommendations.food}
+              onChange={handleChange}
+              className="input"
+              placeholder="Alimentação"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Água</label>
+            <input
+              name="recommendations.water"
+              value={patient.spiritualConsultation.recommendations.water}
+              onChange={handleChange}
+              className="input"
+              placeholder="Água"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Pomada</label>
+            <input
+              name="recommendations.ointment"
+              value={patient.spiritualConsultation.recommendations.ointment}
+              onChange={handleChange}
+              className="input"
+              placeholder="Pomada"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Semanas para retorno</label>
+            <input
+              name="recommendations.returnWeeks"
+              type="number"
+              value={patient.spiritualConsultation.recommendations.returnWeeks}
+              onChange={handleChange}
+              className="input"
+              placeholder="Semanas para retorno"
+            />
+          </div>
         </div>
         <div className="flex flex-wrap gap-4 mt-4">
           <label className="inline-flex items-center gap-2">
@@ -244,8 +256,8 @@ const PatientForm: React.FC = () => {
           <label className="inline-flex items-center gap-2">
             <input
               type="checkbox"
-              name="recommendations.staff"
-              checked={patient.spiritualConsultation.recommendations.staff}
+              name="recommendations.rod"
+              checked={patient.spiritualConsultation.recommendations.rod}
               onChange={handleChange}
               className="rounded border-[color:var(--border)] focus:ring-[color:var(--primary)]"
             />{" "}

@@ -8,6 +8,8 @@ import { mockPatients } from "@/services/mockData";
 const PatientList: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<keyof Patient | null>(null);
+  const [sortAsc, setSortAsc] = useState(true);
 
   useEffect(() => {
     setPatients(mockPatients);
@@ -16,6 +18,30 @@ const PatientList: React.FC = () => {
   const filtered = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleSort = (key: keyof Patient) => {
+    if (sortBy === key) {
+      setSortAsc((asc) => !asc);
+    } else {
+      setSortBy(key);
+      setSortAsc(true);
+    }
+  };
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (!sortBy) return 0;
+    const aValue = a[sortBy];
+    const bValue = b[sortBy];
+    if (aValue === bValue) return 0;
+    if (aValue === undefined) return 1;
+    if (bValue === undefined) return -1;
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortAsc ? aValue - bValue : bValue - aValue;
+    }
+    return sortAsc
+      ? String(aValue).localeCompare(String(bValue))
+      : String(bValue).localeCompare(String(aValue));
+  });
 
   return (
     <div className="max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
@@ -31,17 +57,37 @@ const PatientList: React.FC = () => {
       <table className="table w-full text-blue-900">
         <thead>
           <tr className="bg-[color:var(--primary-light)] text-blue-900">
-            <th>Registro</th>
-            <th>Nome</th>
-            <th>Telefone</th>
-            <th>Prioridade</th>
-            <th>Status</th>
+            <th
+              className="cursor-pointer"
+              onClick={() => handleSort("registrationNumber")}
+            >
+              Registro{" "}
+              {sortBy === "registrationNumber" && (sortAsc ? "▲" : "▼")}
+            </th>
+            <th className="cursor-pointer" onClick={() => handleSort("name")}>
+              Nome {sortBy === "name" && (sortAsc ? "▲" : "▼")}
+            </th>
+            <th className="cursor-pointer" onClick={() => handleSort("phone")}>
+              Telefone {sortBy === "phone" && (sortAsc ? "▲" : "▼")}
+            </th>
+            <th
+              className="cursor-pointer"
+              onClick={() => handleSort("priority")}
+            >
+              Prioridade {sortBy === "priority" && (sortAsc ? "▲" : "▼")}
+            </th>
+            <th className="cursor-pointer" onClick={() => handleSort("status")}>
+              Status {sortBy === "status" && (sortAsc ? "▲" : "▼")}
+            </th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          {filtered.map((p) => (
-            <tr key={p.id}>
+          {sorted.map((p) => (
+            <tr
+              key={p.id}
+              className="transition-colors hover:bg-[color:var(--primary-light)]/40 cursor-pointer"
+            >
               <td>{p.registrationNumber}</td>
               <td>{p.name}</td>
               <td>{p.phone}</td>
@@ -50,9 +96,9 @@ const PatientList: React.FC = () => {
               <td>
                 <Link
                   href={`/patients/${p.id}`}
-                  className="button button-primary py-1 px-2 w-auto min-w-0 text-sm"
+                  className="button-link py-1 px-2 w-auto min-w-0 text-sm"
                 >
-                  Ver
+                  + detalhes
                 </Link>
               </td>
             </tr>

@@ -1,6 +1,6 @@
 export interface Agenda {
   id: string;
-  type: 'spiritual' | 'lightBath' | 'staff';
+  type: 'spiritual' | 'lightBath' | 'rod';
   date: string;
   patients: string[]; // patient IDs
 }
