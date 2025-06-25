@@ -52,6 +52,7 @@ export interface Attendance {
   status: 'OK' | 'Faltou';
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TreatmentHistory {
   // TODO: Define fields for treatment history as needed
 }
