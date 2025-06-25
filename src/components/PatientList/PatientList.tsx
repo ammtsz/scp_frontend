@@ -50,17 +50,19 @@ const PatientList: React.FC = () => {
   );
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h2 className="text-xl font-bold mb-4">Pacientes</h2>
+    <div className="max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
+      <h2 className="text-xl font-bold mb-4 text-[color:var(--primary-dark)]">
+        Pacientes
+      </h2>
       <input
-        className="input input-bordered w-full mb-4"
+        className="input mb-4"
         placeholder="Buscar por nome..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      <table className="table w-full">
+      <table className="table w-full text-blue-900">
         <thead>
-          <tr>
+          <tr className="bg-[color:var(--primary-light)] text-blue-900">
             <th>Registro</th>
             <th>Nome</th>
             <th>Telefone</th>
