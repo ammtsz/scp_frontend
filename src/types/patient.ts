@@ -6,7 +6,7 @@ export interface Patient {
   phone: string;
   priority: 'I' | 'E' | 'N';
   mainComplaint: string;
-  status: 'T' | 'A' | 'F';
+  status: 'T' | 'A' | 'F' | 'N' | 'I';
   spiritualConsultation: SpiritualConsultation;
   lightBaths: LightBath[];
   staffs: Staff[];
@@ -26,7 +26,7 @@ export interface Recommendations {
   water: string;
   ointment: string;
   lightBath: boolean;
-  staff: boolean;
+  rod: boolean;
   spiritualTreatment: boolean;
   returnWeeks: number;
 }
@@ -50,6 +50,8 @@ export interface Staff {
 export interface Attendance {
   date: string;
   status: 'OK' | 'Faltou';
+  notes?: string;
+  recommendations?: Recommendations;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

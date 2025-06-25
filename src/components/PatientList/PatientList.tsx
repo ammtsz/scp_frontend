@@ -3,46 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { Patient } from "@/types/patient";
 import Link from "next/link";
-
-// Mock data for demonstration
-const mockPatients: Patient[] = [
-  {
-    id: "1",
-    registrationNumber: 1,
-    name: "Maria Silva",
-    birthDate: "1980-05-10",
-    phone: "(11) 91234-5678",
-    priority: "N",
-    mainComplaint: "Dor de cabeça",
-    status: "T",
-    spiritualConsultation: {
-      startDate: "2024-06-01",
-      nextDate: "2024-06-15",
-      dischargeDate: "",
-      recommendations: {
-        food: "",
-        water: "",
-        ointment: "",
-        lightBath: false,
-        staff: false,
-        spiritualTreatment: false,
-        returnWeeks: 2,
-      },
-    },
-    lightBaths: [],
-    staffs: [],
-    attendances: [],
-    history: [],
-  },
-  // Add more mock patients as needed
-];
+import { mockPatients } from "@/services/mockData";
 
 const PatientList: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    // TODO: Replace with API call
     setPatients(mockPatients);
   }, []);
 
@@ -67,6 +34,7 @@ const PatientList: React.FC = () => {
             <th>Registro</th>
             <th>Nome</th>
             <th>Telefone</th>
+            <th>Prioridade</th>
             <th>Status</th>
             <th></th>
           </tr>
@@ -77,6 +45,7 @@ const PatientList: React.FC = () => {
               <td>{p.registrationNumber}</td>
               <td>{p.name}</td>
               <td>{p.phone}</td>
+              <td>{p.priority}</td>
               <td>{p.status}</td>
               <td>
                 <Link
@@ -90,6 +59,42 @@ const PatientList: React.FC = () => {
           ))}
         </tbody>
       </table>
+      {/* Status Legend */}
+      <div className="mt-6 p-3 rounded bg-[color:var(--surface-light)] border border-[color:var(--border)] text-sm flex flex-wrap gap-4 items-center">
+        <span className="font-semibold text-[color:var(--primary-dark)]">
+          Legenda de Status:
+        </span>
+        <span>
+          <span className="font-bold">N</span>: Novo
+        </span>
+        <span>
+          <span className="font-bold">I</span>: Inativo
+        </span>
+        <span>
+          <span className="font-bold">A</span>: Ativo
+        </span>
+        <span>
+          <span className="font-bold">T</span>: Tratamento
+        </span>
+        <span>
+          <span className="font-bold">F</span>: Finalizado
+        </span>
+      </div>
+      {/* Priority Legend */}
+      <div className="mt-2 p-3 rounded bg-[color:var(--surface-light)] border border-[color:var(--border)] text-sm flex flex-wrap gap-4 items-center">
+        <span className="font-semibold text-[color:var(--primary-dark)]">
+          Legenda de Prioridade:
+        </span>
+        <span>
+          <span className="font-bold">N</span>: Normal
+        </span>
+        <span>
+          <span className="font-bold">I</span>: Idoso
+        </span>
+        <span>
+          <span className="font-bold">E</span>: Emergência
+        </span>
+      </div>
     </div>
   );
 };

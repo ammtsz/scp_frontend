@@ -1,18 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-
-// Mock attendance list data
-const mockAttendance = [
-  { date: "2025-07-01", type: "spiritual", patients: ["Maria Silva"] },
-  { date: "2025-07-01", type: "lightBath", patients: ["Maria Silva"] },
-];
+import { mockAttendance } from "@/services/mockData";
 
 const AttendanceList: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [attendance] = useState(mockAttendance);
 
-  // TODO: Replace with real logic and API integration
   return (
     <div className="max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
       <h2 className="text-xl font-bold mb-4 text-[color:var(--primary-dark)]">

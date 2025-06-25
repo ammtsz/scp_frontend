@@ -4,3 +4,9 @@ export interface Agenda {
   date: string;
   patients: string[]; // patient IDs
 }
+
+export type AgendaItem = {
+  date: string;
+  type: "spiritual" | "lightBath";
+  patients: string[];
+};
