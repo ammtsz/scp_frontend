@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Patient } from "@/types/patient";
+import Link from "next/link";
 
 // Mock data for demonstration
 const mockPatients: Patient[] = [
@@ -67,6 +68,7 @@ const PatientList: React.FC = () => {
             <th>Nome</th>
             <th>Telefone</th>
             <th>Status</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -76,6 +78,14 @@ const PatientList: React.FC = () => {
               <td>{p.name}</td>
               <td>{p.phone}</td>
               <td>{p.status}</td>
+              <td>
+                <Link
+                  href={`/patients/${p.id}`}
+                  className="button button-primary py-1 px-2 w-auto min-w-0 text-sm"
+                >
+                  Ver
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>
