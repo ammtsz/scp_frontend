@@ -1,6 +1,6 @@
 "use client";
 
-import TreatmentHistory from "@/components/TreatmentHistory/TreatmentHistory";
+import TreatmentHistory from "@/components/TreatmentHistory";
 import Link from "next/link";
 
 export default function PatientHistoryPage() {

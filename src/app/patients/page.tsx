@@ -1,4 +1,4 @@
-import PatientList from "@/components/PatientList/PatientList";
+import PatientList from "@/components/PatientList";
 import Link from "next/link";
 
 export default function PatientsPage() {

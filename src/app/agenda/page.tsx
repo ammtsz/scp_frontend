@@ -1,4 +1,4 @@
-import AgendaCalendar from '@/components/AgendaCalendar/AgendaCalendar';
+import AgendaCalendar from "@/components/AgendaCalendar";
 
 export default function AgendaPage() {
   return <AgendaCalendar />;

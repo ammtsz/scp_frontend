@@ -1,6 +1,6 @@
 "use client";
 
-import PatientForm from "@/components/PatientForm/PatientForm";
+import PatientForm from "@/components/PatientForm";
 import Link from "next/link";
 
 export default function NewPatientPage() {
