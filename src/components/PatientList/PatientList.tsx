@@ -54,29 +54,38 @@ const PatientList: React.FC = () => {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      <table className="table w-full text-blue-900">
+      <table className="table w-full text-primary-dark">
         <thead>
-          <tr className="bg-[color:var(--primary-light)] text-blue-900">
+          <tr className="bg-[color:var(--light)]">
             <th
-              className="cursor-pointer"
+              className="cursor-pointer text-left"
               onClick={() => handleSort("registrationNumber")}
             >
               Registro{" "}
               {sortBy === "registrationNumber" && (sortAsc ? "▲" : "▼")}
             </th>
-            <th className="cursor-pointer" onClick={() => handleSort("name")}>
+            <th
+              className="cursor-pointer text-left"
+              onClick={() => handleSort("name")}
+            >
               Nome {sortBy === "name" && (sortAsc ? "▲" : "▼")}
             </th>
-            <th className="cursor-pointer" onClick={() => handleSort("phone")}>
+            <th
+              className="cursor-pointer text-left"
+              onClick={() => handleSort("phone")}
+            >
               Telefone {sortBy === "phone" && (sortAsc ? "▲" : "▼")}
             </th>
             <th
-              className="cursor-pointer"
+              className="cursor-pointer text-left"
               onClick={() => handleSort("priority")}
             >
               Prioridade {sortBy === "priority" && (sortAsc ? "▲" : "▼")}
             </th>
-            <th className="cursor-pointer" onClick={() => handleSort("status")}>
+            <th
+              className="cursor-pointer text-left"
+              onClick={() => handleSort("status")}
+            >
               Status {sortBy === "status" && (sortAsc ? "▲" : "▼")}
             </th>
             <th></th>
@@ -94,11 +103,8 @@ const PatientList: React.FC = () => {
               <td>{p.priority}</td>
               <td>{p.status}</td>
               <td>
-                <Link
-                  href={`/patients/${p.id}`}
-                  className="button-link py-1 px-2 w-auto min-w-0 text-sm"
-                >
-                  + detalhes
+                <Link href={`/patients/${p.id}`} className="button button-link">
+                  Ver
                 </Link>
               </td>
             </tr>

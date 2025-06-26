@@ -8,25 +8,19 @@ export default function Home() {
       </h1>
       <nav className="flex flex-col gap-4 w-full max-w-md">
         <Link href="/patients">
-          <span className="button button-primary text-center">Pacientes</span>
+          <span className="button button-primary">Pacientes</span>
         </Link>
         <Link href="/patients/new">
-          <span className="button button-secondary text-center">
-            Novo Paciente
-          </span>
+          <span className="button button-secondary">Novo Paciente</span>
         </Link>
         <Link href="/agenda">
-          <span className="button button-primary text-center">Agenda</span>
+          <span className="button button-primary">Agenda</span>
         </Link>
         <Link href="/attendance">
-          <span className="button button-secondary text-center">
-            Lista de Atendimentos
-          </span>
+          <span className="button button-secondary">Atendimentos</span>
         </Link>
         <Link href="/patients/history">
-          <span className="button text-[color:var(--primary-dark)] bg-[color:var(--surface)] border border-[color:var(--border)] text-center">
-            Histórico de Atendimentos
-          </span>
+          <span className="button button-link">Histórico</span>
         </Link>
       </nav>
     </div>

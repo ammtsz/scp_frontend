@@ -7,7 +7,8 @@
   --primary-light: #4b6897; /* blue-400 */
   --primary-dark: #001538; /* blue-800 */
   --surface: #ffffff; /* always white for cards/panels */
-  --border: #0f182c; /* blue-600 for borders */
+  --border: #647191; /* blue-600 for borders */
+  --light: #c1c8da; 
 }
 
 @media (prefers-color-scheme: light) {
@@ -18,7 +19,8 @@
     --primary-light: #4b6897;
     --primary-dark: #001538;
     --surface: #1e293b;
-    --border: #334155;
+    --border: #647191;
+    --light: #c1c8da; 
   }
 }
 
@@ -123,4 +125,41 @@ body {
 }
 .button-link:hover {
   color: var(--primary-dark);
+}
+
+.button-outline {
+  background: var(--surface);
+  color: var(--primary);
+  border: 1.5px solid var(--border);
+}
+.button-outline:hover {
+  background: var(--primary-light);
+  color: #fff;
+  border-color: var(--primary-dark);
+}
+
+.tab-button {
+  background: var(--light);
+  color: #fff;
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  margin-bottom: -1.5px;
+  position: relative;
+  z-index: 1;
+  box-shadow: none;
+  width: 100%;
+}
+.tab-button.active {
+  background: var(--surface);
+  color: var(--primary);
+  border: 1.5px solid var(--border);
+  border-color: var(--border) var(--border) transparent var(--border);
+  z-index: 2;
+}
+.tab-button:not(.active):hover {
+  background: var(--light);
+  color: var(--primary);
+  border-color: var(--border);
 }

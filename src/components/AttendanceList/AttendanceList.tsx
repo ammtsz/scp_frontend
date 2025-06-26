@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { mockAttendance } from "@/services/mockData";
+import { formatDateBR } from "@/utils/dateHelpers";
 
 const AttendanceList: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState("");
@@ -17,6 +18,7 @@ const AttendanceList: React.FC = () => {
         className="input mb-4"
         value={selectedDate}
         onChange={(e) => setSelectedDate(e.target.value)}
+        lang="pt-BR"
       />
       <div>
         {attendance
@@ -27,7 +29,7 @@ const AttendanceList: React.FC = () => {
               className="mb-2 p-2 border rounded border-[color:var(--border)] bg-[color:var(--surface)]"
             >
               <div>
-                <b>Data:</b> {a.date}
+                <b>Data:</b> {formatDateBR(a.date)}
               </div>
               <div>
                 <b>Tipo:</b>{" "}

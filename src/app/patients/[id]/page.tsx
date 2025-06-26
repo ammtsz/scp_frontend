@@ -5,6 +5,7 @@ import Link from "next/link";
 import { mockPatients, mockAttendance } from "@/services/mockData";
 import React, { useState } from "react";
 import type { Attendance } from "@/types/patient";
+import { formatDateBR } from "@/utils/dateHelpers";
 
 export default function PatientDetailPage() {
   const params = useParams();
@@ -13,8 +14,8 @@ export default function PatientDetailPage() {
   if (!patient) {
     return (
       <div>
-        <Link href="/patients" className="button-link mb-4 inline-block w-auto">
-          ← Voltar
+        <Link href="/patients" className="button button-link">
+          Voltar
         </Link>
         <div className="text-red-600">Paciente não encontrado.</div>
       </div>
@@ -31,8 +32,8 @@ export default function PatientDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
-      <Link href="/patients" className="button-link mb-4 inline-block w-auto">
-        ← Voltar
+      <Link href="/patients" className="button button-link">
+        Voltar
       </Link>
       <h2 className="text-2xl font-bold mb-2 text-[color:var(--primary-dark)]">
         {patient.name}
@@ -42,7 +43,7 @@ export default function PatientDetailPage() {
           <b>Registro:</b> {patient.registrationNumber}
         </div>
         <div>
-          <b>Data de nascimento:</b> {patient.birthDate}
+          <b>Data de nascimento:</b> {formatDateBR(patient.birthDate)}
         </div>
         <div>
           <b>Telefone:</b> {patient.phone}
@@ -63,13 +64,16 @@ export default function PatientDetailPage() {
         </h3>
         <div className="text-sm">
           <div>
-            <b>Início:</b> {patient.spiritualConsultation.startDate}
+            <b>Início:</b>{" "}
+            {formatDateBR(patient.spiritualConsultation.startDate)}
           </div>
           <div>
-            <b>Próxima:</b> {patient.spiritualConsultation.nextDate}
+            <b>Próxima:</b>{" "}
+            {formatDateBR(patient.spiritualConsultation.nextDate)}
           </div>
           <div>
-            <b>Alta:</b> {patient.spiritualConsultation.dischargeDate || "-"}
+            <b>Alta:</b>{" "}
+            {formatDateBR(patient.spiritualConsultation.dischargeDate) || "-"}
           </div>
           <div>
             <b>Recomendações:</b>
@@ -131,7 +135,7 @@ export default function PatientDetailPage() {
           <ul className="ml-4 list-disc text-sm">
             {future.map((a, i) => (
               <li key={a.date + i}>
-                {a.date} (
+                {formatDateBR(a.date)} (
                 {a.type === "spiritual" ? "Espiritual" : "Banho de Luz/Bastão"})
               </li>
             ))}
@@ -167,7 +171,7 @@ function AttendancesDropdown({ attendances }: { attendances: Attendance[] }) {
             onClick={() => toggle(i)}
           >
             <span>
-              <b>Data:</b> {att.date} <b>Status:</b> {att.status}
+              <b>Data:</b> {formatDateBR(att.date)} <b>Status:</b> {att.status}
             </span>
             <span className="ml-2 text-[color:var(--primary)]">
               {openIndexes.includes(i) ? "▲" : "▼"}

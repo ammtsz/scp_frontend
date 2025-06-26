@@ -36,7 +36,11 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             {cancelLabel}
           </button>
           <button
-            className="button button-primary bg-red-600 hover:bg-red-700 border-red-600"
+            className={`button button-primary${
+              confirmLabel === "Remover"
+                ? " bg-red-600 hover:bg-red-700 border-red-600"
+                : ""
+            }`}
             onClick={onConfirm}
           >
             {confirmLabel}

@@ -19,10 +19,8 @@ export default function TabNav() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`button text-center px-6 py-2 rounded-b-none border-b-4 transition-all duration-150 ${
-              isActive
-                ? "button-primary border-b-[color:var(--primary-dark)] shadow-none"
-                : "bg-transparent text-[color:var(--primary-dark)] border-b-transparent hover:bg-[color:var(--primary-light)]"
+            className={`button ${
+              isActive ? "button-primary" : "button-secondary"
             }`}
             aria-current={isActive ? "page" : undefined}
           >

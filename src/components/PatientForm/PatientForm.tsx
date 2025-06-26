@@ -113,10 +113,11 @@ const PatientForm: React.FC = () => {
         <input
           name="birthDate"
           type="date"
+          className="input w-full"
           value={patient.birthDate}
           onChange={handleChange}
-          className="input"
           required
+          lang="pt-BR"
         />
       </div>
       <div>
@@ -173,9 +174,10 @@ const PatientForm: React.FC = () => {
             <input
               name="startDate"
               type="date"
+              className="input w-full"
               value={patient.spiritualConsultation.startDate}
               onChange={handleSpiritualConsultationChange}
-              className="input"
+              lang="pt-BR"
             />
           </div>
           <div>
@@ -183,9 +185,10 @@ const PatientForm: React.FC = () => {
             <input
               name="nextDate"
               type="date"
+              className="input w-full"
               value={patient.spiritualConsultation.nextDate}
               onChange={handleSpiritualConsultationChange}
-              className="input"
+              lang="pt-BR"
             />
           </div>
           <div>
@@ -193,9 +196,10 @@ const PatientForm: React.FC = () => {
             <input
               name="dischargeDate"
               type="date"
+              className="input w-full"
               value={patient.spiritualConsultation.dischargeDate}
               onChange={handleSpiritualConsultationChange}
-              className="input"
+              lang="pt-BR"
             />
           </div>
         </div>

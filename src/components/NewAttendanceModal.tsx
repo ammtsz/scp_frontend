@@ -44,6 +44,7 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
               value={newAttendanceDate}
               onChange={(e) => setNewAttendanceDate(e.target.value)}
               required
+              lang="pt-BR"
             />
           </div>
           <div className="flex items-center mb-2">

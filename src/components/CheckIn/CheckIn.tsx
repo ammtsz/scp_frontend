@@ -26,7 +26,7 @@ const CheckIn: React.FC = () => {
         required
       />
       <button type="submit" className="button button-primary">
-        Check-in
+        Fazer Check-in
       </button>
       {checkedIn && (
         <div className="mt-2 text-green-600">Check-in realizado!</div>

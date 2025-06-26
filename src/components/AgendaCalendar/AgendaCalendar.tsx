@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { mockAgenda, mockPatients } from "@/services/mockData";
+import { formatDateBR } from "@/utils/dateHelpers";
 import { MoreVertical } from "react-feather";
 import ConfirmModal from "@/components/ConfirmModal";
 import NewAttendanceModal from "@/components/NewAttendanceModal";
@@ -25,6 +26,7 @@ const AgendaCalendar: React.FC = () => {
     name: string;
   } | null>(null);
   const [showNewAttendance, setShowNewAttendance] = useState(false);
+  const [openAgendaIdx, setOpenAgendaIdx] = useState<number | null>(null);
 
   const filteredAgenda = agendaState.filter(
     (a) => a.type === activeTab && (!selectedDate || a.date === selectedDate)
@@ -64,7 +66,7 @@ const AgendaCalendar: React.FC = () => {
           Agenda
         </h2>
         <button
-          className="button button-primary px-4 py-2 text-sm"
+          className="button button-primary"
           onClick={() => setShowNewAttendance(true)}
         >
           + Novo Agendamento
@@ -75,17 +77,15 @@ const AgendaCalendar: React.FC = () => {
         className="input mb-4"
         value={selectedDate}
         onChange={(e) => setSelectedDate(e.target.value)}
+        lang="pt-BR"
+        placeholder="Selecione uma data"
       />
       {/* Tabs */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-0 mb-4 mt-8 width-full">
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            className={`button px-4 py-2 rounded-t font-semibold transition-colors duration-150 ${
-              activeTab === tab.key
-                ? "button-primary bg-[color:var(--primary-light)] border-b-2 border-[color:var(--primary)]"
-                : "button-secondary bg-[color:var(--surface-light)] border-b-2 border-transparent"
-            }`}
+            className={`tab-button${activeTab === tab.key ? " active" : ""}`}
             onClick={() => setActiveTab(tab.key)}
             type="button"
           >
@@ -98,63 +98,87 @@ const AgendaCalendar: React.FC = () => {
           filteredAgenda.map((a, idx) => (
             <div
               key={a.date + "-" + activeTab + "-" + idx}
-              className="mb-2 p-2 border rounded border-[color:var(--border)] bg-[color:var(--surface)]"
+              className="mb-2 border rounded border-[color:var(--border)] bg-[color:var(--surface)]"
             >
-              <div className="flex justify-between items-center mb-1">
-                <div>
-                  <b>Data:</b> {a.date}
-                </div>
-                <span className="text-xs font-semibold text-[color:var(--primary)] px-2 py-1 rounded">
-                  {a.type === "spiritual"
-                    ? "Consultas Espirituais"
-                    : "Banhos de Luz/Bastão"}
+              <button
+                type="button"
+                className="w-full flex justify-between items-center p-2 font-semibold text-[color:var(--primary-dark)] hover:bg-[color:var(--primary-light)]/20 transition rounded-t focus:outline-none"
+                onClick={() =>
+                  setOpenAgendaIdx(openAgendaIdx === idx ? null : idx)
+                }
+                aria-expanded={openAgendaIdx === idx}
+                aria-controls={`agenda-patients-${idx}`}
+              >
+                <span>
+                  <b>Data:</b> {formatDateBR(a.date)}
                 </span>
-              </div>
-              <div>
-                <b>Pacientes:</b>
-                <ol className="ml-0 list-none flex flex-col gap-2 mt-2">
-                  {a.patients.map((name, i) => (
-                    <li
-                      key={name + i}
-                      draggable
-                      onDragStart={() => handleDragStart(idx, i)}
-                      onDragOver={(e) => handleDragOver(idx, i, e)}
-                      onDrop={() => handleDrop(idx, i)}
-                      onDragEnd={handleDragEnd}
-                      className={`bg-[color:var(--surface-light)] border border-[color:var(--border)] rounded p-2 shadow-sm transition-all select-none cursor-move flex items-center gap-2
-                        ${draggedIdx === i ? "opacity-60" : ""}
-                        ${
-                          draggedOverIdx === i && draggedIdx !== null
-                            ? "ring-2 ring-[color:var(--primary)]"
-                            : ""
-                        }
-                      `}
-                    >
-                      <span
-                        className="text-gray-400 select-none flex items-center gap-0"
-                        style={{ minWidth: 18 }}
+                {openAgendaIdx === idx ? (
+                  <span className="text-xs font-semibold text-[color:var(--primary-light)] px-2 py-1 rounded">
+                    {a.type === "spiritual"
+                      ? "Consultas Espirituais"
+                      : "Banhos de Luz/Bastão"}
+                  </span>
+                ) : (
+                  <span className="text-xs font-semibold text-[color:var(--primary-light)] px-2 py-1 rounded">
+                    {a.patients.length} paciente
+                    {a.patients.length !== 1 ? "s" : ""}
+                  </span>
+                )}
+                <span
+                  className={`ml-2 transition-transform ${
+                    openAgendaIdx === idx ? "rotate-90" : ""
+                  }`}
+                >
+                  ▶
+                </span>
+              </button>
+              {openAgendaIdx === idx && (
+                <div id={`agenda-patients-${idx}`} className="p-2 pt-0">
+                  <b>Pacientes:</b>
+                  <ol className="ml-0 list-none flex flex-col gap-2 mt-2">
+                    {a.patients.map((name, i) => (
+                      <li
+                        key={name + i}
+                        draggable
+                        onDragStart={() => handleDragStart(idx, i)}
+                        onDragOver={(e) => handleDragOver(idx, i, e)}
+                        onDrop={() => handleDrop(idx, i)}
+                        onDragEnd={handleDragEnd}
+                        className={`bg-[color:var(--surface-light)] border border-[color:var(--border)] rounded p-2 shadow-sm transition-all select-none cursor-move flex items-center gap-2
+                          ${draggedIdx === i ? "opacity-60" : ""}
+                          ${
+                            draggedOverIdx === i && draggedIdx !== null
+                              ? "ring-2 ring-[color:var(--primary)]"
+                              : ""
+                          }
+                        `}
                       >
-                        <MoreVertical size={18} />
-                        <MoreVertical size={18} className="-translate-x-3" />
-                      </span>
-                      <span className="w-6 text-xs text-gray-500 font-bold text-center">
-                        {i + 1}
-                      </span>
-                      <span className="font-medium text-[color:var(--primary-dark)] flex-1">
-                        {name}
-                      </span>
-                      <button
-                        type="button"
-                        className="ml-2 text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 rounded"
-                        onClick={() => setConfirmRemove({ idx, i, name })}
-                        aria-label="Cancelar agendamento"
-                      >
-                        Cancelar
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+                        <span
+                          className="text-gray-400 select-none flex items-center gap-0"
+                          style={{ minWidth: 18 }}
+                        >
+                          <MoreVertical size={18} />
+                          <MoreVertical size={18} className="-translate-x-3" />
+                        </span>
+                        <span className="w-6 text-xs text-gray-500 font-bold text-center">
+                          {i + 1}
+                        </span>
+                        <span className="font-medium text-[color:var(--primary-dark)] flex-1">
+                          {name}
+                        </span>
+                        <button
+                          type="button"
+                          className="button button-outline text-red-500 hover:text-red-700"
+                          onClick={() => setConfirmRemove({ idx, i, name })}
+                          aria-label="Cancelar agendamento"
+                        >
+                          Cancelar
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </div>
           ))
         ) : (

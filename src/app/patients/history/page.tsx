@@ -6,8 +6,8 @@ import Link from "next/link";
 export default function PatientHistoryPage() {
   return (
     <div>
-      <Link href="/patients" className="button-link mb-4 inline-block w-auto">
-        ← Voltar
+      <Link href="/patients" className="button button-link">
+        Voltar
       </Link>
       <TreatmentHistory />
     </div>

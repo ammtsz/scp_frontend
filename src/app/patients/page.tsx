@@ -8,7 +8,7 @@ export default function PatientsPage() {
         <Link href="/patients/new" className="button button-secondary">
           Novo Paciente
         </Link>
-        <Link href="/patients/history" className="button">
+        <Link href="/patients/history" className="button button-primary">
           Histórico
         </Link>
       </div>
