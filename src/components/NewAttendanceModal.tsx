@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { mockPatients } from "@/services/mockData";
+import { Search } from "react-feather";
 
 interface NewAttendanceModalProps {
   open: boolean;
@@ -16,6 +17,7 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
   const [newAttendancePatient, setNewAttendancePatient] = useState("");
   const [patientSearch, setPatientSearch] = useState("");
   const [isFirstAttendance, setIsFirstAttendance] = useState(false);
+  const [showPatientList, setShowPatientList] = useState(false);
 
   if (!open) return null;
 
@@ -47,7 +49,7 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
               lang="pt-BR"
             />
           </div>
-          <div className="flex items-center mb-2">
+          <div className="flex items-center mb-2 mt-8">
             <input
               id="firstAttendance"
               type="checkbox"
@@ -79,18 +81,29 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
               />
             ) : (
               <>
-                <input
-                  type="text"
-                  className="input w-full"
-                  placeholder="Buscar paciente..."
-                  value={patientSearch}
-                  onChange={(e) => {
-                    setPatientSearch(e.target.value);
-                    setNewAttendancePatient("");
-                  }}
-                  autoComplete="off"
-                />
-                {patientSearch && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="input w-full pr-10"
+                    placeholder="Buscar paciente..."
+                    value={patientSearch}
+                    onChange={(e) => {
+                      setPatientSearch(e.target.value);
+                      setNewAttendancePatient("");
+                      setShowPatientList(true);
+                    }}
+                    autoComplete="off"
+                    onFocus={() => setShowPatientList(true)}
+                    onBlur={() => {
+                      // Delay to allow click event on list
+                      setTimeout(() => setShowPatientList(false), 100);
+                    }}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <Search size={18} />
+                  </span>
+                </div>
+                {showPatientList && patientSearch && (
                   <ul className="absolute bg-white border border-[color:var(--border)] rounded shadow mt-1 w-full z-10 max-h-40 overflow-y-auto">
                     {mockPatients
                       .filter((p) =>
@@ -106,9 +119,10 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
                               ? "bg-[color:var(--primary-light)]"
                               : ""
                           }`}
-                          onClick={() => {
+                          onMouseDown={() => {
                             setNewAttendancePatient(p.name);
                             setPatientSearch(p.name);
+                            setShowPatientList(false);
                           }}
                         >
                           {p.name}
