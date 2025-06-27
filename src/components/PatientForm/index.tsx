@@ -1,94 +1,21 @@
-import React, { useState } from "react";
-import {
-  Patient,
-  SpiritualConsultation,
-  Recommendations,
-} from "@/types/patient";
-
-const initialRecommendations: Recommendations = {
-  food: "",
-  water: "",
-  ointment: "",
-  lightBath: false,
-  rod: false,
-  spiritualTreatment: false,
-  returnWeeks: 0,
-};
-
-const initialSpiritualConsultation: SpiritualConsultation = {
-  startDate: "",
-  nextDate: "",
-  dischargeDate: "",
-  recommendations: initialRecommendations,
-};
-
-const initialPatient: Omit<Patient, "id" | "registrationNumber" | "history"> = {
-  name: "",
-  birthDate: "",
-  phone: "",
-  priority: "N",
-  mainComplaint: "",
-  status: "T",
-  spiritualConsultation: initialSpiritualConsultation,
-  lightBaths: [],
-  rods: [],
-  attendances: [],
-};
-
-const labelClass =
-  "block text-sm font-medium text-[color:var(--primary-dark)] mb-1";
-const fieldsetClass =
-  "mb-6 border border-[color:var(--border)] rounded-lg p-4 bg-[color:var(--background)]";
-const legendClass =
-  "font-semibold text-base text-[color:var(--primary-dark)] px-2";
+import React from "react";
+import { usePatientForm } from "./usePatientForm";
 
 const PatientForm: React.FC = () => {
-  const [patient, setPatient] = useState(initialPatient);
+  const {
+    patient,
+    setPatient,
+    handleChange,
+    handleSpiritualConsultationChange,
+    handleSubmit,
+  } = usePatientForm();
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    const { name, value, type } = e.target;
-    const checked =
-      type === "checkbox" ? (e.target as HTMLInputElement).checked : undefined;
-    if (name.startsWith("recommendations.")) {
-      const recKey = name.replace("recommendations.", "");
-      setPatient((prev) => ({
-        ...prev,
-        spiritualConsultation: {
-          ...prev.spiritualConsultation,
-          recommendations: {
-            ...prev.spiritualConsultation.recommendations,
-            [recKey]: type === "checkbox" ? checked : value,
-          },
-        },
-      }));
-    } else {
-      setPatient((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleSpiritualConsultationChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
-    setPatient((prev) => ({
-      ...prev,
-      spiritualConsultation: {
-        ...prev.spiritualConsultation,
-        [name]: value,
-        recommendations: { ...prev.spiritualConsultation.recommendations },
-      },
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Call API to save patient
-    alert("Paciente cadastrado! (mock)");
-  };
+  const labelClass =
+    "block text-sm font-medium text-[color:var(--primary-dark)] mb-1";
+  const fieldsetClass =
+    "mb-6 border border-[color:var(--border)] rounded-lg p-4 bg-[color:var(--background)]";
+  const legendClass =
+    "font-semibold text-base text-[color:var(--primary-dark)] px-2";
 
   return (
     <form

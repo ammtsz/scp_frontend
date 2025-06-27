@@ -1,87 +1,41 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Patient } from "@/types/patient";
-import { mockPatients } from "@/services/mockData";
+import React from "react";
+import { usePatientList } from "./usePatientList";
+import Link from "next/link";
 
 const PatientList: React.FC = () => {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<keyof Patient | null>(null);
-  const [sortAsc, setSortAsc] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(20);
-  const loaderRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    setPatients(mockPatients);
-  }, []);
-
-  const filtered = patients.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const handleSort = (key: keyof Patient) => {
-    if (sortBy === key) {
-      setSortAsc((asc) => !asc);
-    } else {
-      setSortBy(key);
-      setSortAsc(true);
-    }
-  };
-
-  const sorted = [...filtered].sort((a, b) => {
-    if (!sortBy) return 0;
-    const aValue = a[sortBy];
-    const bValue = b[sortBy];
-    if (aValue === bValue) return 0;
-    if (aValue === undefined) return 1;
-    if (bValue === undefined) return -1;
-    if (typeof aValue === "number" && typeof bValue === "number") {
-      return sortAsc ? aValue - bValue : bValue - aValue;
-    }
-    return sortAsc
-      ? String(aValue).localeCompare(String(bValue))
-      : String(bValue).localeCompare(String(aValue));
-  });
-
-  const paginated = sorted.slice(0, visibleCount);
-
-  useEffect(() => {
-    setVisibleCount(20); // Reset on search
-  }, [search]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!loaderRef.current) return;
-      const rect = loaderRef.current.getBoundingClientRect();
-      if (rect.top < window.innerHeight && visibleCount < sorted.length) {
-        setVisibleCount((prev) => Math.min(prev + 20, sorted.length));
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [visibleCount, sorted.length]);
-
-  // Legend maps
-  const statusLegend: Record<string, string> = {
-    N: "Novo",
-    I: "Inativo",
-    A: "Ativo",
-    T: "Tratamento",
-    F: "Finalizado",
-  };
-  const priorityLegend: Record<string, string> = {
-    N: "Normal",
-    I: "Idoso",
-    E: "Emergência",
-  };
+  const {
+    patients,
+    setPatients,
+    search,
+    setSearch,
+    sortBy,
+    setSortBy,
+    sortAsc,
+    setSortAsc,
+    visibleCount,
+    setVisibleCount,
+    loaderRef,
+    filtered,
+    handleSort,
+    sorted,
+    paginated,
+    statusLegend,
+    priorityLegend,
+  } = usePatientList();
 
   return (
     <>
       <div className="max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
-        <h2 className="text-xl font-bold mb-2 text-[color:var(--primary-dark)]">
-          Pacientes <span>({filtered.length})</span>
-        </h2>
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-bold text-[color:var(--primary-dark)]">
+            Pacientes <span>({filtered.length})</span>
+          </h2>
+          <Link href="/patients/new" className="button button-primary ml-4">
+            + Novo Paciente
+          </Link>
+        </div>
         <div className="sticky top-[73px] z-20 bg-[color:var(--surface)] pb-2">
           <input
             className="input mb-2 mt-4"

@@ -1,81 +1,29 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { mockAgenda, mockPatients } from "@/services/mockData";
-import { formatDateBR } from "@/utils/dateHelpers";
-import { MoreVertical } from "react-feather";
+import React from "react";
 import ConfirmModal from "@/components/ConfirmModal";
 import NewAttendanceModal from "@/components/NewAttendanceModal";
-
-const TABS = [
-  { key: "spiritual", label: "Consultas Espirituais" },
-  { key: "lightBath", label: "Banhos de Luz/Bastão" },
-];
+import { useAgendaCalendar } from "./useAgendaCalendar";
 
 const AgendaCalendar: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState("");
-  const [agenda] = useState(mockAgenda);
-  const [activeTab, setActiveTab] = useState("spiritual");
-  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
-  const [draggedOverIdx, setDraggedOverIdx] = useState<number | null>(null);
-  const [agendaState, setAgendaState] = useState(agenda);
-  const [allPatients] = useState(mockPatients.map((p) => p.name));
-  const [confirmRemove, setConfirmRemove] = useState<{
-    idx: number;
-    i: number;
-    name: string;
-  } | null>(null);
-  const [showNewAttendance, setShowNewAttendance] = useState(false);
-  const [openAgendaIdx, setOpenAgendaIdx] = useState<number | null>(null);
-  const [isTabTransitioning, setIsTabTransitioning] = useState(false);
-
-  const filteredAgenda = agendaState.filter(
-    (a) => a.type === activeTab && (!selectedDate || a.date === selectedDate)
-  );
-
-  // Open the first dropdown by default when filteredAgenda changes
-  useEffect(() => {
-    if (filteredAgenda.length > 0) {
-      setOpenAgendaIdx(0);
-    } else {
-      setOpenAgendaIdx(null);
-    }
-  }, [filteredAgenda.length]);
-
-  // Animate cards on tab change
-  useEffect(() => {
-    if (isTabTransitioning) {
-      const timeout = setTimeout(() => setIsTabTransitioning(false), 100);
-      return () => clearTimeout(timeout);
-    }
-  }, [isTabTransitioning]);
-
-  // Drag and drop handlers for patient cards
-  function handleDragStart(aIdx: number, pIdx: number) {
-    setDraggedIdx(pIdx);
-  }
-  function handleDragOver(aIdx: number, pIdx: number, e: React.DragEvent) {
-    e.preventDefault();
-    setDraggedOverIdx(pIdx);
-  }
-  function handleDrop(aIdx: number, pIdx: number) {
-    if (draggedIdx === null || draggedIdx === pIdx) return;
-    setAgendaState((prev) => {
-      const newAgenda = [...prev];
-      const agendaItem = newAgenda[aIdx];
-      const newPatients = [...agendaItem.patients];
-      const [removed] = newPatients.splice(draggedIdx, 1);
-      newPatients.splice(pIdx, 0, removed);
-      newAgenda[aIdx] = { ...agendaItem, patients: newPatients };
-      return newAgenda;
-    });
-    setDraggedIdx(null);
-    setDraggedOverIdx(null);
-  }
-  function handleDragEnd() {
-    setDraggedIdx(null);
-    setDraggedOverIdx(null);
-  }
+  const {
+    TABS,
+    selectedDate,
+    setSelectedDate,
+    activeTab,
+    setActiveTab,
+    filteredAgenda,
+    openAgendaIdx,
+    setOpenAgendaIdx,
+    isTabTransitioning,
+    confirmRemove,
+    setConfirmRemove,
+    showNewAttendance,
+    setShowNewAttendance,
+    handleRemovePatient,
+    handleNewAttendance,
+    formatDateBR,
+  } = useAgendaCalendar();
 
   return (
     <div className="max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
@@ -111,12 +59,7 @@ const AgendaCalendar: React.FC = () => {
           <button
             key={tab.key}
             className={`tab-button${activeTab === tab.key ? " active" : ""}`}
-            onClick={() => {
-              if (tab.key !== activeTab) {
-                setIsTabTransitioning(true);
-                setTimeout(() => setActiveTab(tab.key), 100);
-              }
-            }}
+            onClick={() => setActiveTab(tab.key)}
             type="button"
           >
             {tab.label}
@@ -169,35 +112,13 @@ const AgendaCalendar: React.FC = () => {
                 </button>
                 {openAgendaIdx === idx && (
                   <div id={`agenda-patients-${idx}`} className="p-2 pt-0">
-                    <b>Pacientes:</b>
+                    <b>{a.patients.length} Pacientes:</b>
                     <ol className="ml-0 list-none flex flex-col gap-2 mt-2">
                       {a.patients.map((name, i) => (
                         <li
                           key={name + i}
-                          draggable
-                          onDragStart={() => handleDragStart(idx, i)}
-                          onDragOver={(e) => handleDragOver(idx, i, e)}
-                          onDrop={() => handleDrop(idx, i)}
-                          onDragEnd={handleDragEnd}
-                          className={`bg-[color:var(--surface-light)] border border-[color:var(--border)] rounded p-2 shadow-sm transition-all select-none cursor-move flex items-center gap-2
-                            ${draggedIdx === i ? "opacity-60" : ""}
-                            ${
-                              draggedOverIdx === i && draggedIdx !== null
-                                ? "ring-2 ring-[color:var(--primary)]"
-                                : ""
-                            }
-                          `}
+                          className="bg-[color:var(--surface-light)] border border-[color:var(--border)] rounded p-2 shadow-sm transition-all select-none flex items-center gap-2"
                         >
-                          <span
-                            className="text-gray-400 select-none flex items-center gap-0"
-                            style={{ minWidth: 18 }}
-                          >
-                            <MoreVertical size={18} />
-                            <MoreVertical
-                              size={18}
-                              className="-translate-x-3"
-                            />
-                          </span>
                           <span className="w-6 text-xs text-gray-500 font-bold text-center">
                             {i + 1}
                           </span>
@@ -228,7 +149,6 @@ const AgendaCalendar: React.FC = () => {
           )}
         </div>
       </div>
-      {/* Remove confirmation modal */}
       <ConfirmModal
         open={!!confirmRemove}
         title="Remover paciente"
@@ -244,34 +164,14 @@ const AgendaCalendar: React.FC = () => {
         confirmLabel="Remover"
         cancelLabel="Cancelar"
         onCancel={() => setConfirmRemove(null)}
-        onConfirm={() => {
-          if (!confirmRemove) return;
-          setAgendaState((prev) => {
-            const newAgenda = [...prev];
-            const agendaItem = newAgenda[confirmRemove.idx];
-            const newPatients = agendaItem.patients.filter(
-              (_, j) => j !== confirmRemove.i
-            );
-            newAgenda[confirmRemove.idx] = {
-              ...agendaItem,
-              patients: newPatients,
-            };
-            return newAgenda;
-          });
-          setConfirmRemove(null);
-        }}
+        onConfirm={handleRemovePatient}
       />
-      {/* New Attendance Modal */}
       <NewAttendanceModal
         open={showNewAttendance}
         onClose={() => {
           setShowNewAttendance(false);
         }}
-        onSubmit={(date, patient) => {
-          // TODO: Add logic to actually add the attendance
-          alert(`Agendado para ${patient} em ${date}`);
-          setShowNewAttendance(false);
-        }}
+        onSubmit={handleNewAttendance}
       />
     </div>
   );

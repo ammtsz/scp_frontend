@@ -1,11 +1,6 @@
 import React, { useState } from "react";
-import { mockPatients } from "@/services/mockData";
 import { Search, ChevronDown, ChevronUp } from "react-feather";
-
-const attendanceTypes = [
-  { value: "spiritual", label: "Consulta Espiritual" },
-  { value: "lightBath", label: "Banho de Luz/Bastão" },
-];
+import { attendanceTypes, useCheckIn } from "./useCheckIn";
 
 // Add prop to receive callback for check-in from CheckIn form
 interface CheckInProps {
@@ -13,53 +8,25 @@ interface CheckInProps {
 }
 
 const CheckIn: React.FC<CheckInProps> = ({ onCheckIn }) => {
-  const [search, setSearch] = useState("");
-  const [checkedIn, setCheckedIn] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<string>("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [isNewPatient, setIsNewPatient] = useState(false);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [collapsed, setCollapsed] = useState(false);
+  const {
+    search,
+    checkedIn,
+    selectedPatient,
+    showDropdown,
+    setShowDropdown,
+    isNewPatient,
+    setIsNewPatient,
+    selectedTypes,
+    collapsed: initialCollapsed,
+    setCollapsed: setInitialCollapsed,
+    filteredPatients,
+    handleCheckIn,
+    handleInputChange,
+    handleSelect,
+    handleTypeCheckbox,
+  } = useCheckIn(onCheckIn);
 
-  const filteredPatients = mockPatients.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const handleCheckIn = (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = isNewPatient ? search : selectedPatient;
-    if ((isNewPatient && search) || (!isNewPatient && selectedPatient)) {
-      setCheckedIn(true);
-      if (onCheckIn && name) {
-        onCheckIn(name, selectedTypes, isNewPatient);
-      }
-      setSearch("");
-      setShowDropdown(false);
-      setSelectedPatient("");
-      setSelectedTypes([]);
-      setIsNewPatient(false);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setSelectedPatient("");
-    setShowDropdown(true);
-  };
-
-  const handleSelect = (name: string) => {
-    setSelectedPatient(name);
-    setSearch(name);
-    setShowDropdown(false);
-  };
-
-  // Replace multiselect with checkboxes for attendance types
-  const handleTypeCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, checked } = e.target;
-    setSelectedTypes((prev) =>
-      checked ? [...prev, value] : prev.filter((t) => t !== value)
-    );
-  };
+  const [collapsed, setCollapsed] = useState(true); // Closed by default
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
@@ -162,9 +129,7 @@ const CheckIn: React.FC<CheckInProps> = ({ onCheckIn }) => {
             Fazer Check-in
           </button>
           {checkedIn && (
-            <div className="mt-2 text-green-600">
-              Check-in realizado para {isNewPatient ? search : selectedPatient}!
-            </div>
+            <div className="mt-2 text-green-600">Check-in realizado!</div>
           )}
         </form>
       )}

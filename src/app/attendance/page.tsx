@@ -12,7 +12,7 @@ export default function AttendancePage() {
   } | null>(null);
 
   return (
-    <div className="flex flex-col gap-8 mt-8">
+    <div className="flex flex-col gap-8">
       <CheckIn
         onCheckIn={(name, types, isNew) =>
           setExternalCheckIn({ name, types, isNew })
