@@ -81,12 +81,24 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
   ) => {
     if (!dragged || dragged.type !== type) return;
     let patient = "";
+    let fromSection = "scheduled";
     if (dragged.fromCheckedIn) {
       patient = checkedInPatients[type][dragged.idx];
+      fromSection = "checkedIn";
     } else if (dragged.fromCompleted) {
       patient = completedPatients[type][dragged.idx];
+      fromSection = "completed";
     } else {
       patient = attendancesByType[type][dragged.idx];
+    }
+
+    // Prevent re-dropping in the same section at any position
+    if (
+      (toCheckedIn && fromSection === "checkedIn") ||
+      (toCompleted && fromSection === "completed") ||
+      (!toCheckedIn && !toCompleted && fromSection === "scheduled")
+    ) {
+      return;
     }
 
     if (toCheckedIn) {
