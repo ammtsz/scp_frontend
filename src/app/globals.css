@@ -130,7 +130,7 @@ body {
 .button-outline {
   background: var(--surface);
   color: var(--primary);
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--border);
 }
 .button-outline:hover {
   background: var(--primary-light);
