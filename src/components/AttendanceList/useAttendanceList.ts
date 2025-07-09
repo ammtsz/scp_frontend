@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { mockAttendance } from "@/services/mockData";
+import { useAttendances } from "@/contexts/AttendancesContext";
 
 type AttendanceType = "spiritual" | "lightBath";
 
@@ -26,8 +26,9 @@ function getClosestAttendanceDate(attendance: { date: string }[]) {
 }
 
 export function useAttendanceList(externalCheckIn?: { name: string; types: string[]; isNew: boolean } | null) {
-  const [attendance, setAttendance] = useState(mockAttendance);
-  const [selectedDate, setSelectedDate] = useState(() => getClosestAttendanceDate(mockAttendance));
+  const { attendances } = useAttendances();
+  const [attendance, setAttendance] = useState(attendances);
+  const [selectedDate, setSelectedDate] = useState(() => getClosestAttendanceDate(attendances));
   const [checkedInPatients, setCheckedInPatients] = useState<Record<AttendanceType, string[]>>({ spiritual: [], lightBath: [] });
   const [completedPatients, setCompletedPatients] = useState<Record<AttendanceType, string[]>>({ spiritual: [], lightBath: [] });
   const [modal, setModal] = useState<{ open: boolean; patient: string; type: AttendanceType } | null>(null);

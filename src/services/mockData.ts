@@ -737,6 +737,7 @@ export const mockPatients: Patient[] = [
 
 export const mockAgenda: AgendaItem[] = [
   {
+    id: "2025-07-01-spiritual",
     date: "2025-07-01",
     type: "spiritual",
     patients: [
@@ -754,6 +755,7 @@ export const mockAgenda: AgendaItem[] = [
     ],
   },
   {
+    id: "2025-07-01-lightBath",
     date: "2025-07-01",
     type: "lightBath",
     patients: [
@@ -768,6 +770,7 @@ export const mockAgenda: AgendaItem[] = [
     ],
   },
   {
+    id: "2025-07-08-spiritual",
     date: "2025-07-08",
     type: "spiritual",
     patients: [
@@ -784,6 +787,7 @@ export const mockAgenda: AgendaItem[] = [
     ],
   },
   {
+    id: "2025-07-08-lightBath",
     date: "2025-07-08",
     type: "lightBath",
     patients: [

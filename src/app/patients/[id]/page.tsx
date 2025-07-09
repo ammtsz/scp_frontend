@@ -2,14 +2,17 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { mockPatients, mockAttendance } from "@/services/mockData";
 import React from "react";
 import { formatDateBR } from "@/utils/dateHelpers";
 import AttendancesDropdown from "@/components/AttendancesDropdown";
+import { usePatients } from "@/contexts/PatientsContext";
+import { useAttendances } from "@/contexts/AttendancesContext";
 
 export default function PatientDetailPage() {
   const params = useParams();
-  const patient = mockPatients.find((p) => p.id === params.id);
+  const { patients } = usePatients();
+  const { attendances } = useAttendances();
+  const patient = patients.find((p) => p.id === params.id);
 
   if (!patient) {
     return (
@@ -23,7 +26,7 @@ export default function PatientDetailPage() {
   }
 
   // Find previous and future attendances for this patient
-  const allAttendances = mockAttendance.filter((a) =>
+  const allAttendances = attendances.filter((a) =>
     a.patients.includes(patient.name)
   );
   const today = new Date().toISOString().slice(0, 10);

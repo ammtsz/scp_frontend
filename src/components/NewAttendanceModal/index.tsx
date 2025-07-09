@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { mockPatients } from "@/services/mockData";
+import { usePatients } from "@/contexts/PatientsContext";
 import { Search } from "react-feather";
 
 interface NewAttendanceModalProps {
@@ -18,6 +18,7 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
   const [patientSearch, setPatientSearch] = useState("");
   const [isFirstAttendance, setIsFirstAttendance] = useState(false);
   const [showPatientList, setShowPatientList] = useState(false);
+  const { patients } = usePatients();
 
   if (!open) return null;
 
@@ -105,7 +106,7 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
                 </div>
                 {showPatientList && patientSearch && (
                   <ul className="absolute bg-white border border-[color:var(--border)] rounded shadow mt-1 w-full z-10 max-h-40 overflow-y-auto">
-                    {mockPatients
+                    {patients
                       .filter((p) =>
                         p.name
                           .toLowerCase()
@@ -128,7 +129,7 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
                           {p.name}
                         </li>
                       ))}
-                    {mockPatients.filter((p) =>
+                    {patients.filter((p) =>
                       p.name.toLowerCase().includes(patientSearch.toLowerCase())
                     ).length === 0 && (
                       <li className="px-3 py-2 text-gray-400">

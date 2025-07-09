@@ -3,7 +3,6 @@ import React from "react";
 interface DragAndDropSectionProps {
   title: string;
   color: string;
-  border: string;
   patients: string[];
   emptyText: string;
   onDrop: () => void;
@@ -14,7 +13,6 @@ interface DragAndDropSectionProps {
 const DragAndDropSection: React.FC<DragAndDropSectionProps> = ({
   title,
   color,
-  border,
   patients,
   emptyText,
   onDrop,
@@ -31,14 +29,14 @@ const DragAndDropSection: React.FC<DragAndDropSectionProps> = ({
       {reorderButton && (
         <div className="relative group">
           {reorderButton}
-          <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 whitespace-nowrap bg-blue-700 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 whitespace-nowrap bg-gray-700 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             Reordenar lista
           </span>
         </div>
       )}
     </div>
     <div
-      className={`flex flex-row flex-wrap gap-2 min-h-[104px] bg-[color:var(--surface)] rounded border border-dashed border-${border}-400 p-2`}
+      className={`flex flex-row flex-wrap gap-2 min-h-[104px] bg-[color:var(--surface)] rounded border border-dashed border-${color}-400 p-2`}
       onDragOver={(e) => e.preventDefault()}
       onDrop={onDrop}
     >

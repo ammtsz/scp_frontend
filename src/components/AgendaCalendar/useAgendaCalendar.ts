@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { mockAgenda } from "@/services/mockData";
+import { useAgenda } from "@/contexts/AgendaContext";
 import { formatDateBR } from "@/utils/dateHelpers";
 
 export const TABS = [
@@ -8,10 +8,10 @@ export const TABS = [
 ];
 
 export function useAgendaCalendar() {
+  const { agenda: contextAgenda, setAgenda: setContextAgenda } = useAgenda();
   const [selectedDate, setSelectedDate] = useState("");
-  const [agenda] = useState(mockAgenda);
   const [activeTab, setActiveTab] = useState("spiritual");
-  const [agendaState, setAgendaState] = useState(agenda);
+  const [agendaState, setAgendaState] = useState(contextAgenda);
   const [confirmRemove, setConfirmRemove] = useState<{
     idx: number;
     i: number;

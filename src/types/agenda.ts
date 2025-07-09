@@ -6,6 +6,7 @@ export interface Agenda {
 }
 
 export type AgendaItem = {
+  id: string;
   date: string;
   type: "spiritual" | "lightBath";
   patients: string[];

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Edit } from "react-feather";
 import CompleteAttendanceModal from "./CompleteAttendanceModal";
 import ConfirmModal from "../ConfirmModal";
-import { useAttendanceList } from "./useAttendanceList";
+import { useAttendanceListEdit } from "./useAttendanceListEdit";
 import DragAndDropSection from "./DragAndDropSection";
 
 const AttendanceList: React.FC<{
@@ -12,19 +12,13 @@ const AttendanceList: React.FC<{
 }> = ({ externalCheckIn }) => {
   const {
     typeLabels,
-    setAttendance,
     selectedDate,
     setSelectedDate,
     checkedInPatients,
-    setCheckedInPatients,
     completedPatients,
-    setCompletedPatients,
     modal,
     setModal,
-    completedData,
-    setCompletedData,
     timestamps,
-    setTimestamps,
     attendancesByType,
     dragged,
     handleDragStart,
@@ -32,49 +26,19 @@ const AttendanceList: React.FC<{
     handleDrop,
     handleDragEnd,
     showCheckinBothModal,
-    setShowCheckinBothModal,
     handleCompleteAttendanceModalSubmit,
     handleCheckinBothCancel,
     handleCheckinBothConfirm,
-  } = useAttendanceList(externalCheckIn);
-
-  const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({});
-  const [editOrder, setEditOrder] = useState<{ [key: string]: string[] }>({});
-  const [editDraggedIdx, setEditDraggedIdx] = useState<number | null>(null);
-
-  const startEdit = (type: string) => {
-    setEditMode((prev) => ({ ...prev, [type]: true }));
-    setEditOrder((prev) => ({ ...prev, [type]: [...checkedInPatients[type]] }));
-  };
-  const cancelEdit = (type: string) => {
-    setEditMode((prev) => ({ ...prev, [type]: false }));
-    setEditOrder((prev) => ({ ...prev, [type]: [] }));
-    setEditDraggedIdx(null);
-  };
-  const saveEdit = (type: string) => {
-    setCheckedInPatients((prev) => ({ ...prev, [type]: editOrder[type] }));
-    setEditMode((prev) => ({ ...prev, [type]: false }));
-    setEditOrder((prev) => ({ ...prev, [type]: [] }));
-    setEditDraggedIdx(null);
-  };
-  const handleEditDragStart = (idx: number) => setEditDraggedIdx(idx);
-  const handleEditDragOver = (idx: number, type: string) => {
-    if (editDraggedIdx === null || editDraggedIdx === idx) return;
-    // Prevent moving to the last position if draggedIdx is the last and idx is the last
-    if (
-      editDraggedIdx === editOrder[type].length - 1 &&
-      idx === editOrder[type].length - 1
-    )
-      return;
-    // Prevent moving to the same position
-    if (editDraggedIdx === idx) return;
-    const newOrder = [...editOrder[type]];
-    const [removed] = newOrder.splice(editDraggedIdx, 1);
-    newOrder.splice(idx, 0, removed);
-    setEditOrder((prev) => ({ ...prev, [type]: newOrder }));
-    setEditDraggedIdx(idx);
-  };
-  const handleEditDrop = () => setEditDraggedIdx(null);
+    editMode,
+    editOrder,
+    editDraggedIdx,
+    startEdit,
+    cancelEdit,
+    saveEdit,
+    handleEditDragStart,
+    handleEditDragOver,
+    handleEditDrop,
+  } = useAttendanceListEdit(externalCheckIn);
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
@@ -108,7 +72,6 @@ const AttendanceList: React.FC<{
                 <DragAndDropSection
                   title="Agendados"
                   color="yellow"
-                  border="yellow"
                   patients={attendancesByType[type]}
                   emptyText="Nenhum paciente agendado."
                   onDrop={() =>
@@ -117,7 +80,7 @@ const AttendanceList: React.FC<{
                   renderPatient={(name: string, idx: number) => (
                     <div
                       key={name}
-                      className={`h-24 w-full flex items-center justify-center rounded border bg-[color:var(--surface-light)] text-center font-medium transition-all cursor-move select-none ${
+                      className={`h-24 w-full flex items-center justify-center p-2 rounded border-2 border-yellow-400 bg-[color:var(--surface-light)] text-center font-medium transition-all cursor-move select-none ${
                         dragged &&
                         dragged.type === type &&
                         dragged.idx === idx &&
@@ -141,7 +104,6 @@ const AttendanceList: React.FC<{
                 <DragAndDropSection
                   title="Sala de Espera"
                   color="blue"
-                  border="blue"
                   patients={
                     editMode[type] ? editOrder[type] : checkedInPatients[type]
                   }
@@ -247,7 +209,6 @@ const AttendanceList: React.FC<{
                 <DragAndDropSection
                   title="Atendidos"
                   color="green"
-                  border="green"
                   patients={completedPatients[type]}
                   emptyText="Arraste aqui os pacientes atendidos"
                   onDrop={() =>

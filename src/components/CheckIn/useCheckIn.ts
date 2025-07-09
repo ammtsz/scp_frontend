@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { mockPatients } from "@/services/mockData";
+import { usePatients } from "@/contexts/PatientsContext";
 
 export const attendanceTypes = [
   { value: "spiritual", label: "Consulta Espiritual" },
@@ -7,6 +7,7 @@ export const attendanceTypes = [
 ];
 
 export function useCheckIn(onCheckIn?: (patientName: string, types: string[], isNew: boolean) => void) {
+  const { patients } = usePatients();
   const [search, setSearch] = useState("");
   const [checkedIn, setCheckedIn] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<string>("");
@@ -15,7 +16,7 @@ export function useCheckIn(onCheckIn?: (patientName: string, types: string[], is
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState(false);
 
-  const filteredPatients = mockPatients.filter((p) =>
+  const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 

@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { Patient } from "@/types/patient";
-import { mockPatients } from "@/services/mockData";
+import { usePatients } from "@/contexts/PatientsContext";
 
 export function usePatientList() {
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const { patients: contextPatients, setPatients: setContextPatients } = usePatients();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<keyof Patient | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
   const [visibleCount, setVisibleCount] = useState(20);
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    setPatients(mockPatients);
-  }, []);
+  // Use context patients as the source of truth
+  const patients = contextPatients;
+  const setPatients = setContextPatients;
 
   const filtered = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
