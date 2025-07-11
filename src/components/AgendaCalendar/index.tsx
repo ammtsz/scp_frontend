@@ -72,10 +72,10 @@ const AgendaCalendar: React.FC = () => {
         }`}
       >
         <div>
-          {filteredAgenda.length > 0 ? (
-            filteredAgenda.map((a, idx) => (
+          {filteredAgenda[activeTab].length > 0 ? (
+            filteredAgenda[activeTab].map(({ date, patients }, idx: number) => (
               <div
-                key={a.date + "-" + activeTab + "-" + idx}
+                key={date + "-" + activeTab + "-" + idx}
                 className="mb-2 border rounded border-[color:var(--border)] bg-[color:var(--surface)]"
               >
                 <button
@@ -88,18 +88,19 @@ const AgendaCalendar: React.FC = () => {
                   aria-controls={`agenda-patients-${idx}`}
                 >
                   <span>
-                    <b>Data:</b> {formatDateBR(a.date)}
+                    <b>Data:</b>{" "}
+                    {formatDateBR(date.toLocaleDateString("pt-BR"))}
                   </span>
                   {openAgendaIdx === idx ? (
                     <span className="text-xs font-semibold text-[color:var(--primary-light)] px-2 py-1 rounded">
-                      {a.type === "spiritual"
+                      {activeTab === "spiritual"
                         ? "Consultas Espirituais"
                         : "Banhos de Luz/Bastão"}
                     </span>
                   ) : (
                     <span className="text-xs font-semibold text-[color:var(--primary-light)] px-2 py-1 rounded">
-                      {a.patients.length} paciente
-                      {a.patients.length !== 1 ? "s" : ""}
+                      {patients.length} paciente
+                      {patients.length !== 1 ? "s" : ""}
                     </span>
                   )}
                   <span
@@ -112,11 +113,11 @@ const AgendaCalendar: React.FC = () => {
                 </button>
                 {openAgendaIdx === idx && (
                   <div id={`agenda-patients-${idx}`} className="p-2 pt-0">
-                    <b>{a.patients.length} Pacientes:</b>
+                    <b>{patients.length} Pacientes:</b>
                     <ol className="ml-0 list-none flex flex-col gap-2 mt-2">
-                      {a.patients.map((name, i) => (
+                      {patients.map(({ name, id }, i) => (
                         <li
-                          key={name + i}
+                          key={id}
                           className="bg-[color:var(--surface-light)] border border-[color:var(--border)] rounded p-2 shadow-sm transition-all select-none flex items-center gap-2"
                         >
                           <span className="w-6 text-xs text-gray-500 font-bold text-center">
@@ -128,7 +129,14 @@ const AgendaCalendar: React.FC = () => {
                           <button
                             type="button"
                             className="button button-outline text-red-500 hover:text-red-700"
-                            onClick={() => setConfirmRemove({ idx, i, name })}
+                            onClick={() =>
+                              setConfirmRemove({
+                                id,
+                                date,
+                                name,
+                                type: activeTab,
+                              })
+                            }
                             aria-label="Cancelar agendamento"
                           >
                             Cancelar

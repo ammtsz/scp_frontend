@@ -12,7 +12,7 @@ export default function AttendancePage() {
   } | null>(null);
 
   return (
-    <div className="flex">
+    <div className="flex flex-col">
       <div className="flex w-full flex-col gap-8">
         <CheckIn
           onCheckIn={(name, types, isNew) =>

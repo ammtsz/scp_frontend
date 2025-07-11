@@ -4,15 +4,33 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import React from "react";
 import { formatDateBR } from "@/utils/dateHelpers";
-import AttendancesDropdown from "@/components/AttendancesDropdown";
-import { usePatients } from "@/contexts/PatientsContext";
+import AttendancesDropdown from "@/components/AttendancesDropdown/index";
+// import { usePatients } from "@/contexts/PatientsContext";
+import {
+  mockPatient_1,
+  mockPatient_2,
+  mockPatient_3,
+  mockPatient_4,
+  mockPatient_5,
+} from "@/services/mockData";
 import { useAttendances } from "@/contexts/AttendancesContext";
+import { IPatient } from "@/types/db";
+
+const mockPatientById = {
+  "1": mockPatient_1,
+  "2": mockPatient_2,
+  "3": mockPatient_3,
+  "4": mockPatient_4,
+  "5": mockPatient_5,
+};
 
 export default function PatientDetailPage() {
   const params = useParams();
-  const { patients } = usePatients();
+  // const { patients } = usePatients();
   const { attendances } = useAttendances();
-  const patient = patients.find((p) => p.id === params.id);
+  // const patient = patients.find((p) => p.id === params.id);
+  const patient: IPatient =
+    mockPatientById[params.id as "1" | "2" | "3" | "4" | "5"];
 
   if (!patient) {
     return (
@@ -52,10 +70,13 @@ export default function PatientDetailPage() {
         </div>
         <div className="mb-4 text-sm text-gray-700">
           <div>
-            <b>Registro:</b> {patient.registrationNumber}
+            <b>Registro:</b> {patient.id}
           </div>
           <div>
-            <b>Data de nascimento:</b> {formatDateBR(patient.birthDate)}
+            <b>Data de nascimento:</b>{" "}
+            {formatDateBR(
+              patient.birthDate?.toISOString?.() ?? String(patient.birthDate)
+            )}
           </div>
           <div>
             <b>Telefone:</b> {patient.phone}
@@ -77,54 +98,60 @@ export default function PatientDetailPage() {
           <div className="text-sm">
             <div>
               <b>Início:</b>{" "}
-              {formatDateBR(patient.spiritualConsultation.startDate)}
+              {formatDateBR(
+                patient.startDate.toISOString?.() ?? String(patient.startDate)
+              )}
             </div>
             <div>
               <b>Próxima:</b>{" "}
-              {formatDateBR(patient.spiritualConsultation.nextDate)}
+              {formatDateBR(
+                patient.nextAttendanceDates[0]?.date?.toISOString?.() ??
+                  String(patient.nextAttendanceDates[0]?.date)
+              )}
             </div>
             <div>
               <b>Alta:</b>{" "}
-              {formatDateBR(patient.spiritualConsultation.dischargeDate) || "-"}
+              {formatDateBR(
+                patient.dischargeDate?.toISOString?.() ??
+                  String(patient.dischargeDate)
+              ) || "-"}
             </div>
             <div>
-              <b>Recomendações:</b>
+              <b>
+                Últimas Recomendações{" ("}
+                {patient.currentRecommendations.date.toLocaleDateString(
+                  "pt-BR"
+                )}
+                {")"}:
+              </b>
             </div>
             <ul className="ml-4 list-disc">
               <li>
-                <b>Alimentação:</b>{" "}
-                {patient.spiritualConsultation.recommendations.food}
+                <b>Alimentação:</b> {patient.currentRecommendations.food}
               </li>
               <li>
-                <b>Água:</b>{" "}
-                {patient.spiritualConsultation.recommendations.water}
+                <b>Água:</b> {patient.currentRecommendations.water}
               </li>
               <li>
-                <b>Pomada:</b>{" "}
-                {patient.spiritualConsultation.recommendations.ointment}
+                <b>Pomada:</b> {patient.currentRecommendations.ointment}
               </li>
               <li>
                 <b>Banho de luz:</b>{" "}
-                {patient.spiritualConsultation.recommendations.lightBath
-                  ? "Sim"
-                  : "Não"}
+                {patient.currentRecommendations.lightBath ? "Sim" : "Não"}
               </li>
               <li>
                 <b>Bastão:</b>{" "}
-                {patient.spiritualConsultation.recommendations.rod
-                  ? "Sim"
-                  : "Não"}
+                {patient.currentRecommendations.rod ? "Sim" : "Não"}
               </li>
               <li>
                 <b>Tratamento espiritual:</b>{" "}
-                {patient.spiritualConsultation.recommendations
-                  .spiritualTreatment
+                {patient.currentRecommendations.spiritualTreatment
                   ? "Sim"
                   : "Não"}
               </li>
               <li>
                 <b>Retorno (semanas):</b>{" "}
-                {patient.spiritualConsultation.recommendations.returnWeeks}
+                {patient.currentRecommendations.returnWeeks}
               </li>
             </ul>
           </div>
@@ -133,8 +160,8 @@ export default function PatientDetailPage() {
           <h3 className="font-semibold text-[color:var(--primary)] mb-1">
             Atendimentos Anteriores
           </h3>
-          {patient.attendances && patient.attendances.length > 0 ? (
-            <AttendancesDropdown attendances={patient.attendances} />
+          {patient.previousAttendances.length > 0 ? (
+            <AttendancesDropdown attendances={patient.previousAttendances} />
           ) : (
             <div className="text-sm text-gray-500">
               Nenhum atendimento anterior.

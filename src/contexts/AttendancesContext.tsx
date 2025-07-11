@@ -2,11 +2,12 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { mockAttendance } from "@/services/mockData";
-import { Attendance } from "@/types/attendance";
+// import { Attendance } from "@/types/attendance";
+import { IAttendance } from "@/types/db";
 
 interface AttendancesContextProps {
-  attendances: Attendance[];
-  setAttendances: React.Dispatch<React.SetStateAction<Attendance[]>>;
+  attendances: IAttendance[];
+  setAttendances: React.Dispatch<React.SetStateAction<IAttendance[]>>;
 }
 
 const AttendancesContext = createContext<AttendancesContextProps | undefined>(
@@ -14,7 +15,7 @@ const AttendancesContext = createContext<AttendancesContextProps | undefined>(
 );
 
 export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
-  const [attendances, setAttendances] = useState<Attendance[]>(mockAttendance);
+  const [attendances, setAttendances] = useState<IAttendance[]>(mockAttendance);
   return (
     <AttendancesContext.Provider value={{ attendances, setAttendances }}>
       {children}

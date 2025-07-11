@@ -6,20 +6,13 @@ import Link from "next/link";
 
 const PatientList: React.FC = () => {
   const {
-    patients,
-    setPatients,
     search,
     setSearch,
     sortBy,
-    setSortBy,
     sortAsc,
-    setSortAsc,
-    visibleCount,
-    setVisibleCount,
     loaderRef,
     filtered,
     handleSort,
-    sorted,
     paginated,
     statusLegend,
     priorityLegend,
@@ -84,7 +77,7 @@ const PatientList: React.FC = () => {
                 className="transition-colors hover:bg-[color:var(--primary-light)]/40 cursor-pointer h-8"
                 onClick={() => (window.location.href = `/patients/${p.id}`)}
               >
-                <td className="text-center">{p.registrationNumber}</td>
+                <td className="text-center">{p.id}</td>
                 <td>{p.name}</td>
                 <td className="text-center">{p.phone}</td>
                 <td className="text-center">

@@ -2,17 +2,17 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { mockAgenda } from "@/services/mockData";
-import { AgendaItem } from "@/types/agenda";
+import { IAgenda } from "@/types/db";
 
 interface AgendaContextProps {
-  agenda: AgendaItem[];
-  setAgenda: React.Dispatch<React.SetStateAction<AgendaItem[]>>;
+  agenda: IAgenda;
+  setAgenda: React.Dispatch<React.SetStateAction<IAgenda>>;
 }
 
 const AgendaContext = createContext<AgendaContextProps | undefined>(undefined);
 
 export const AgendaProvider = ({ children }: { children: ReactNode }) => {
-  const [agenda, setAgenda] = useState<AgendaItem[]>(mockAgenda);
+  const [agenda, setAgenda] = useState<IAgenda>(mockAgenda);
   return (
     <AgendaContext.Provider value={{ agenda, setAgenda }}>
       {children}

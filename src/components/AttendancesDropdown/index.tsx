@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { formatDateBR } from "@/utils/dateHelpers";
-import type { Attendance } from "@/types/patient";
+import { IPreviousAttendance } from "@/types/db";
 
 interface AttendancesDropdownProps {
-  attendances: Attendance[];
+  attendances: IPreviousAttendance[];
 }
 
 const AttendancesDropdown: React.FC<AttendancesDropdownProps> = ({
@@ -18,9 +18,9 @@ const AttendancesDropdown: React.FC<AttendancesDropdownProps> = ({
   };
   return (
     <ul className="ml-4 list-none text-sm">
-      {attendances.map((att: Attendance, i: number) => (
+      {attendances.map((att: IPreviousAttendance, i: number) => (
         <li
-          key={att.date + i}
+          key={att.date.toISOString() + i}
           className="mb-2 border-b border-[color:var(--border)]"
         >
           <div className="flex items-center justify-between">
@@ -30,8 +30,7 @@ const AttendancesDropdown: React.FC<AttendancesDropdownProps> = ({
               onClick={() => toggle(i)}
             >
               <span>
-                <b>Data:</b> {formatDateBR(att.date)} <b>Status:</b>{" "}
-                {att.status}
+                <b>Data:</b> {formatDateBR(att.date.toISOString())}
               </span>
               <span className="ml-2 text-[color:var(--primary)]">
                 {openIndexes.includes(i) ? "▲" : "▼"}

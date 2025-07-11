@@ -1,73 +1,64 @@
 import { useState, useEffect } from "react";
 import { useAttendances } from "@/contexts/AttendancesContext";
+import { IAttendance, IAttendanceType, IRecommendations } from "@/types/db";
+import { useAttendanceListV2 } from "./useAttendanceListV2";
 
-type AttendanceType = "spiritual" | "lightBath";
-
-const typeLabels = {
+const typeLabels: Record<IAttendanceType, string> = {
   spiritual: "Consulta Espiritual",
   lightBath: "Banho de Luz/Bastão",
 };
 
-const isAttendanceType = (type: string): type is AttendanceType =>
+const isAttendanceType = (type: string): type is IAttendanceType =>
   type === "spiritual" || type === "lightBath";
-
-function getClosestAttendanceDate(attendance: { date: string }[]) {
-  const today = new Date().toISOString().slice(0, 10);
-  const futureOrToday = attendance
-    .map((a) => a.date)
-    .filter((date) => date >= today)
-    .sort();
-  if (futureOrToday.length > 0) return futureOrToday[0];
-  const past = attendance
-    .map((a) => a.date)
-    .filter((date) => date < today)
-    .sort();
-  return past.length > 0 ? past[past.length - 1] : "";
+interface CompletedAttendance {
+  patient: string;
+  type: IAttendanceType;
+  notes: string;
+  recommendations: IRecommendations;
+  date: string;
 }
 
 export function useAttendanceList(externalCheckIn?: { name: string; types: string[]; isNew: boolean } | null) {
   const { attendances } = useAttendances();
-  const [attendance, setAttendance] = useState(attendances);
-  const [selectedDate, setSelectedDate] = useState(() => getClosestAttendanceDate(attendances));
-  const [checkedInPatients, setCheckedInPatients] = useState<Record<AttendanceType, string[]>>({ spiritual: [], lightBath: [] });
-  const [completedPatients, setCompletedPatients] = useState<Record<AttendanceType, string[]>>({ spiritual: [], lightBath: [] });
-  const [modal, setModal] = useState<{ open: boolean; patient: string; type: AttendanceType } | null>(null);
-  const [completedData, setCompletedData] = useState<any[]>([]);
-  const [timestamps, setTimestamps] = useState<Record<AttendanceType, Record<string, { checkIn?: string; completed?: string }>>>({ spiritual: {}, lightBath: {} });
-  const [dragged, setDragged] = useState<{ type: AttendanceType; idx: number; fromCheckedIn?: boolean; fromCompleted?: boolean } | null>(null);
-  const [showCheckinBothModal, setShowCheckinBothModal] = useState<{ open: boolean; patient: string; type: AttendanceType; otherType: AttendanceType } | null>(null);
+  const [attendance, setAttendance] = useState<IAttendance[]>(attendances);
+  const [checkedInPatients, setCheckedInPatients] = useState<Record<IAttendanceType, string[]>>({ spiritual: [], lightBath: [] });
+  const [completedPatients, setCompletedPatients] = useState<Record<IAttendanceType, string[]>>({ spiritual: [], lightBath: [] });
+  
+  const { getClosestAttendanceDate, movePatient } = useAttendanceListV2(attendance, checkedInPatients, completedPatients, "");
+  
+  const [selectedDate, setSelectedDate] = useState(() => getClosestAttendanceDate());
+  const [modal, setModal] = useState<{ open: boolean; patient: string; type: IAttendanceType } | null>(null);
+  const [completedData, setCompletedData] = useState<CompletedAttendance[]>([]);
+  const [timestamps, setTimestamps] = useState<Record<IAttendanceType, Record<string, { checkIn?: string; completed?: string }>>>({ spiritual: {}, lightBath: {} });
+  const [dragged, setDragged] = useState<{ type: IAttendanceType; idx: number; fromStatus: keyof IAttendance[IAttendanceType] } | null>(null);
+  const [showCheckinBothModal, setShowCheckinBothModal] = useState<{ open: boolean; patient: string; type: IAttendanceType; otherType: IAttendanceType } | null>(null);
+
+  const attendancesByType = {
+    spiritual: attendance[0]?.spiritual || [],
+    lightBath: attendance[0]?.lightBath || [],
+  };
 
   const getCurrentTime = () => {
     const now = new Date();
     return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const attendancesByType = attendance
-    .filter((a) => !selectedDate || a.date === selectedDate)
-    .reduce(
-      (acc, a) => {
-        acc[a.type] = a.patients.filter(
-          (name) =>
-            !checkedInPatients[a.type].includes(name) &&
-            !completedPatients[a.type].includes(name)
-        );
-        return acc;
-      },
-      { spiritual: [], lightBath: [] } as Record<AttendanceType, string[]>
-    );
-
-  // Drag and drop logic
+  // Drag and drop logic using new structure
   const handleDragStart = (
-    type: AttendanceType,
+    type: IAttendanceType,
     idx: number,
-    fromCheckedIn = false,
-    fromCompleted = false
+    fromStatus: keyof IAttendance[IAttendanceType]
   ) => {
-    setDragged({ type, idx, fromCheckedIn, fromCompleted });
+    setDragged({ type, idx, fromStatus });
   };
 
+  // Prevent default to allow drop
+  // This is necessary to allow dropping on the target element
+  // without triggering the browser's default behavior
+  // such as opening the dragged element in a new tab
+  // or navigating to a different page.
   const handleDragOver = (
-    type: AttendanceType,
+    type: IAttendanceType,
     idx: number,
     e: React.DragEvent
   ) => {
@@ -75,112 +66,32 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
   };
 
   const handleDrop = (
-    type: AttendanceType,
+    type: IAttendanceType,
     idx: number,
-    toCheckedIn = false,
-    toCompleted = false
+    fromStatus: keyof IAttendance[IAttendanceType],
+    toStatus: keyof IAttendance[IAttendanceType]
   ) => {
     if (!dragged || dragged.type !== type) return;
-    let patient = "";
-    let fromSection = "scheduled";
-    if (dragged.fromCheckedIn) {
-      patient = checkedInPatients[type][dragged.idx];
-      fromSection = "checkedIn";
-    } else if (dragged.fromCompleted) {
-      patient = completedPatients[type][dragged.idx];
-      fromSection = "completed";
-    } else {
-      patient = attendancesByType[type][dragged.idx];
-    }
 
-    // Prevent re-dropping in the same section at any position
-    if (
-      (toCheckedIn && fromSection === "checkedIn") ||
-      (toCompleted && fromSection === "completed") ||
-      (!toCheckedIn && !toCompleted && fromSection === "scheduled")
-    ) {
-      return;
-    }
-
-    if (toCheckedIn) {
-      const otherType: AttendanceType = type === "spiritual" ? "lightBath" : "spiritual";
-      const isInOtherScheduled = attendancesByType[otherType].includes(patient);
-      if (isInOtherScheduled) {
-        setShowCheckinBothModal({ open: true, patient, type, otherType });
-        setDragged(null);
-        return;
-      }
-      setCheckedInPatients((prev) => {
-        const newChecked = { ...prev };
-        newChecked[type] = newChecked[type].filter((n) => n !== patient);
-        if (!newChecked[type].includes(patient)) {
-          newChecked[type] = [...newChecked[type], patient];
-        }
-        return newChecked;
-      });
-      setCompletedPatients((prev) => {
-        const newCompleted = { ...prev };
-        newCompleted[type] = newCompleted[type].filter((n) => n !== patient);
-        return newCompleted;
-      });
-      setAttendance((prev) => {
-        return prev.map((a) => {
-          if (a.date === selectedDate && a.type === type) {
-            return {
-              ...a,
-              patients: a.patients.filter((n) => n !== patient),
-            };
-          }
-          return a;
-        });
-      });
-      setTimestamps((prev) => {
-        const newTimestamps = { ...prev };
-        if (!newTimestamps[type][patient]) newTimestamps[type][patient] = {};
-        newTimestamps[type][patient].checkIn = getCurrentTime();
-        delete newTimestamps[type][patient].completed;
-        return newTimestamps;
-      });
-    } else if (toCompleted) {
-      setModal({ open: true, patient, type });
-    } else {
-      setCheckedInPatients((prev) => {
-        const newChecked = { ...prev };
-        newChecked[type] = newChecked[type].filter((n) => n !== patient);
-        return newChecked;
-      });
-      setCompletedPatients((prev) => {
-        const newCompleted = { ...prev };
-        newCompleted[type] = newCompleted[type].filter((n) => n !== patient);
-        return newCompleted;
-      });
-      setAttendance((prev) => {
-        return prev.map((a) => {
-          if (a.date === selectedDate && a.type === type) {
-            if (!a.patients.includes(patient)) {
-              return {
-                ...a,
-                patients: [...a.patients, patient],
-              };
-            }
-          }
-          return a;
-        });
-      });
-      setTimestamps((prev) => {
-        const newTimestamps = { ...prev };
-        if (newTimestamps[type][patient]) {
-          delete newTimestamps[type][patient].checkIn;
-          delete newTimestamps[type][patient].completed;
-        }
-        return newTimestamps;
-      });
-    }
+    // Get patient name from the correct array
+    let patientName = "";
+    const attendanceByDate = attendance.find(
+      (a) => a.date.toISOString().slice(0, 10) === selectedDate
+    );
+    
+    if (!attendanceByDate) return;
+    patientName = attendanceByDate[type][fromStatus][dragged.idx]?.name;
+    
+    if (!patientName) return;
+    
+    // Move patient using new logic
+    setAttendance(() => movePatient(type, patientName, fromStatus, toStatus));
     setDragged(null);
   };
 
   const handleDragEnd = () => setDragged(null);
 
+  // Handle external check-in (pacientes não agendados -?-)
   useEffect(() => {
     if (
       externalCheckIn &&
@@ -250,17 +161,8 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
       return newTimestamps;
     });
     setModal(null);
-    setAttendance((prev) => {
-      return prev.map((a) => {
-        if (a.date === selectedDate && a.type === modal.type) {
-          return {
-            ...a,
-            patients: a.patients.filter((n) => n !== modal.patient),
-          };
-        }
-        return a;
-      });
-    });
+    // Use movePatient to remove patient from onGoing and add to completed
+    setAttendance((prev) => movePatient(modal.type, modal.patient, "onGoing", "completed"));
   }
 
   function handleCheckinBothCancel() {
@@ -279,17 +181,8 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
       newCompleted[type] = newCompleted[type].filter((n) => n !== patient);
       return newCompleted;
     });
-    setAttendance((prev) => {
-      return prev.map((a) => {
-        if (a.date === selectedDate && a.type === type) {
-          return {
-            ...a,
-            patients: a.patients.filter((n) => n !== patient),
-          };
-        }
-        return a;
-      });
-    });
+    // Use movePatient to remove patient from checkedIn and add to scheduled
+    setAttendance((prev) => movePatient(type, patient, "checkedIn", "scheduled"));
     setTimestamps((prev) => {
       const newTimestamps = { ...prev };
       if (!newTimestamps[type][patient])
@@ -322,17 +215,8 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
         newCompleted[t] = newCompleted[t].filter((n) => n !== patient);
         return newCompleted;
       });
-      setAttendance((prev) => {
-        return prev.map((a) => {
-          if (a.date === selectedDate && a.type === t) {
-            return {
-              ...a,
-              patients: a.patients.filter((n) => n !== patient),
-            };
-          }
-          return a;
-        });
-      });
+      // Use movePatient to remove patient from checkedIn and add to onGoing for both types
+      setAttendance((prev) => movePatient(t, patient, "checkedIn", "onGoing"));
       setTimestamps((prev) => {
         const newTimestamps = { ...prev };
         if (!newTimestamps[t][patient]) newTimestamps[t][patient] = {};

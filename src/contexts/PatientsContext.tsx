@@ -2,11 +2,10 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { mockPatients } from "@/services/mockData";
-import { Patient } from "@/types/patient";
-
+import { IPatients } from "@/types/db";
 interface PatientsContextProps {
-  patients: Patient[];
-  setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
+  patients: IPatients[];
+  setPatients: React.Dispatch<React.SetStateAction<IPatients[]>>;
 }
 
 const PatientsContext = createContext<PatientsContextProps | undefined>(
@@ -14,7 +13,7 @@ const PatientsContext = createContext<PatientsContextProps | undefined>(
 );
 
 export const PatientsProvider = ({ children }: { children: ReactNode }) => {
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
+  const [patients, setPatients] = useState<IPatients[]>(mockPatients);
   return (
     <PatientsContext.Provider value={{ patients, setPatients }}>
       {children}
