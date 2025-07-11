@@ -1,48 +1,5 @@
 import type { IPatients, IPatient, IAttendance, IAgenda } from "../types/db";
 
-// export const mockAttendance: Attendance[] = [
-//   {
-//     date: "2025-07-01",
-//     type: "spiritual",
-//     patients: [
-//       "Maria Silva",
-//       "João Souza",
-//       "Ana Paula Lima",
-//       "Carlos Eduardo Dias",
-//       "Beatriz Souza",
-//     ],
-//   },
-//   {
-//     date: "2025-07-01",
-//     type: "lightBath",
-//     patients: [
-//       "Maria Silva",
-//       "Beatriz Souza",
-//       "Fernanda Alves",
-//       "Larissa Oliveira",
-//     ],
-//   },
-//   {
-//     date: "2025-07-08",
-//     type: "spiritual",
-//     patients: [
-//       "Juliana Mendes",
-//       "Kleber Nunes",
-//       "Larissa Oliveira",
-//       "Marcos Vinícius",
-//     ],
-//   },
-//   {
-//     date: "2025-07-08",
-//     type: "lightBath",
-//     patients: [
-//       "Ana Paula Lima",
-//       "Gabriel Martins",
-//       "Helena Costa",
-//     ],
-//   },
-// ];
-
 export const mockPatients: IPatients[] = [
   { name: "Maria Silva", id: "1", phone: "(11) 91234-5678", priority: "N", status: "T" },
   { name: "João Souza", id: "2", phone: "(11) 99876-5432", priority: "I", status: "A" },
