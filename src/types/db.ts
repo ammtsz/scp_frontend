@@ -54,7 +54,7 @@
 //   completed
 
 
-export type IPriority = "N" | "I" | "E";
+export type IPriority = "1" | "2" | "3";
 export type IStatus = "T" | "A" | "F" | "N" | "I";
 export type IAttendanceType = "spiritual" | "lightBath";
 export type IAttendanceProgression = "scheduled" | "checkedIn" | "onGoing" | "completed";
@@ -69,11 +69,16 @@ export interface IRecommendations {
   returnWeeks: number;
 }
 
+export interface IAttendanceStatusDetail {
+  name: string; priority: IPriority; checkedInTime?: Date | null; onGoingTime?: Date | null; completedTime?: Date | null
+}
+
+
 export interface IAttendanceStatus {
-    scheduled: {name: string, priority: IPriority}[],
-    checkedIn: {name: string, priority: IPriority, time: Date}[],
-    onGoing: {name: string, priority: IPriority, time: Date}[],
-    completed: {name: string, priority: IPriority, time: Date}[],
+    scheduled: IAttendanceStatusDetail[],
+    checkedIn: IAttendanceStatusDetail[],
+    onGoing: IAttendanceStatusDetail[],
+    completed: IAttendanceStatusDetail[],
   }
 
 export type IAttendance = {
