@@ -19,6 +19,7 @@ interface AttendanceCardProps {
     status: IAttendanceProgression
   ) => void;
   handleDragEnd: () => void;
+  isNextToBeAttended?: boolean; // NEW PROP
 }
 
 const AttendanceCard: React.FC<AttendanceCardProps> = ({
@@ -29,6 +30,7 @@ const AttendanceCard: React.FC<AttendanceCardProps> = ({
   dragged,
   handleDragStart,
   handleDragEnd,
+  isNextToBeAttended = false,
 }) => (
   <li
     key={patient.name}
@@ -36,9 +38,9 @@ const AttendanceCard: React.FC<AttendanceCardProps> = ({
     onDragStart={() => handleDragStart(type, idx, status)}
     onDragEnd={handleDragEnd}
     className={`relative h-20 w-full flex items-center justify-center p-2 rounded border-2 
-      ${status === "scheduled" ? "border-yellow-400" : ""}
-      ${status === "checkedIn" ? "border-blue-400" : ""}
-      ${status === "onGoing" ? "border-purple-400" : ""}
+      ${status === "scheduled" ? "border-gray-400" : ""}
+      ${status === "checkedIn" ? "border-yellow-400" : ""}
+      ${status === "onGoing" ? "border-red-400" : ""}
       ${status === "completed" ? "border-green-400" : ""}
       bg-[color:var(--surface-light)] text-center font-medium transition-all cursor-move select-none ${
         dragged &&
@@ -49,7 +51,13 @@ const AttendanceCard: React.FC<AttendanceCardProps> = ({
           : ""
       }`}
   >
+    {isNextToBeAttended && (
+      <span className="absolute top-1 left-1 text-red-700 text-xs font-bold px-1 py-0 rounded z-10">
+        Próximo a ser atendido
+      </span>
+    )}
     <span>
+      {status === "checkedIn" ? `${idx + 1}. ` : ""}
       {patient.name} ({patient.priority})
     </span>
     <AttendanceTimes

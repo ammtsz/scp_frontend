@@ -30,6 +30,17 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
 
   const [selectedDate, setSelectedDate] = useState<string>(getClosestDate());
   const [dragged, setDragged] = useState<IDraggedItem | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDrop, setPendingDrop] = useState<{
+    toType: IAttendanceType;
+    toStatus: IAttendanceProgression;
+  } | null>(null);
+  const [multiSectionModalOpen, setMultiSectionModalOpen] = useState(false);
+  const [multiSectionPending, setMultiSectionPending] = useState<{
+    name: string;
+    fromStatus: IAttendanceProgression;
+    toStatus: IAttendanceProgression;
+  } | null>(null);
 
   // Find attendance for selected date
   const attendanceByDate = attendances.find(
@@ -66,9 +77,21 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
   };
 
   const handleDragEnd = () => {
-    setDragged(null);
+    if (!pendingDrop && !multiSectionModalOpen) {
+      setDragged(null);
+    }
   };
 
+  // Helper to determine if drop is backward
+  const isBackwardDrop = (
+    from: IAttendanceProgression,
+    to: IAttendanceProgression
+  ) => {
+    const order = ["scheduled", "checkedIn", "onGoing", "completed"];
+    return order.indexOf(to) < order.indexOf(from);
+  };
+
+  // Main drop logic
   const handleDrop = (
     toType: IAttendanceType,
     toStatus: IAttendanceProgression
@@ -82,10 +105,9 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
     const sortedPatients = getPatients(dragged.type, dragged.status);
     const patient = sortedPatients[dragged.idx];
     const realIdx = sourcePatients.findIndex((p: IAttendanceStatusDetail) => p.name === patient.name);
-    
     if (realIdx === -1) return;
     sourcePatients.splice(realIdx, 1);
-    
+
     // Add to new column at the bottom, with correct type
     if (toStatus === "scheduled") {
       const { name, priority } = patient;
@@ -103,6 +125,76 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
     setDragged(null);
   };
 
+  // Modified drop handler
+  const handleDropWithConfirm = (
+    toType: IAttendanceType,
+    toStatus: IAttendanceProgression
+  ) => {
+    if (!dragged) return;
+    // Check for multi-section move only when moving from scheduled to checkedIn
+    if (dragged.status === "scheduled" && toStatus === "checkedIn" && attendanceByDate) {
+      const patient = getPatients(dragged.type, dragged.status)[dragged.idx];
+      if (!patient) return;
+      // Check if patient exists in both sections
+      const inSpiritual = attendanceByDate.spiritual.scheduled.some((p: IAttendanceStatusDetail) => p.name === patient.name);
+      const inLightBath = attendanceByDate.lightBath.scheduled.some((p: IAttendanceStatusDetail) => p.name === patient.name);
+      if (inSpiritual && inLightBath) {
+        setMultiSectionPending({ name: patient.name, fromStatus: dragged.status, toStatus });
+        setMultiSectionModalOpen(true);
+        return;
+      }
+    }
+    if (isBackwardDrop(dragged.status, toStatus)) {
+      setPendingDrop({ toType, toStatus });
+      setConfirmOpen(true);
+    } else {
+      handleDrop(toType, toStatus);
+    }
+  };
+
+  // Multi-section modal handlers
+  const handleMultiSectionConfirm = () => {
+    if (!multiSectionPending || !attendanceByDate) return;
+    // Move patient in both sections
+    ["spiritual", "lightBath"].forEach((type) => {
+      const sourcePatients = attendanceByDate[type as IAttendanceType]["scheduled"];
+      const idx = sourcePatients.findIndex((p: IAttendanceStatusDetail) => p.name === multiSectionPending.name);
+      if (idx !== -1) {
+        const patient = sourcePatients[idx];
+        sourcePatients.splice(idx, 1);
+        attendanceByDate[type as IAttendanceType]["checkedIn"].push({
+          ...patient,
+          checkedInTime: new Date(),
+        });
+      }
+    });
+    setMultiSectionModalOpen(false);
+    setMultiSectionPending(null);
+    setDragged(null);
+  };
+
+  const handleMultiSectionCancel = () => {
+    // Only move in dragged section
+    if (dragged) {
+      handleDrop(dragged.type, "checkedIn");
+    }
+    setMultiSectionModalOpen(false);
+    setMultiSectionPending(null);
+  };
+
+  const handleConfirm = () => {
+    if (pendingDrop && dragged) {
+      handleDrop(pendingDrop.toType, pendingDrop.toStatus);
+    }
+    setConfirmOpen(false);
+    setPendingDrop(null);
+  };
+
+  const handleCancel = () => {
+    setConfirmOpen(false);
+    setPendingDrop(null);
+  };
+
   return {
     attendances,
     selectedDate,
@@ -112,5 +204,14 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
     handleDragEnd,
     handleDrop,
     getPatients,
+    confirmOpen,
+    pendingDrop,
+    handleDropWithConfirm,
+    handleConfirm,
+    handleCancel,
+    multiSectionModalOpen,
+    multiSectionPending,
+    handleMultiSectionConfirm,
+    handleMultiSectionCancel,
   };
 }

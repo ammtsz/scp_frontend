@@ -30,12 +30,12 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = ({
   handleDragEnd,
   handleDrop,
 }) => (
-  <div className="flex-1 min-w-[220px] max-w-[1fr]">
+  <div className="flex-1 min-w-[220px] max-w-[1fr] flex flex-col">
     <div
       className={`mb-2 font-semibold text-center
-        ${status === "scheduled" ? "text-yellow-700" : ""}
-        ${status === "checkedIn" ? "text-blue-700" : ""}
-        ${status === "onGoing" ? "text-purple-700" : ""}
+        ${status === "scheduled" ? "text-gray-700" : ""}
+        ${status === "checkedIn" ? "text-yellow-700" : ""}
+        ${status === "onGoing" ? "text-red-700" : ""}
         ${status === "completed" ? "text-green-700" : ""}`}
     >
       {status === "scheduled"
@@ -46,33 +46,37 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = ({
         ? "Em Atendimento"
         : "Atendidos"}
     </div>
-    <ul
-      onDragOver={(e) => {
-        if (dragged && dragged.type === type && dragged.status !== status) {
-          e.preventDefault();
-        }
-      }}
-      onDrop={() => handleDrop(type, status)}
-      className="min-h-[60px] flex flex-col gap-2 justify-start items-stretch bg-[color:var(--surface-light)] rounded"
-    >
-      {patients.length === 0 && (
-        <li className="h-20 flex items-center justify-center text-gray-400 italic border-2 border-dashed border-[color:var(--border)] rounded select-none pointer-events-none">
-          Arraste aqui para mover
-        </li>
-      )}
-      {patients.map((patient, idx) => (
-        <AttendanceCard
-          key={patient.name}
-          patient={patient}
-          status={status}
-          type={type}
-          idx={idx}
-          dragged={dragged}
-          handleDragStart={handleDragStart}
-          handleDragEnd={handleDragEnd}
-        />
-      ))}
-    </ul>
+    <div className="flex-1 flex items-stretch border-1 border-dashed border-[color:var(--border)] rounded p-2">
+      <ul
+        onDragOver={(e) => {
+          if (dragged && dragged.type === type && dragged.status !== status) {
+            e.preventDefault();
+          }
+        }}
+        onDrop={() => handleDrop(type, status)}
+        className="w-full flex flex-col gap-2 justify-start items-stretch bg-[color:var(--surface-light)] rounded min-h-[300px]"
+        style={{ minHeight: "100%" }}
+      >
+        {patients.length === 0 && (
+          <li className="flex items-center justify-center text-gray-400 italic select-none pointer-events-none h-full">
+            Arraste aqui para mover
+          </li>
+        )}
+        {patients.map((patient, idx) => (
+          <AttendanceCard
+            key={patient.name}
+            patient={patient}
+            status={status}
+            type={type}
+            idx={idx}
+            dragged={dragged}
+            handleDragStart={handleDragStart}
+            handleDragEnd={handleDragEnd}
+            isNextToBeAttended={status === "checkedIn" && idx === 0}
+          />
+        ))}
+      </ul>
+    </div>
   </div>
 );
 

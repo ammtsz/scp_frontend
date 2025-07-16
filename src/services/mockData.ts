@@ -50,9 +50,11 @@ export const mockAttendance: IAttendance[] = [
     lightBath: {
       scheduled: [
         { name: "Larissa Oliveira", priority: "3" },
+        { name: "João Souza", priority: "2" },
         { name: "Otávio Pires", priority: "2" },
         { name: "Sabrina Lopes", priority: "1"},
         { name: "Vitor Hugo", priority: "3"},
+        { name: "Fernanda Alves", priority: "1"},
         { name: "Wesley Cardoso", priority: "2"},
       ],
       checkedIn: [],

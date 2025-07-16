@@ -14,8 +14,8 @@ const AttendanceTimes: React.FC<AttendanceTimesProps> = ({
   onGoingTime,
   completedTime,
 }) => (
-  <div className="absolute bottom-2 left-2 right-2 flex justify-between text-xs text-gray-500 w-[calc(100%-1rem)]">
-    <span>
+  <div className="absolute bottom-2 left-2 right-2 flex justify-between text-xs w-[calc(100%-1rem)]">
+    <span className="text-yellow-700">
       {(status !== "scheduled" || checkedInTime) &&
         checkedInTime &&
         new Date(checkedInTime).toLocaleTimeString("pt-BR", {
@@ -23,7 +23,7 @@ const AttendanceTimes: React.FC<AttendanceTimesProps> = ({
           minute: "2-digit",
         })}
     </span>
-    <span className="mx-auto">
+    <span className="mx-auto text-red-700">
       {status !== "scheduled" &&
         status !== "checkedIn" &&
         onGoingTime &&
@@ -32,7 +32,7 @@ const AttendanceTimes: React.FC<AttendanceTimesProps> = ({
           minute: "2-digit",
         })}
     </span>
-    <span>
+    <span className="text-green-700">
       {status === "completed" &&
         completedTime &&
         new Date(completedTime).toLocaleTimeString("pt-BR", {

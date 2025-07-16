@@ -15,51 +15,19 @@ const AttendanceList: React.FC<{
     dragged,
     handleDragStart,
     handleDragEnd,
-    handleDrop,
     getPatients,
+    confirmOpen,
+    handleDropWithConfirm,
+    handleConfirm,
+    handleCancel,
+    multiSectionModalOpen,
+    handleMultiSectionConfirm,
+    handleMultiSectionCancel,
   } = useAttendanceList(externalCheckIn);
 
-  const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [pendingDrop, setPendingDrop] = React.useState<{
-    toType: IAttendanceType;
-    toStatus: IAttendanceProgression;
-  } | null>(null);
-
-  // Helper to determine if drop is backward
-  const isBackwardDrop = (
-    from: IAttendanceProgression,
-    to: IAttendanceProgression
-  ) => {
-    const order = ["scheduled", "checkedIn", "onGoing", "completed"];
-    return order.indexOf(to) < order.indexOf(from);
-  };
-
-  // Modified drop handler
-  const handleDropWithConfirm = (
-    toType: IAttendanceType,
-    toStatus: IAttendanceProgression
-  ) => {
-    if (!dragged) return;
-    if (isBackwardDrop(dragged.status, toStatus)) {
-      setPendingDrop({ toType, toStatus });
-      setConfirmOpen(true);
-    } else {
-      handleDrop(toType, toStatus);
-    }
-  };
-
-  const handleConfirm = () => {
-    if (pendingDrop && dragged) {
-      handleDrop(pendingDrop.toType, pendingDrop.toStatus);
-    }
-    setConfirmOpen(false);
-    setPendingDrop(null);
-  };
-
-  const handleCancel = () => {
-    setConfirmOpen(false);
-    setPendingDrop(null);
-  };
+  const [collapsed, setCollapsed] = React.useState<{
+    [key in IAttendanceType]: boolean;
+  }>({ spiritual: false, lightBath: false });
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
@@ -76,32 +44,39 @@ const AttendanceList: React.FC<{
       <div className="flex flex-col gap-8 w-full">
         {(["spiritual", "lightBath"] as IAttendanceType[]).map((type) => (
           <div key={type} className="w-full">
-            <h3 className="text-lg font-semibold mb-2 text-[color:var(--primary-dark)] text-center">
+            <button
+              className="w-full text-left mb-2 px-2 py-1 rounded bg-[color:var(--surface-light)] border border-[color:var(--border)] font-semibold text-[color:var(--primary-dark)]"
+              onClick={() =>
+                setCollapsed((prev) => ({ ...prev, [type]: !prev[type] }))
+              }
+            >
               {type === "spiritual"
-                ? "Consultas Espirituais"
-                : "Banho de Luz/Bastão"}
-            </h3>
-            <div className="flex flex-row gap-4 w-full">
-              {(
-                [
-                  "scheduled",
-                  "checkedIn",
-                  "onGoing",
-                  "completed",
-                ] as IAttendanceProgression[]
-              ).map((status) => (
-                <AttendanceColumn
-                  key={status}
-                  status={status}
-                  type={type}
-                  patients={getPatients(type, status)}
-                  dragged={dragged}
-                  handleDragStart={handleDragStart}
-                  handleDragEnd={handleDragEnd}
-                  handleDrop={handleDropWithConfirm}
-                />
-              ))}
-            </div>
+                ? (collapsed[type] ? "▶ " : "▼ ") + "Consultas Espirituais"
+                : (collapsed[type] ? "▶ " : "▼ ") + "Banho de Luz/Bastão"}
+            </button>
+            {!collapsed[type] && (
+              <div className="flex flex-row gap-4 w-full">
+                {(
+                  [
+                    "scheduled",
+                    "checkedIn",
+                    "onGoing",
+                    "completed",
+                  ] as IAttendanceProgression[]
+                ).map((status) => (
+                  <AttendanceColumn
+                    key={status}
+                    status={status}
+                    type={type}
+                    patients={getPatients(type, status)}
+                    dragged={dragged}
+                    handleDragStart={handleDragStart}
+                    handleDragEnd={handleDragEnd}
+                    handleDrop={() => handleDropWithConfirm(type, status)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -110,6 +85,14 @@ const AttendanceList: React.FC<{
         message="Tem certeza que deseja mover este atendimento para uma etapa anterior?"
         onConfirm={handleConfirm}
         onCancel={handleCancel}
+      />
+      <ConfirmModal
+        open={multiSectionModalOpen}
+        message="Este paciente está agendado nas duas consultas. Deseja mover para 'Sala de Espera' em ambas?"
+        confirmLabel="Mover em ambas"
+        cancelLabel="Apenas nesta seção"
+        onConfirm={handleMultiSectionConfirm}
+        onCancel={handleMultiSectionCancel}
       />
     </div>
   );
