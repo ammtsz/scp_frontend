@@ -1,6 +1,6 @@
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { useState } from "react";
-import { IAttendanceType, IAttendanceProgression, IAttendanceStatusDetail } from "@/types/db";
+import { useState, useEffect } from "react";
+import { IAttendanceType, IAttendanceProgression, IAttendanceStatusDetail, IPriority } from "@/types/db";
 
 export interface IDraggedItem {
     type: IAttendanceType;
@@ -8,8 +8,7 @@ export interface IDraggedItem {
     idx: number;
   }
   
-
-export function useAttendanceList(externalCheckIn?: { name: string; types: string[]; isNew: boolean } | null) {
+export function useAttendanceList(externalCheckIn?: { name: string; types: string[]; isNew: boolean; priority?: IPriority } | null, onCheckInProcessed?: () => void) {
   const { attendances } = useAttendances();
 
   // Find the closest attendance date
@@ -41,11 +40,39 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
     fromStatus: IAttendanceProgression;
     toStatus: IAttendanceProgression;
   } | null>(null);
+  const [checkInProcessed, setCheckInProcessed] = useState(false);
 
   // Find attendance for selected date
   const attendanceByDate = attendances.find(
     (a) => a.date.toISOString().slice(0, 10) === selectedDate
   );
+
+  // Inject externalCheckIn into checkedIn columns if present
+  useEffect(() => {
+    if (
+      externalCheckIn &&
+      attendanceByDate &&
+      Array.isArray(externalCheckIn.types) &&
+      externalCheckIn.types.length > 0
+    ) {
+      externalCheckIn.types.forEach((type) => {
+        if (
+          attendanceByDate[type as IAttendanceType] &&
+          !attendanceByDate[type as IAttendanceType].checkedIn.some(
+            (p) => p.name === externalCheckIn.name
+          )
+        ) {
+          attendanceByDate[type as IAttendanceType].checkedIn.push({
+            name: externalCheckIn.name,
+            priority: externalCheckIn.priority || "3",
+            checkedInTime: new Date(),
+          });
+        }
+      });
+      setCheckInProcessed(true);
+      if (onCheckInProcessed) onCheckInProcessed();
+    }
+  }, [externalCheckIn, attendanceByDate, onCheckInProcessed]);
 
   // Helper to get patients for a status and type
   const getPatients = (type: IAttendanceType, status: IAttendanceProgression) => {
@@ -213,5 +240,7 @@ export function useAttendanceList(externalCheckIn?: { name: string; types: strin
     multiSectionPending,
     handleMultiSectionConfirm,
     handleMultiSectionCancel,
+    checkInProcessed,
+    setCheckInProcessed,
   };
 }

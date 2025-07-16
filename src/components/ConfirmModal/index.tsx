@@ -7,7 +7,7 @@ interface ConfirmModalProps {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -32,9 +32,11 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           {message}
         </div>
         <div className="flex gap-4 justify-end">
-          <button className="button button-secondary" onClick={onCancel}>
-            {cancelLabel}
-          </button>
+          {cancelLabel && (
+            <button className="button button-secondary" onClick={onCancel}>
+              {cancelLabel}
+            </button>
+          )}
           <button
             className={`button button-primary${
               confirmLabel === "Remover"

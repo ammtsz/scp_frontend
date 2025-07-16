@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { usePatients } from "@/contexts/PatientsContext";
+import { IPriority } from "@/types/db";
 
 export const attendanceTypes = [
   { value: "spiritual", label: "Consulta Espiritual" },
   { value: "lightBath", label: "Banho de Luz/Bastão" },
 ];
 
-export function useCheckIn(onCheckIn?: (patientName: string, types: string[], isNew: boolean) => void) {
+export function useCheckIn(onCheckIn?: (patientName: string, types: string[], isNew: boolean, priority: "1" | "2" | "3") => void) {
   const { patients } = usePatients();
   const [search, setSearch] = useState("");
   const [checkedIn, setCheckedIn] = useState(false);
@@ -14,7 +15,8 @@ export function useCheckIn(onCheckIn?: (patientName: string, types: string[], is
   const [showDropdown, setShowDropdown] = useState(false);
   const [isNewPatient, setIsNewPatient] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [collapsed, setCollapsed] = useState(false);
+  const [priority, setPriority] = useState<IPriority>("3");
+  const [collapsed, setCollapsed] = useState(true);
 
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -26,14 +28,17 @@ export function useCheckIn(onCheckIn?: (patientName: string, types: string[], is
     if ((isNewPatient && search) || (!isNewPatient && selectedPatient)) {
       setCheckedIn(true);
       if (onCheckIn && name) {
-        onCheckIn(name, selectedTypes, isNewPatient);
+        onCheckIn(name, selectedTypes, isNewPatient, priority);
       }
       setSearch("");
       setShowDropdown(false);
       setSelectedPatient("");
       setSelectedTypes([]);
       setIsNewPatient(false);
+      setCollapsed(true);
+      return true;
     }
+    return false;
   }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -70,6 +75,8 @@ export function useCheckIn(onCheckIn?: (patientName: string, types: string[], is
     setIsNewPatient,
     selectedTypes,
     setSelectedTypes,
+    priority,
+    setPriority,
     collapsed,
     setCollapsed,
     filteredPatients,

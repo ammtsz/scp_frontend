@@ -2,13 +2,19 @@
 
 import React from "react";
 import { useAttendanceList } from "./useAttendanceList";
-import { IAttendanceProgression, IAttendanceType } from "@/types/db";
+import { IAttendanceProgression, IAttendanceType, IPriority } from "@/types/db";
 import ConfirmModal from "@/components/ConfirmModal/index";
 import AttendanceColumn from "./AttendanceColumn";
 
 const AttendanceList: React.FC<{
-  externalCheckIn?: { name: string; types: string[]; isNew: boolean } | null;
-}> = ({ externalCheckIn }) => {
+  externalCheckIn?: {
+    name: string;
+    types: string[];
+    isNew: boolean;
+    priority?: IPriority;
+  } | null;
+  onCheckInProcessed?: () => void;
+}> = ({ externalCheckIn, onCheckInProcessed }) => {
   const {
     selectedDate,
     setSelectedDate,
@@ -23,7 +29,16 @@ const AttendanceList: React.FC<{
     multiSectionModalOpen,
     handleMultiSectionConfirm,
     handleMultiSectionCancel,
+    checkInProcessed,
+    setCheckInProcessed,
   } = useAttendanceList(externalCheckIn);
+
+  React.useEffect(() => {
+    if (checkInProcessed && onCheckInProcessed) {
+      onCheckInProcessed();
+      setCheckInProcessed(false);
+    }
+  }, [checkInProcessed, onCheckInProcessed, setCheckInProcessed]);
 
   const [collapsed, setCollapsed] = React.useState<{
     [key in IAttendanceType]: boolean;
