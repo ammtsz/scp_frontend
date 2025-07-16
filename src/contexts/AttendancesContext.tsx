@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { mockAttendance } from "@/services/mockData";
 // import { Attendance } from "@/types/attendance";
-import { IAttendance } from "@/types/db";
+import { IAttendance } from "@/types/globas";
 
 interface AttendancesContextProps {
   attendances: IAttendance[];

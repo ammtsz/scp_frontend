@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { usePatients } from "@/contexts/PatientsContext";
-import { IPriority } from "@/types/db";
+import { IPriority } from "@/types/globas";
 
 export const attendanceTypes = [
   { value: "spiritual", label: "Consulta Espiritual" },

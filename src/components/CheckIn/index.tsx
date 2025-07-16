@@ -1,7 +1,7 @@
 import React from "react";
 import { Search, ChevronDown, ChevronUp } from "react-feather";
 import { attendanceTypes, useCheckIn } from "./useCheckIn";
-import { IPriority } from "@/types/db";
+import { IPriority } from "@/types/globas";
 import ConfirmModal from "@/components/ConfirmModal/index";
 
 // Add prop to receive callback for check-in from CheckIn form

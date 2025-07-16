@@ -2,7 +2,11 @@
 
 import React from "react";
 import { useAttendanceList } from "./useAttendanceList";
-import { IAttendanceProgression, IAttendanceType, IPriority } from "@/types/db";
+import {
+  IAttendanceProgression,
+  IAttendanceType,
+  IPriority,
+} from "@/types/globas";
 import ConfirmModal from "@/components/ConfirmModal/index";
 import AttendanceColumn from "./AttendanceColumn";
 

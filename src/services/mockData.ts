@@ -1,4 +1,4 @@
-import type { IPatients, IPatient, IAttendance, IAgenda } from "../types/db";
+import type { IPatients, IPatient, IAttendance, IAgenda } from "../types/globas";
 
 export const mockPatients: IPatients[] = [
   { name: "Maria Silva", id: "1", phone: "(11) 91234-5678", priority: "3", status: "T" },

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { mockAgenda } from "@/services/mockData";
-import { IAgenda } from "@/types/db";
+import { IAgenda } from "@/types/globas";
 
 interface AgendaContextProps {
   agenda: IAgenda;

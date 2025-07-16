@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAgenda } from "@/contexts/AgendaContext";
 import { formatDateBR } from "@/utils/dateHelpers";
-import { IAgenda, IAttendanceType } from "@/types/db";
+import { IAgenda, IAttendanceType } from "@/types/globas";
 
 export const TABS: { key: IAttendanceType; label: string }[] = [
   { key: "spiritual", label: "Consultas Espirituais" },

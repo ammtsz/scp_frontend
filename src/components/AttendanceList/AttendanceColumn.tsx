@@ -3,7 +3,7 @@ import {
   IAttendanceProgression,
   IAttendanceType,
   IAttendanceStatusDetail,
-} from "@/types/db";
+} from "@/types/globas";
 import AttendanceCard from "./AttendanceCard";
 import { IDraggedItem } from "./useAttendanceList";
 

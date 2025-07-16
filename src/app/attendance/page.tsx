@@ -2,7 +2,7 @@
 
 import AttendanceList from "@/components/AttendanceList";
 import CheckIn from "@/components/CheckIn";
-import { IPriority } from "@/types/db";
+import { IPriority } from "@/types/globas";
 import React, { useState } from "react";
 
 export default function AttendancePage() {

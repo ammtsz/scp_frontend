@@ -14,7 +14,7 @@ import {
   mockPatient_5,
 } from "@/services/mockData";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { IPatient } from "@/types/db";
+import { IPatient } from "@/types/globas";
 
 const mockPatientById = {
   "1": mockPatient_1,
