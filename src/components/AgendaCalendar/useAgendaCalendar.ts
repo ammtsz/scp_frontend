@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAgenda } from "@/contexts/AgendaContext";
-import { formatDateBR } from "@/utils/dateHelpers";
 import { IAgenda, IAttendanceType } from "@/types/globas";
 
 export const TABS: { key: IAttendanceType; label: string }[] = [
@@ -23,13 +22,17 @@ export function useAgendaCalendar() {
   const [openAgendaIdx, setOpenAgendaIdx] = useState<number | null>(null);
   const [isTabTransitioning, setIsTabTransitioning] = useState(false);
 
-  
+  // Helper to convert a Date to 'YYYY-MM-DD' string for input[type=date] comparison
+  function toInputDateString(date: Date) {
+    return date.toISOString().slice(0, 10);
+  }
+
   const filteredAgenda = useMemo(() => ({
     spiritual: agendaState.spiritual.filter(
-      (a) => !selectedDate || a.date.toLocaleDateString("pt-BR") === selectedDate
+      (a) => !selectedDate || toInputDateString(a.date) === selectedDate
     ),
     lightBath: agendaState.lightBath.filter(
-      (a) => !selectedDate || a.date.toLocaleDateString("pt-BR") === selectedDate
+      (a) => !selectedDate || toInputDateString(a.date) === selectedDate
     ),
   }), [agendaState.spiritual, agendaState.lightBath, selectedDate]);
 
@@ -62,7 +65,7 @@ export function useAgendaCalendar() {
       const newAgenda = { ...prev };
       const type = confirmRemove.type;
       newAgenda[type] = newAgenda[type].map((a) => {
-        if (a.date.toLocaleDateString("pt-BR") === confirmRemove.date.toLocaleDateString("pt-BR")) {
+        if (toInputDateString(a.date) === toInputDateString(confirmRemove.date)) {
           return {
             ...a,
             patients: a.patients.filter((p) => p.id !== confirmRemove.id),
@@ -99,6 +102,5 @@ export function useAgendaCalendar() {
     filteredAgenda,
     handleRemovePatient,
     handleNewAttendance,
-    formatDateBR,
   };
 }

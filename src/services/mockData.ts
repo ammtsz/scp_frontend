@@ -33,7 +33,7 @@ export const mockPatients: IPatients[] = [
 
 export const mockAttendance: IAttendance[] = [
   {
-    date: new Date("2025-08-07"),
+    date: new Date(2025, 7, 7),
     spiritual: {
       scheduled: [
         { name: "Maria Silva", priority: "3" },
@@ -63,7 +63,7 @@ export const mockAttendance: IAttendance[] = [
     },
   },
   {
-    date: new Date("2025-08-14"),
+    date: new Date(2025, 7, 14),
     spiritual: {
       scheduled: [
         { name: "Juliana Mendes", priority: "1" },
@@ -90,7 +90,7 @@ export const mockAttendance: IAttendance[] = [
     },
   },
   {
-    date: new Date("2025-08-21"),
+    date: new Date(2025, 7, 21),
     spiritual: {
       scheduled: [
         { name: "Eduardo Ramos", priority: "3" },
@@ -120,7 +120,7 @@ export const mockAttendance: IAttendance[] = [
 
 export const mockAgenda: IAgenda = {
   spiritual: [{
-    date: new Date("2025-08-07"),
+    date: new Date(2025, 7, 7),
     patients: [
       { id: "1", name: "Maria Silva", priority: "3" },
       { id: "3", name: "Ana Paula Lima", priority: "1" },
@@ -133,7 +133,7 @@ export const mockAgenda: IAgenda = {
     ],
   },
   {
-    date: new Date("2025-08-14"),
+    date: new Date(2025, 7, 14),
     patients: [
       { id: "1", name: "Maria Silva", priority: "3" },
       { id: "2", name: "João Souza", priority: "2" },
@@ -146,7 +146,7 @@ export const mockAgenda: IAgenda = {
     ]
   },
   {
-    date: new Date("2025-08-21"),
+    date: new Date(2025, 7, 21),
     patients: [
       { id: "11", name: "Fernanda Lima", priority: "2" },
       { id: "13", name: "Juliana Costa", priority: "1" },
@@ -156,7 +156,7 @@ export const mockAgenda: IAgenda = {
     ],
   }],
   lightBath: [{
-    date: new Date("2025-08-07"),
+    date: new Date(2025, 7, 7),
     patients: [
       { id: "2", name: "João Souza", priority: "2" },
       { id: "4", name: "Carlos Eduardo Dias", priority: "2" },
@@ -167,7 +167,7 @@ export const mockAgenda: IAgenda = {
     ],
   },
   {
-    date: new Date("2025-08-14"),
+    date: new Date(2025, 7, 14),
     patients: [
       { id: "2", name: "João Souza", priority: "2" },
       { id: "3", name: "Ana Paula Lima", priority: "1" },
@@ -180,7 +180,7 @@ export const mockAgenda: IAgenda = {
     ],
   },
   {
-    date: new Date("2025-08-21"),
+    date: new Date(2025, 7, 21),
     patients: [
       { id: "12", name: "Juliana Mendes", priority: "1" },
       { id: "14", name: "Marcos Vinícius", priority: "2" },
@@ -197,15 +197,15 @@ export const mockPatient_1: IPatient = {
   phone: "(11) 91234-5678",
   priority: "3",
   status: "T",
-  birthDate: new Date("1980-05-10"),
+  birthDate: new Date(1980, 4, 10),
   mainComplaint: "Dor de cabeça",
-  startDate: new Date("2024-06-01"),
-  dischargeDate: new Date("2024-06-15"),
+  startDate: new Date(2024, 5, 1),
+  dischargeDate: new Date(2024, 5, 15),
   nextAttendanceDates: [
-    { date: new Date("2025-08-07"), type: "spiritual" },
+    { date: new Date(2025, 7, 7), type: "spiritual" },
   ],
   currentRecommendations: {
-    date: new Date("2025-07-08"),
+    date: new Date(2025, 6, 8),
     food: "Frutas",
     water: "Água",
     ointment: "Pomada X",
@@ -217,7 +217,7 @@ export const mockPatient_1: IPatient = {
   previousAttendances: [
     {
       attendanceId: "1",
-      date: new Date("2025-07-08"),
+      date: new Date(2025, 6, 8),
       notes: "Atendimento anterior.",
       type: "spiritual",
       recommendations: {
@@ -232,7 +232,7 @@ export const mockPatient_1: IPatient = {
     },
     {
       attendanceId: "1",
-      date: new Date("2025-07-24"),
+      date: new Date(2025, 6, 24),
       notes: "Atendimento anterior.",
       type: "spiritual",
       recommendations: {
@@ -247,7 +247,7 @@ export const mockPatient_1: IPatient = {
     },
     {
       attendanceId: "5",
-      date: new Date("2025-07-10"),
+      date: new Date(2025, 6, 10),
       notes: "Atendimento anterior.",
       type: "spiritual",
       recommendations: {
@@ -269,15 +269,15 @@ export const mockPatient_2: IPatient = {
   phone: "(11) 99876-5432",
   priority: "2",
   status: "A",
-  birthDate: new Date("1975-03-22"),
+  birthDate: new Date(1975, 2, 22),
   mainComplaint: "Dores nas costas",
-  startDate: new Date("2024-05-10"),
-  dischargeDate: new Date("2024-06-20"),
+  startDate: new Date(2024, 4, 10),
+  dischargeDate: new Date(2024, 5, 20),
   nextAttendanceDates: [
-    { date: new Date("2025-08-07"), type: "lightBath" },
+    { date: new Date(2025, 7, 7), type: "lightBath" },
   ],
   currentRecommendations: {
-    date: new Date("2025-07-10"),
+    date: new Date(2025, 6, 10),
     food: "Legumes",
     water: "Água",
     ointment: "Pomada Y",
@@ -289,7 +289,7 @@ export const mockPatient_2: IPatient = {
   previousAttendances: [
     {
       attendanceId: "2",
-      date: new Date("2025-07-10"),
+      date: new Date(2025, 6, 10),
       notes: "Atendimento anterior.",
       type: "lightBath",
       recommendations: {
@@ -304,7 +304,7 @@ export const mockPatient_2: IPatient = {
     },
     {
       attendanceId: "2",
-      date: new Date("2025-07-24"),
+      date: new Date(2025, 6, 24),
       notes: "Atendimento anterior.",
       type: "lightBath",
       recommendations: {
@@ -326,15 +326,15 @@ export const mockPatient_3: IPatient = {
   phone: "(11) 91111-2222",
   priority: "1",
   status: "N",
-  birthDate: new Date("1990-08-15"),
+  birthDate: new Date(1990, 7, 15),
   mainComplaint: "Ansiedade",
-  startDate: new Date("2025-06-01"),
+  startDate: new Date(2025, 5, 1),
   dischargeDate: null,
   nextAttendanceDates: [
-    { date: new Date("2025-08-07"), type: "spiritual" },
+    { date: new Date(2025, 7, 7), type: "spiritual" },
   ],
   currentRecommendations: {
-    date: new Date("2025-07-10"),
+    date: new Date(2025, 6, 10),
     food: "Frutas",
     water: "Água",
     ointment: "Pomada X",
@@ -346,7 +346,7 @@ export const mockPatient_3: IPatient = {
   previousAttendances: [
     {
       attendanceId: "3",
-      date: new Date("2025-07-10"),
+      date: new Date(2025, 6, 10),
       notes: "Atendimento anterior.",
       type: "spiritual",
       recommendations: {
@@ -361,7 +361,7 @@ export const mockPatient_3: IPatient = {
     },
     {
       attendanceId: "3",
-      date: new Date("2025-07-31"),
+      date: new Date(2025, 6, 31),
       notes: "Atendimento anterior.",
       type: "spiritual",
       recommendations: {
@@ -383,15 +383,15 @@ export const mockPatient_4: IPatient = {
   phone: "(11) 92222-3333",
   priority: "2",
   status: "A",
-  birthDate: new Date("1982-12-03"),
+  birthDate: new Date(1982, 11, 3),
   mainComplaint: "Insônia",
-  startDate: new Date("2025-05-20"),
-  dischargeDate: new Date("2025-07-01"),
+  startDate: new Date(2025, 4, 20),
+  dischargeDate: new Date(2025, 6, 1),
   nextAttendanceDates: [
-    { date: new Date("2025-08-07"), type: "lightBath" },
+    { date: new Date(2025, 7, 7), type: "lightBath" },
   ],
   currentRecommendations: {
-    date: new Date("2025-07-10"),
+    date: new Date(2025, 6, 10),
     food: "Legumes",
     water: "Água",
     ointment: "Pomada Y",
@@ -403,7 +403,7 @@ export const mockPatient_4: IPatient = {
   previousAttendances: [
     {
       attendanceId: "4",
-      date: new Date("2025-07-10"),
+      date: new Date(2025, 6, 10),
       notes: "Atendimento anterior.",
       type: "lightBath",
       recommendations: {
@@ -418,7 +418,7 @@ export const mockPatient_4: IPatient = {
     },
     {
       attendanceId: "4",
-      date: new Date("2025-07-31"),
+      date: new Date(2025, 6, 31),
       notes: "Atendimento anterior.",
       type: "lightBath",
       recommendations: {
@@ -440,15 +440,15 @@ export const mockPatient_5: IPatient = {
   phone: "(11) 93333-4444",
   priority: "3",
   status: "T",
-  birthDate: new Date("1995-11-21"),
+  birthDate: new Date(1995, 10, 21),
   mainComplaint: "Estresse",
-  startDate: new Date("2025-06-10"),
+  startDate: new Date(2025, 5, 10),
   dischargeDate: null,
   nextAttendanceDates: [
-    { date: new Date("2025-08-07"), type: "spiritual" },
+    { date: new Date(2025, 7, 7), type: "spiritual" },
   ],
   currentRecommendations: {
-    date: new Date("2025-07-17"),
+    date: new Date(2025, 6, 17),
     food: "Frutas",
     water: "Água",
     ointment: "Pomada X",
@@ -460,7 +460,7 @@ export const mockPatient_5: IPatient = {
   previousAttendances: [
     {
       attendanceId: "5",
-      date: new Date("2025-07-17"),
+      date: new Date(2025, 6, 17),
       notes: "Atendimento anterior.",
       type: "spiritual",
       recommendations: {
@@ -475,7 +475,7 @@ export const mockPatient_5: IPatient = {
     },
     {
       attendanceId: "5",
-      date: new Date("2025-07-10"),
+      date: new Date(2025, 6, 10),
       notes: "Atendimento anterior.",
       type: "spiritual",
       recommendations: {

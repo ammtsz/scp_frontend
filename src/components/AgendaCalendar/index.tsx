@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import ConfirmModal from "@/components/ConfirmModal";
+import ConfirmModal from "@/components/ConfirmModal/index";
 import NewAttendanceModal from "@/components/NewAttendanceModal";
 import { useAgendaCalendar } from "./useAgendaCalendar";
+import { formatDateBR } from "@/utils/dateHelpers";
 
 const AgendaCalendar: React.FC = () => {
   const {
@@ -22,7 +23,6 @@ const AgendaCalendar: React.FC = () => {
     setShowNewAttendance,
     handleRemovePatient,
     handleNewAttendance,
-    formatDateBR,
   } = useAgendaCalendar();
 
   return (
@@ -88,8 +88,7 @@ const AgendaCalendar: React.FC = () => {
                   aria-controls={`agenda-patients-${idx}`}
                 >
                   <span>
-                    <b>Data:</b>{" "}
-                    {formatDateBR(date.toLocaleDateString("pt-BR"))}
+                    <b>Data:</b> {formatDateBR(date.toISOString())}
                   </span>
                   {openAgendaIdx === idx ? (
                     <span className="text-xs font-semibold text-[color:var(--primary-light)] px-2 py-1 rounded">

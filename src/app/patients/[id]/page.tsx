@@ -175,8 +175,8 @@ export default function PatientDetailPage() {
           {future.length > 0 ? (
             <ul className="ml-4 list-disc text-sm">
               {future.map((a, i) => (
-                <li key={a.date + i}>
-                  {formatDateBR(a.date)} (
+                <li key={a.date.toISOString() + i}>
+                  {formatDateBR(a.date.toISOString())} (
                   {a.type === "spiritual"
                     ? "Consulta Espiritual"
                     : "Banho de Luz/Bastão"}
