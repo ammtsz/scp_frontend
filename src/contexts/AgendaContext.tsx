@@ -1,8 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import { mockAgenda } from "@/services/mockData";
-import { IAgenda } from "@/types/globas";
+import { mockAgenda } from "@/api/mockData";
+import { IAgenda } from "@/types/globals";
 
 interface AgendaContextProps {
   agenda: IAgenda;

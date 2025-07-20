@@ -1,6 +1,6 @@
 import { useAttendances } from "@/contexts/AttendancesContext";
 import { useState, useEffect } from "react";
-import { IAttendanceType, IAttendanceProgression, IAttendanceStatusDetail, IPriority } from "@/types/globas";
+import { IAttendanceType, IAttendanceProgression, IAttendanceStatusDetail, IPriority } from "@/types/globals";
 
 export interface IDraggedItem {
     type: IAttendanceType;

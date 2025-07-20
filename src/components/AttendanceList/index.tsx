@@ -6,7 +6,7 @@ import {
   IAttendanceProgression,
   IAttendanceType,
   IPriority,
-} from "@/types/globas";
+} from "@/types/globals";
 import ConfirmModal from "@/components/ConfirmModal/index";
 import AttendanceColumn from "./AttendanceColumn";
 

@@ -1,6 +1,6 @@
 import React from "react";
 import NewAttendanceForm from "../NewAttendanceForm";
-import { IPriority } from "@/types/globas";
+import { IPriority } from "@/types/globals";
 
 interface NewAttendanceModalProps {
   open: boolean;

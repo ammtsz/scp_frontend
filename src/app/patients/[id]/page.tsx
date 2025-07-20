@@ -12,9 +12,9 @@ import {
   mockPatient_3,
   mockPatient_4,
   mockPatient_5,
-} from "@/services/mockData";
+} from "@/api/mockData";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { IPatient } from "@/types/globas";
+import { IPatient } from "@/types/globals";
 
 const mockPatientById = {
   "1": mockPatient_1,

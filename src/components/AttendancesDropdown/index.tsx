@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { formatDateBR } from "@/utils/dateHelpers";
-import { IPreviousAttendance } from "@/types/globas";
+import { IPreviousAttendance } from "@/types/globals";
 
 interface AttendancesDropdownProps {
   attendances: IPreviousAttendance[];

@@ -1,5 +1,5 @@
 import React from "react";
-import { IAttendanceProgression } from "@/types/globas";
+import { IAttendanceProgression } from "@/types/globals";
 
 interface AttendanceTimesProps {
   status: IAttendanceProgression;

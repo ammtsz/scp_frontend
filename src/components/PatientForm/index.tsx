@@ -4,7 +4,6 @@ import { usePatientForm } from "./usePatientForm";
 const PatientForm: React.FC = () => {
   const {
     patient,
-    setPatient,
     handleChange,
     handleSpiritualConsultationChange,
     handleSubmit,
@@ -41,7 +40,7 @@ const PatientForm: React.FC = () => {
           name="birthDate"
           type="date"
           className="input w-full"
-          value={patient.birthDate}
+          value={patient.birthDate.toISOString().split("T")[0]}
           onChange={handleChange}
           required
           lang="pt-BR"
@@ -102,7 +101,7 @@ const PatientForm: React.FC = () => {
               name="startDate"
               type="date"
               className="input w-full"
-              value={patient.spiritualConsultation.startDate}
+              value={patient.startDate.toISOString().split("T")[0]}
               onChange={handleSpiritualConsultationChange}
               lang="pt-BR"
             />
@@ -113,7 +112,11 @@ const PatientForm: React.FC = () => {
               name="nextDate"
               type="date"
               className="input w-full"
-              value={patient.spiritualConsultation.nextDate}
+              value={
+                patient.nextAttendanceDates[0]?.date
+                  .toISOString()
+                  .split("T")[0] || ""
+              }
               onChange={handleSpiritualConsultationChange}
               lang="pt-BR"
             />
@@ -124,7 +127,7 @@ const PatientForm: React.FC = () => {
               name="dischargeDate"
               type="date"
               className="input w-full"
-              value={patient.spiritualConsultation.dischargeDate}
+              value={patient.dischargeDate?.toISOString().split("T")[0]}
               onChange={handleSpiritualConsultationChange}
               lang="pt-BR"
             />
@@ -135,7 +138,7 @@ const PatientForm: React.FC = () => {
             <label className={labelClass}>Alimentação</label>
             <input
               name="recommendations.food"
-              value={patient.spiritualConsultation.recommendations.food}
+              value={patient.currentRecommendations.food}
               onChange={handleChange}
               className="input"
               placeholder="Alimentação"
@@ -145,7 +148,7 @@ const PatientForm: React.FC = () => {
             <label className={labelClass}>Água</label>
             <input
               name="recommendations.water"
-              value={patient.spiritualConsultation.recommendations.water}
+              value={patient.currentRecommendations.water}
               onChange={handleChange}
               className="input"
               placeholder="Água"
@@ -155,7 +158,7 @@ const PatientForm: React.FC = () => {
             <label className={labelClass}>Pomada</label>
             <input
               name="recommendations.ointment"
-              value={patient.spiritualConsultation.recommendations.ointment}
+              value={patient.currentRecommendations.ointment}
               onChange={handleChange}
               className="input"
               placeholder="Pomada"
@@ -166,7 +169,7 @@ const PatientForm: React.FC = () => {
             <input
               name="recommendations.returnWeeks"
               type="number"
-              value={patient.spiritualConsultation.recommendations.returnWeeks}
+              value={patient.currentRecommendations.returnWeeks}
               onChange={handleChange}
               className="input"
               placeholder="Semanas para retorno"
@@ -178,7 +181,7 @@ const PatientForm: React.FC = () => {
             <input
               type="checkbox"
               name="recommendations.lightBath"
-              checked={patient.spiritualConsultation.recommendations.lightBath}
+              checked={patient.currentRecommendations.lightBath}
               onChange={handleChange}
               className="rounded border-[color:var(--border)] focus:ring-[color:var(--primary)]"
             />{" "}
@@ -188,7 +191,7 @@ const PatientForm: React.FC = () => {
             <input
               type="checkbox"
               name="recommendations.rod"
-              checked={patient.spiritualConsultation.recommendations.rod}
+              checked={patient.currentRecommendations.rod}
               onChange={handleChange}
               className="rounded border-[color:var(--border)] focus:ring-[color:var(--primary)]"
             />{" "}
@@ -198,9 +201,7 @@ const PatientForm: React.FC = () => {
             <input
               type="checkbox"
               name="recommendations.spiritualTreatment"
-              checked={
-                patient.spiritualConsultation.recommendations.spiritualTreatment
-              }
+              checked={patient.currentRecommendations.spiritualTreatment}
               onChange={handleChange}
               className="rounded border-[color:var(--border)] focus:ring-[color:var(--primary)]"
             />{" "}

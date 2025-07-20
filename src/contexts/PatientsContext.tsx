@@ -1,8 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import { mockPatients } from "@/services/mockData";
-import { IPatients } from "@/types/globas";
+import { mockPatients } from "@/api/mockData";
+import { IPatients } from "@/types/globals";
 interface PatientsContextProps {
   patients: IPatients[];
   setPatients: React.Dispatch<React.SetStateAction<IPatients[]>>;

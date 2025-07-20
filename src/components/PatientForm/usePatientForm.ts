@@ -1,11 +1,10 @@
 import { useState } from "react";
 import {
-  Patient,
-  SpiritualConsultation,
-  Recommendations,
-} from "@/types/patient";
+  IPatient,
+  IRecommendations,
+} from "@/types/globals";
 
-const initialRecommendations: Recommendations = {
+const initialRecommendations: IRecommendations = {
   food: "",
   water: "",
   ointment: "",
@@ -15,24 +14,21 @@ const initialRecommendations: Recommendations = {
   returnWeeks: 0,
 };
 
-const initialSpiritualConsultation: SpiritualConsultation = {
-  startDate: "",
-  nextDate: "",
-  dischargeDate: "",
-  recommendations: initialRecommendations,
-};
 
-const initialPatient: Omit<Patient, "id" | "registrationNumber" | "history"> = {
+const initialPatient: Omit<IPatient, "id" | "history"> = {
   name: "",
-  birthDate: "",
   phone: "",
-  priority: "N",
-  mainComplaint: "",
+  priority: "3",
   status: "T",
-  spiritualConsultation: initialSpiritualConsultation,
-  lightBaths: [],
-  rods: [],
-  attendances: [],
+  birthDate: new Date(),
+  mainComplaint: "",
+  startDate:  new Date(),
+  dischargeDate:  new Date(),
+  nextAttendanceDates: [],
+  previousAttendances: [],
+  currentRecommendations: {
+    date: new Date(),
+    ...initialRecommendations},
 };
 
 export function usePatientForm() {
@@ -50,10 +46,10 @@ export function usePatientForm() {
       const recKey = name.replace("recommendations.", "");
       setPatient((prev) => ({
         ...prev,
-        spiritualConsultation: {
-          ...prev.spiritualConsultation,
+        currentRecommendations: {
+          ...prev.currentRecommendations,
           recommendations: {
-            ...prev.spiritualConsultation.recommendations,
+            ...prev.currentRecommendations,
             [recKey]: type === "checkbox" ? checked : value,
           },
         },
@@ -69,10 +65,10 @@ export function usePatientForm() {
     const { name, value } = e.target;
     setPatient((prev) => ({
       ...prev,
-      spiritualConsultation: {
-        ...prev.spiritualConsultation,
+      currentRecommendations: {
+        ...prev.currentRecommendations,
         [name]: value,
-        recommendations: { ...prev.spiritualConsultation.recommendations },
+        recommendations: { ...prev.currentRecommendations },
       },
     }));
   };

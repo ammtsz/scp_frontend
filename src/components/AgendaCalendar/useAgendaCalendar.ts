@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAgenda } from "@/contexts/AgendaContext";
-import { IAgenda, IAttendanceType, IPriority } from "@/types/globas";
+import { IAgenda, IAttendanceType, IPriority } from "@/types/globals";
 import { usePatients } from "@/contexts/PatientsContext";
 
 export const TABS: { key: IAttendanceType; label: string }[] = [

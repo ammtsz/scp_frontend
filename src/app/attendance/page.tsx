@@ -2,7 +2,7 @@
 
 import AttendanceList from "@/components/AttendanceList";
 import UnscheduledPatients from "@/components/UnscheduledPatients";
-import { IPriority } from "@/types/globas";
+import { IPriority } from "@/types/globals";
 import React, { useState } from "react";
 
 export default function AttendancePage() {

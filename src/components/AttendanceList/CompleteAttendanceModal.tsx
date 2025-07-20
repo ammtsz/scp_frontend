@@ -1,14 +1,17 @@
 import React, { useState } from "react";
-import { Recommendations } from "@/types/patient";
+import { IRecommendations } from "@/types/globals";
 
 interface CompleteAttendanceModalProps {
   open: boolean;
   patientName: string;
   onClose: () => void;
-  onSubmit: (data: { notes: string; recommendations: Recommendations }) => void;
+  onSubmit: (data: {
+    notes: string;
+    recommendations: IRecommendations;
+  }) => void;
 }
 
-const initialRecommendations: Recommendations = {
+const initialRecommendations: IRecommendations = {
   food: "",
   water: "",
   ointment: "",
@@ -25,7 +28,7 @@ const CompleteAttendanceModal: React.FC<CompleteAttendanceModalProps> = ({
   onSubmit,
 }) => {
   const [notes, setNotes] = useState("");
-  const [recommendations, setRecommendations] = useState<Recommendations>(
+  const [recommendations, setRecommendations] = useState<IRecommendations>(
     initialRecommendations
   );
 

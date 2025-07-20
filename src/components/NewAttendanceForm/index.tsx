@@ -4,7 +4,7 @@ import {
   attendanceTypes,
   useUnscheduledPatients,
 } from "../UnscheduledPatients/useUnscheduledPatients";
-import { IPriority } from "@/types/globas";
+import { IPriority } from "@/types/globals";
 import ConfirmModal from "@/components/ConfirmModal";
 
 interface NewAttendanceFormProps {

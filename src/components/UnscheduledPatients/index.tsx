@@ -1,7 +1,7 @@
 import React from "react";
 import { ChevronDown, ChevronUp } from "react-feather";
 import NewAttendanceForm from "../NewAttendanceForm";
-import { IPriority } from "@/types/globas";
+import { IPriority } from "@/types/globals";
 
 interface UnscheduledPatientsProps {
   onRegisterNewAttendance?: (

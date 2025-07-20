@@ -40,12 +40,8 @@ const PatientList: React.FC = () => {
         <table className="table w-full text-primary-dark mt-4">
           <thead className="h-10 sticky top-[146px] z-10 bg-[color:var(--surface)]">
             <tr className="bg-[color:var(--light)]">
-              <th
-                className="cursor-pointer"
-                onClick={() => handleSort("registrationNumber")}
-              >
-                Registro{" "}
-                {sortBy === "registrationNumber" && (sortAsc ? "▲" : "▼")}
+              <th className="cursor-pointer" onClick={() => handleSort("id")}>
+                Registro {sortBy === "id" && (sortAsc ? "▲" : "▼")}
               </th>
               <th className="cursor-pointer" onClick={() => handleSort("name")}>
                 Nome {sortBy === "name" && (sortAsc ? "▲" : "▼")}
