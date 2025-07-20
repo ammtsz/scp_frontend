@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAgenda } from "@/contexts/AgendaContext";
-import { IAgenda, IAttendanceType } from "@/types/globas";
+import { IAgenda, IAttendanceType, IPriority } from "@/types/globas";
+import { usePatients } from "@/contexts/PatientsContext";
 
 export const TABS: { key: IAttendanceType; label: string }[] = [
   { key: "spiritual", label: "Consultas Espirituais" },
@@ -9,6 +10,7 @@ export const TABS: { key: IAttendanceType; label: string }[] = [
 
 export function useAgendaCalendar() {
   const { agenda: contextAgenda } = useAgenda();
+  const { patients } = usePatients();
   const [selectedDate, setSelectedDate] = useState("");
   const [activeTab, setActiveTab] = useState<IAttendanceType>("spiritual");
   const [agendaState, setAgendaState] = useState<IAgenda>(contextAgenda);
@@ -27,14 +29,17 @@ export function useAgendaCalendar() {
     return date.toISOString().slice(0, 10);
   }
 
-  const filteredAgenda = useMemo(() => ({
-    spiritual: agendaState.spiritual.filter(
-      (a) => !selectedDate || toInputDateString(a.date) === selectedDate
-    ),
-    lightBath: agendaState.lightBath.filter(
-      (a) => !selectedDate || toInputDateString(a.date) === selectedDate
-    ),
-  }), [agendaState.spiritual, agendaState.lightBath, selectedDate]);
+  const filteredAgenda = useMemo(
+    () => ({
+      spiritual: agendaState.spiritual.filter(
+        (a) => !selectedDate || toInputDateString(a.date) === selectedDate
+      ),
+      lightBath: agendaState.lightBath.filter(
+        (a) => !selectedDate || toInputDateString(a.date) === selectedDate
+      ),
+    }),
+    [agendaState.spiritual, agendaState.lightBath, selectedDate]
+  );
 
   useEffect(() => {
 
@@ -78,9 +83,55 @@ export function useAgendaCalendar() {
     setConfirmRemove(null);
   }
 
-  function handleNewAttendance(date: string, patient: string) {
-    // TODO: Add logic to actually add the attendance
-    alert(`Agendado para ${patient} em ${date}`);
+  function handleNewAttendance(
+    patientName: string,
+    types: string[],
+    isNew: boolean,
+    priority: IPriority,
+    date?: string
+  ) {
+    let patient = patients.find((p) => p.name === patientName);
+    if (!patient) {
+      // If new, generate a new id (simple random for demo)
+      patient = {
+        id: Math.random().toString(36).slice(2, 10),
+        name: patientName,
+        phone: "",
+        priority,
+        status: "T",
+      };
+    }
+    // For each selected type, add to agenda
+    types.forEach((type) => {
+      setAgendaState((prev) => {
+        const agendaArr = prev[type as IAttendanceType] || [];
+        // Find agenda item for the date
+        const agendaDate = date ? new Date(date) : new Date();
+        const dateStr = agendaDate.toISOString().slice(0, 10);
+        let found = false;
+        const newArr = agendaArr.map((item) => {
+          if (item.date.toISOString().slice(0, 10) === dateStr) {
+            found = true;
+            // Avoid duplicate patient
+            if (!item.patients.some((p) => p.id === patient!.id)) {
+              return {
+                ...item,
+                patients: [...item.patients, { id: patient!.id, name: patient!.name, priority: patient!.priority }],
+              };
+            }
+          }
+          return item;
+        });
+        if (!found) {
+          // Add new agenda item for this date
+          newArr.push({
+            date: agendaDate,
+            patients: [{ id: patient.id, name: patient.name, priority: patient.priority }],
+          });
+        }
+        return { ...prev, [type]: newArr };
+      });
+    });
     setShowNewAttendance(false);
   }
 

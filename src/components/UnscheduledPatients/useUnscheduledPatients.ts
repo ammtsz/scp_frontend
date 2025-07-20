@@ -7,10 +7,10 @@ export const attendanceTypes = [
   { value: "lightBath", label: "Banho de Luz/Bastão" },
 ];
 
-export function useCheckIn(onCheckIn?: (patientName: string, types: string[], isNew: boolean, priority: "1" | "2" | "3") => void) {
+export function useUnscheduledPatients(onRegisterNewAttendance?: (patientName: string, types: string[], isNew: boolean, priority: "1" | "2" | "3") => void) {
   const { patients } = usePatients();
   const [search, setSearch] = useState("");
-  const [checkedIn, setCheckedIn] = useState(false);
+  const [hasNewAttendance, setHasNewAttendance] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<string>("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [isNewPatient, setIsNewPatient] = useState(false);
@@ -22,13 +22,13 @@ export function useCheckIn(onCheckIn?: (patientName: string, types: string[], is
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  function handleCheckIn(e: React.FormEvent) {
+  function handleRegisterNewAttendance(e: React.FormEvent) {
     e.preventDefault();
     const name = isNewPatient ? search : selectedPatient;
     if ((isNewPatient && search) || (!isNewPatient && selectedPatient)) {
-      setCheckedIn(true);
-      if (onCheckIn && name) {
-        onCheckIn(name, selectedTypes, isNewPatient, priority);
+      setHasNewAttendance(true);
+      if (onRegisterNewAttendance && name) {
+        onRegisterNewAttendance(name, selectedTypes, isNewPatient, priority);
       }
       setSearch("");
       setShowDropdown(false);
@@ -45,14 +45,18 @@ export function useCheckIn(onCheckIn?: (patientName: string, types: string[], is
     setSearch(e.target.value);
     setSelectedPatient("");
     setShowDropdown(true);
-    setCheckedIn(false);
+    setHasNewAttendance(false);
   }
 
   function handleSelect(name: string) {
+    const selected = filteredPatients.find((p) => p.name === name);
     setSelectedPatient(name);
     setSearch(name);
     setShowDropdown(false);
-    setCheckedIn(false);
+    setHasNewAttendance(false);
+    if (selected) {
+      setPriority(selected.priority);
+    }
   }
 
   function handleTypeCheckbox(e: React.ChangeEvent<HTMLInputElement>) {
@@ -65,8 +69,8 @@ export function useCheckIn(onCheckIn?: (patientName: string, types: string[], is
   return {
     search,
     setSearch,
-    checkedIn,
-    setCheckedIn,
+    hasNewAttendance,
+    setHasNewAttendance,
     selectedPatient,
     setSelectedPatient,
     showDropdown,
@@ -80,7 +84,7 @@ export function useCheckIn(onCheckIn?: (patientName: string, types: string[], is
     collapsed,
     setCollapsed,
     filteredPatients,
-    handleCheckIn,
+    handleRegisterNewAttendance,
     handleInputChange,
     handleSelect,
     handleTypeCheckbox,
