@@ -1,20 +1,20 @@
-import type { IPatients, IPatient, IAttendance, IAgenda } from "../types/globals";
+import type { IPatients, IPatient, IAttendanceByDate, IAgenda } from "../types/globals";
 
 export const mockPatients: IPatients[] = [
   { name: "Maria Silva", id: "1", phone: "(11) 91234-5678", priority: "3", status: "T" },
   { name: "João Souza", id: "2", phone: "(11) 99876-5432", priority: "2", status: "A" },
-  { name: "Ana Paula Lima", id: "3", phone: "(11) 91111-2222", priority: "1", status: "N" },
+  { name: "Ana Paula Lima", id: "3", phone: "(11) 91111-2222", priority: "1", status: "F" },
   { name: "Carlos Eduardo Dias", id: "4", phone: "(11) 92222-3333", priority: "2", status: "A" },
   { name: "Beatriz Souza", id: "5", phone: "(11) 93333-4444", priority: "3", status: "T" },
   { name: "Fernanda Alves", id: "6", phone: "(11) 94444-5555", priority: "1", status: "A" },
-  { name: "Larissa Oliveira", id: "7", phone: "(11) 95555-6666", priority: "3", status: "N" },
+  { name: "Larissa Oliveira", id: "7", phone: "(11) 95555-6666", priority: "3", status: "F" },
   { name: "Otávio Pires", id: "8", phone: "(11) 96666-7777", priority: "2", status: "T" },
   { name: "Sabrina Lopes", id: "9", phone: "(11) 97777-8888", priority: "1", status: "A" },
   { name: "Vitor Hugo", id: "10", phone: "(11) 98888-9999", priority: "3", status: "F" },
   { name: "Wesley Cardoso", id: "11", phone: "(11) 90000-1111", priority: "2", status: "A" },
   { name: "Juliana Mendes", id: "12", phone: "(11) 91111-2223", priority: "1", status: "T" },
   { name: "Kleber Nunes", id: "13", phone: "(11) 92222-3334", priority: "3", status: "A" },
-  { name: "Marcos Vinícius", id: "14", phone: "(11) 93333-4445", priority: "2", status: "N" },
+  { name: "Marcos Vinícius", id: "14", phone: "(11) 93333-4445", priority: "2", status: "F" },
   { name: "Natália Rocha", id: "15", phone: "(11) 94444-5556", priority: "1", status: "A" },
   { name: "Patrícia Silva", id: "16", phone: "(11) 95555-6667", priority: "3", status: "T" },
   { name: "Rafael Teixeira", id: "17", phone: "(11) 96666-7778", priority: "2", status: "A" },
@@ -22,7 +22,7 @@ export const mockPatients: IPatients[] = [
   { name: "Ursula Barros", id: "19", phone: "(11) 98888-9990", priority: "3", status: "A" },
   { name: "Xuxa Meneghel", id: "20", phone: "(11) 90000-1112", priority: "2", status: "T" },
   { name: "Daniela Castro", id: "21", phone: "(11) 91111-2224", priority: "1", status: "A" },
-  { name: "Eduardo Ramos", id: "22", phone: "(11) 92222-3335", priority: "3", status: "N" },
+  { name: "Eduardo Ramos", id: "22", phone: "(11) 92222-3335", priority: "3", status: "F" },
   { name: "Gabriel Martins", id: "23", phone: "(11) 93333-4446", priority: "2", status: "A" },
   { name: "Helena Costa", id: "24", phone: "(11) 94444-5557", priority: "1", status: "T" },
   { name: "Igor Ferreira", id: "25", phone: "(11) 95555-6668", priority: "3", status: "A" },
@@ -31,7 +31,7 @@ export const mockPatients: IPatients[] = [
   { name: "Marcos Paulo", id: "28", phone: "(11) 98888-9991", priority: "3", status: "T" },
 ];
 
-export const mockAttendance: IAttendance[] = [
+export const mockAttendance: IAttendanceByDate[] = [
   {
     date: new Date(2025, 7, 7),
     spiritual: {
@@ -325,7 +325,7 @@ export const mockPatient_3: IPatient = {
   name: "Ana Paula Lima",
   phone: "(11) 91111-2222",
   priority: "1",
-  status: "N",
+  status: "F",
   birthDate: new Date(1990, 7, 15),
   mainComplaint: "Ansiedade",
   startDate: new Date(2025, 5, 1),

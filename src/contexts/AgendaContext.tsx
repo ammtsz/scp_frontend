@@ -1,20 +1,53 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import { mockAgenda } from "@/api/mockData";
-import { IAgenda } from "@/types/globals";
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useCallback,
+} from "react";
+import { getAttendancesForAgenda } from "@/api/attendances";
+import { AttendanceAgendaDto } from "@/api/types";
 
 interface AgendaContextProps {
-  agenda: IAgenda;
-  setAgenda: React.Dispatch<React.SetStateAction<IAgenda>>;
+  loadAgendaAttendances: (filters?: {
+    status?: string;
+    type?: string;
+    limit?: number;
+  }) => Promise<AttendanceAgendaDto[]>;
 }
 
 const AgendaContext = createContext<AgendaContextProps | undefined>(undefined);
 
 export const AgendaProvider = ({ children }: { children: ReactNode }) => {
-  const [agenda, setAgenda] = useState<IAgenda>(mockAgenda);
+  const loadAgendaAttendances = useCallback(
+    async (filters?: {
+      status?: string;
+      type?: string;
+      limit?: number;
+    }): Promise<AttendanceAgendaDto[]> => {
+      try {
+        const result = await getAttendancesForAgenda(filters);
+        if (result.success && result.value) {
+          return result.value;
+        } else {
+          console.error("Failed to load agenda attendances:", result.error);
+          return [];
+        }
+      } catch (error) {
+        console.error("Error loading agenda attendances:", error);
+        return [];
+      }
+    },
+    []
+  );
+
   return (
-    <AgendaContext.Provider value={{ agenda, setAgenda }}>
+    <AgendaContext.Provider
+      value={{
+        loadAgendaAttendances,
+      }}
+    >
       {children}
     </AgendaContext.Provider>
   );

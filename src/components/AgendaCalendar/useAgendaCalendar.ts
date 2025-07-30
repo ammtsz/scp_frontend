@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { useAgenda } from "@/contexts/AgendaContext";
 import { IAgenda, IAttendanceType, IPriority } from "@/types/globals";
 import { usePatients } from "@/contexts/PatientsContext";
+import { mockAgenda } from "@/api/mockData";
 
 export const TABS: { key: IAttendanceType; label: string }[] = [
   { key: "spiritual", label: "Consultas Espirituais" },
@@ -9,7 +9,7 @@ export const TABS: { key: IAttendanceType; label: string }[] = [
 ];
 
 export function useAgendaCalendar() {
-  const { agenda: contextAgenda } = useAgenda();
+  const contextAgenda = mockAgenda as IAgenda; // Replace with useAgenda() when backend is ready
   const { patients } = usePatients();
   const [selectedDate, setSelectedDate] = useState("");
   const [activeTab, setActiveTab] = useState<IAttendanceType>("spiritual");

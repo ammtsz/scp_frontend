@@ -2,35 +2,69 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { formatDateBR } from "@/utils/dateHelpers";
 import AttendancesDropdown from "@/components/AttendancesDropdown/index";
-// import { usePatients } from "@/contexts/PatientsContext";
-import {
-  mockPatient_1,
-  mockPatient_2,
-  mockPatient_3,
-  mockPatient_4,
-  mockPatient_5,
-} from "@/api/mockData";
-import { useAttendances } from "@/contexts/AttendancesContext";
+import { getPatientById } from "@/api/patients";
+import { transformPatientDetailFromApi } from "@/utils/apiTransformers";
 import { IPatient } from "@/types/globals";
-
-const mockPatientById = {
-  "1": mockPatient_1,
-  "2": mockPatient_2,
-  "3": mockPatient_3,
-  "4": mockPatient_4,
-  "5": mockPatient_5,
-};
 
 export default function PatientDetailPage() {
   const params = useParams();
-  // const { patients } = usePatients();
-  const { attendances } = useAttendances();
-  // const patient = patients.find((p) => p.id === params.id);
-  const patient: IPatient =
-    mockPatientById[params.id as "1" | "2" | "3" | "4" | "5"];
+  // TODO: We'll implement patient-specific attendances loading later
+  // For now, we'll just show the patient details without attendances integration
+  const [patient, setPatient] = useState<IPatient | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPatient = async () => {
+      if (!params.id) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await getPatientById(params.id as string);
+
+        if (result.success && result.value) {
+          const transformedPatient = transformPatientDetailFromApi(
+            result.value
+          );
+          setPatient(transformedPatient);
+        } else {
+          setError(result.error || "Erro ao carregar paciente");
+        }
+      } catch {
+        setError("Erro ao carregar paciente");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatient();
+  }, [params.id]);
+
+  if (loading) {
+    return (
+      <div>
+        <Link href="/patients" className="button button-link">
+          Voltar
+        </Link>
+        <div>Carregando...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <Link href="/patients" className="button button-link">
+          Voltar
+        </Link>
+        <div className="text-red-600">{error}</div>
+      </div>
+    );
+  }
 
   if (!patient) {
     return (
@@ -43,13 +77,8 @@ export default function PatientDetailPage() {
     );
   }
 
-  // Find previous and future attendances for this patient
-  const allAttendances = attendances.filter((a) =>
-    a.patients.includes(patient.name)
-  );
-  const today = new Date().toISOString().slice(0, 10);
-  // const previous = allAttendances.filter((a) => a.date < today); // not used
-  const future = allAttendances.filter((a) => a.date >= today);
+  // TODO: Filter attendances for this patient when we have proper attendance structure
+  const future: unknown[] = []; // Temporarily empty until we implement patient-specific attendance loading
 
   return (
     <>
@@ -174,7 +203,8 @@ export default function PatientDetailPage() {
           </h3>
           {future.length > 0 ? (
             <ul className="ml-4 list-disc text-sm">
-              {future.map((a, i) => (
+              {/* TODO: Update this when we have proper attendance structure */}
+              {/* {future.map((a, i) => (
                 <li key={a.date.toISOString() + i}>
                   {formatDateBR(a.date.toISOString())} (
                   {a.type === "spiritual"
@@ -182,7 +212,8 @@ export default function PatientDetailPage() {
                     : "Banho de Luz/Bastão"}
                   )
                 </li>
-              ))}
+              ))} */}
+              <li>Atendimentos futuros serão exibidos aqui</li>
             </ul>
           ) : (
             <div className="text-sm text-gray-500">

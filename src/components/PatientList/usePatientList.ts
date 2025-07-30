@@ -3,7 +3,13 @@ import { IPatients } from "@/types/globals";
 import { usePatients } from "@/contexts/PatientsContext";
 
 export function usePatientList() {
-  const { patients: contextPatients, setPatients: setContextPatients } = usePatients();
+  const { 
+    patients: contextPatients, 
+    setPatients: setContextPatients,
+    loading,
+    error,
+    refreshPatients
+  } = usePatients();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<keyof IPatients | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
@@ -92,5 +98,8 @@ export function usePatientList() {
     paginated,
     statusLegend,
     priorityLegend,
+    loading,
+    error,
+    refreshPatients,
   };
 }

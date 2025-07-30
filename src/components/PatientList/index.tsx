@@ -16,7 +16,40 @@ const PatientList: React.FC = () => {
     paginated,
     statusLegend,
     priorityLegend,
+    loading,
+    error,
+    refreshPatients,
   } = usePatientList();
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
+        <h2 className="text-xl font-bold text-[color:var(--primary-dark)] mb-4">
+          Pacientes
+        </h2>
+        <div className="text-center py-8">Carregando pacientes...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
+        <h2 className="text-xl font-bold text-[color:var(--primary-dark)] mb-4">
+          Pacientes
+        </h2>
+        <div className="text-center py-8">
+          <div className="text-red-600 mb-4">{error}</div>
+          <button 
+            onClick={refreshPatients}
+            className="button button-primary"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
