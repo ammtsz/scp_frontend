@@ -13,8 +13,8 @@ import {
   getNextAttendanceDate,
   bulkUpdateAttendanceStatus,
 } from "@/api/attendances";
+import { transformAttendanceWithPatientByDate } from "@/utils/apiTransformers";
 import { IAttendanceByDate } from "@/types/globals";
-import { transformAttendanceWithPatientByDate } from "@/utils/camelCaseTransformers";
 import { AttendanceStatus } from "@/api/types";
 
 interface AttendancesContextProps {
@@ -47,7 +47,7 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
     new Date().toISOString().slice(0, 10)
   );
 
-  // Enhanced function using automatic case conversion
+  // Simple function without useCallback to avoid dependency issues
   const loadAttendancesByDate = async (
     date: string
   ): Promise<IAttendanceByDate | null> => {
@@ -55,17 +55,20 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
       setDataLoading(true);
       setError(null);
 
-      // Using existing API but with automatic case conversion
       const result = await getAttendancesByDate(date);
 
       if (result.success && result.value) {
-        // Transform the structure for component format
-        // Note: We still use the existing transformer for now, but it now gets camelCase data
+        // Transform the data with patient information
         const attendancesByDateMapped = transformAttendanceWithPatientByDate(
-          result.value, // Keep using original for compatibility
+          result.value,
           date
         );
+        console.log({
+          attendancesApi: result.value,
+          attendancesMapped: attendancesByDateMapped,
+        });
 
+        // Always update the current attendances
         setAttendancesByDate(attendancesByDateMapped);
         return attendancesByDateMapped;
       } else {
@@ -89,12 +92,10 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
   const initializeSelectedDate = useCallback(async () => {
     try {
       setLoading(true);
-
-      // Using existing API with case conversion
       const result = await getNextAttendanceDate();
-
       if (result.success && result.value?.next_date) {
-        setSelectedDate(result.value.next_date);
+        const nextDate = result.value.next_date;
+        setSelectedDate(nextDate);
       } else {
         const today = new Date().toISOString().slice(0, 10);
         setSelectedDate(today);
@@ -114,12 +115,10 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
     status: string
   ): Promise<boolean> => {
     try {
-      // Using existing API with case conversion for the request
       const result = await bulkUpdateAttendanceStatus(
         ids,
         status as AttendanceStatus
       );
-
       if (result.success) {
         // Refresh current date after bulk update
         await refreshCurrentDate();
