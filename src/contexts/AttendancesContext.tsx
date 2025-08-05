@@ -14,7 +14,7 @@ import {
   bulkUpdateAttendanceStatus,
 } from "@/api/attendances";
 import { IAttendanceByDate } from "@/types/globals";
-import { transformAttendanceWithPatientByDate } from "@/utils/camelCaseTransformers";
+import { transformAttendanceWithPatientByDate } from "@/utils/apiTransformers";
 import { AttendanceStatus } from "@/api/types";
 
 interface AttendancesContextProps {
