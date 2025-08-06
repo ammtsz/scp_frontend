@@ -1,4 +1,4 @@
-import api from './axios';
+import api from '../axios';
 
 describe('Axios Configuration', () => {
   it('should have correct base URL', () => {

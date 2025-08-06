@@ -4,8 +4,8 @@ import {
   createPatient,
   updatePatient,
   deletePatient
-} from './index';
-import { PatientPriority } from '../types';
+} from '../index';
+import { PatientPriority } from '../../types';
 
 // Mock the api instance
 jest.mock('@/api/lib/axios', () => ({

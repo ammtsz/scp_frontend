@@ -1,4 +1,4 @@
-import { transformAttendancesToAgenda } from './agendaTransformers';
+import { transformAttendancesToAgenda } from '../agendaTransformers';
 import { 
   AttendanceResponseDto,
   PatientResponseDto,

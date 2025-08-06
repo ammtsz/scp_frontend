@@ -1,4 +1,4 @@
-import { transformPriority, transformStatus, transformAttendanceType, transformAttendanceProgression } from './apiTransformers';
+import { transformPriority, transformStatus, transformAttendanceType, transformAttendanceProgression } from '../apiTransformers';
 import { PatientPriority, TreatmentStatus, AttendanceType, AttendanceStatus } from '@/api/types';
 
 describe('API Transformers', () => {

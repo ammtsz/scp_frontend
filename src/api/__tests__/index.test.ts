@@ -1,9 +1,9 @@
-import * as patientApi from './patients';
-import * as attendanceApi from './attendances';
-import * as treatmentRecordApi from './treatment-records';
-import * as scheduleSettingApi from './schedule-settings';
-import * as types from './types';
-import * as utils from './utils/functions';
+import * as patientApi from '../patients';
+import * as attendanceApi from '../attendances';
+import * as treatmentRecordApi from '../treatment-records';
+import * as scheduleSettingApi from '../schedule-settings';
+import * as types from '../types';
+import * as utils from '../utils/functions';
 
 // Test that all API modules are properly exported
 describe('API Index Exports', () => {

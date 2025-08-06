@@ -1,4 +1,4 @@
-import { getErrorMessage } from './functions';
+import { getErrorMessage } from '../functions';
 
 describe('API Utility Functions', () => {
   describe('getErrorMessage', () => {

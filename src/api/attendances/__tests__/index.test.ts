@@ -8,9 +8,9 @@ import {
   checkInAttendance,
   startAttendance,
   completeAttendance,
-  cancelAttendance
-} from './index';
-import { AttendanceStatus, AttendanceType } from '../types';
+  cancelAttendance,
+} from '../index';
+import { AttendanceStatus, AttendanceType } from '../../types';
 
 // Mock the api instance
 jest.mock('@/api/lib/axios', () => ({

@@ -5,7 +5,7 @@ import {
   updateTreatmentRecord,
   deleteTreatmentRecord,
   getTreatmentRecordByAttendance
-} from './index';
+} from '../index';
 
 // Mock the api instance
 jest.mock('@/api/lib/axios', () => ({
