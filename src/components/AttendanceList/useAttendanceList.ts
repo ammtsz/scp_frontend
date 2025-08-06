@@ -6,6 +6,7 @@ import {
   IPriority,
   IAttendanceStatusDetail,
 } from "@/types/globals";
+import { sortPatientsByPriority } from "@/utils/businessRules";
 import { IDraggedItem } from "./types";
 
 interface ExternalCheckIn {
@@ -93,7 +94,15 @@ export const useAttendanceList = ({
     status: IAttendanceProgression
   ): IAttendanceStatusDetail[] => {
     if (!attendancesByDate) return [];
-    return attendancesByDate[type][status] || [];
+    
+    const patients = attendancesByDate[type][status] || [];
+    
+    // Sort checkedIn patients by priority using business rules
+    if (status === "checkedIn") {
+      return sortPatientsByPriority(patients) as IAttendanceStatusDetail[];
+    }
+    
+    return patients;
   };
 
   // Drag and drop handlers
@@ -102,7 +111,9 @@ export const useAttendanceList = ({
     idx: number,
     status: IAttendanceProgression
   ) => {
-    setDragged({ type, status, idx });
+    const patients = getPatients(type, status);
+    const patient = patients[idx];
+    setDragged({ type, status, idx, name: patient.name });
   };
 
   const handleDragEnd = () => {
@@ -115,10 +126,11 @@ export const useAttendanceList = ({
   ) => {
     if (!dragged || !attendancesByDate) return;
 
-    const fromPatients = getPatients(dragged.type, dragged.status);
-    if (dragged.idx >= fromPatients.length) return;
-
-    const patient = fromPatients[dragged.idx];
+    // Find patient by name in the original data structure
+    const sourceArray = attendancesByDate[dragged.type][dragged.status];
+    const patient = sourceArray.find(p => p.name === dragged.name);
+    
+    if (!patient) return; // Patient not found
 
     // Prevent moves between different consultation types
     if (dragged.type !== toType) {
@@ -156,14 +168,17 @@ export const useAttendanceList = ({
   const performMove = (toType: IAttendanceType, toStatus: IAttendanceProgression) => {
     if (!dragged || !attendancesByDate || !setAttendancesByDate) return;
 
-    const fromPatients = getPatients(dragged.type, dragged.status);
-    const patient = fromPatients[dragged.idx];
-
     // Create a deep copy of attendancesByDate to avoid mutation
     const newAttendancesByDate = JSON.parse(JSON.stringify(attendancesByDate));
 
-    // Remove from source
-    newAttendancesByDate[dragged.type][dragged.status].splice(dragged.idx, 1);
+    // Find and remove patient from source by name (handles sorted lists correctly)
+    const sourceArray = newAttendancesByDate[dragged.type][dragged.status];
+    const patientIndex = sourceArray.findIndex((p: IAttendanceStatusDetail) => p.name === dragged.name);
+    
+    if (patientIndex === -1) return; // Patient not found
+    
+    const patient = sourceArray[patientIndex];
+    sourceArray.splice(patientIndex, 1);
 
     // Add to destination with updated times
     const updatedPatient = { ...patient };
@@ -205,7 +220,11 @@ export const useAttendanceList = ({
   const handleMultiSectionConfirm = () => {
     if (!dragged || !multiSectionPending || !attendancesByDate || !setAttendancesByDate) return;
 
-    const patient = getPatients(dragged.type, dragged.status)[dragged.idx];
+    // Find patient by name in the source array
+    const sourceArray = attendancesByDate[dragged.type][dragged.status];
+    const patient = sourceArray.find(p => p.name === dragged.name);
+    
+    if (!patient) return; // Patient not found
 
     // Create a deep copy of attendancesByDate to avoid mutation
     const newAttendancesByDate = JSON.parse(JSON.stringify(attendancesByDate));
