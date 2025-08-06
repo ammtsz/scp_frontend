@@ -28,6 +28,7 @@ export const useAttendanceList = ({
     selectedDate,
     setSelectedDate,
     attendancesByDate,
+    setAttendancesByDate,
     loading,
     error,
     refreshCurrentDate,
@@ -119,8 +120,18 @@ export const useAttendanceList = ({
 
     const patient = fromPatients[dragged.idx];
 
-    // Check if moving between different sections of the same type
-    if (dragged.type === toType && dragged.status !== toStatus) {
+    // Prevent moves between different consultation types
+    if (dragged.type !== toType) {
+      setDragged(null);
+      return;
+    }
+
+    // Check if patient is scheduled in both consultation types
+    const isInBothTypes = attendancesByDate.spiritual.scheduled.some(p => p.name === patient.name) &&
+                         attendancesByDate.lightBath.scheduled.some(p => p.name === patient.name);
+
+    // If patient is in both types and we're moving from scheduled to checkedIn, show multi-section modal
+    if (isInBothTypes && dragged.status === "scheduled" && toStatus === "checkedIn") {
       setMultiSectionPending({
         name: patient.name,
         fromStatus: dragged.status,
@@ -130,41 +141,59 @@ export const useAttendanceList = ({
       return;
     }
 
-    // For moves between different types, show confirmation
-    setPendingDrop({ toType, toStatus });
-    setConfirmOpen(true);
+    // For same type moves (not involving multi-type scenarios), perform move directly
+    if (dragged.type === toType && dragged.status !== toStatus) {
+      performMove(toType, toStatus);
+      setDragged(null);
+      return;
+    }
+
+    // Same type and same status - no action needed
+    setDragged(null);
   };
 
-  const handleConfirm = () => {
-    if (!dragged || !pendingDrop || !attendancesByDate) return;
+  // Helper function for performing the actual move
+  const performMove = (toType: IAttendanceType, toStatus: IAttendanceProgression) => {
+    if (!dragged || !attendancesByDate || !setAttendancesByDate) return;
 
     const fromPatients = getPatients(dragged.type, dragged.status);
     const patient = fromPatients[dragged.idx];
 
+    // Create a deep copy of attendancesByDate to avoid mutation
+    const newAttendancesByDate = JSON.parse(JSON.stringify(attendancesByDate));
+
     // Remove from source
-    fromPatients.splice(dragged.idx, 1);
+    newAttendancesByDate[dragged.type][dragged.status].splice(dragged.idx, 1);
 
     // Add to destination with updated times
     const updatedPatient = { ...patient };
-    if (pendingDrop.toStatus === "checkedIn") {
+    if (toStatus === "checkedIn") {
       updatedPatient.checkedInTime = new Date();
-    } else if (pendingDrop.toStatus === "onGoing") {
+    } else if (toStatus === "onGoing") {
       updatedPatient.onGoingTime = new Date();
-    } else if (pendingDrop.toStatus === "completed") {
+    } else if (toStatus === "completed") {
       updatedPatient.completedTime = new Date();
     }
 
-    attendancesByDate[pendingDrop.toType][pendingDrop.toStatus].push(
-      updatedPatient
-    );
+    newAttendancesByDate[toType][toStatus].push(updatedPatient);
+
+    // Update state with new object
+    setAttendancesByDate(newAttendancesByDate);
+  };
+
+  const handleConfirm = () => {
+    if (!dragged || !pendingDrop) return;
+
+    // Use the helper function to perform the move
+    performMove(pendingDrop.toType, pendingDrop.toStatus);
 
     // Reset state
     setConfirmOpen(false);
     setPendingDrop(null);
     setDragged(null);
 
-    // Refresh to sync with backend
-    refreshCurrentDate();
+    // Note: Not calling refreshCurrentDate() to avoid overwriting our changes
+    // TODO: In the future, we should update the backend and then refresh
   };
 
   const handleCancel = () => {
@@ -174,38 +203,47 @@ export const useAttendanceList = ({
   };
 
   const handleMultiSectionConfirm = () => {
-    if (!dragged || !multiSectionPending || !attendancesByDate) return;
+    if (!dragged || !multiSectionPending || !attendancesByDate || !setAttendancesByDate) return;
 
-    const fromPatients = getPatients(dragged.type, dragged.status);
-    const patient = fromPatients[dragged.idx];
+    const patient = getPatients(dragged.type, dragged.status)[dragged.idx];
 
-    // Remove from source
-    fromPatients.splice(dragged.idx, 1);
+    // Create a deep copy of attendancesByDate to avoid mutation
+    const newAttendancesByDate = JSON.parse(JSON.stringify(attendancesByDate));
 
-    // Add to destination with updated times
-    const updatedPatient = { ...patient };
-    if (multiSectionPending.toStatus === "checkedIn") {
-      updatedPatient.checkedInTime = new Date();
-    } else if (multiSectionPending.toStatus === "onGoing") {
-      updatedPatient.onGoingTime = new Date();
-    } else if (multiSectionPending.toStatus === "completed") {
-      updatedPatient.completedTime = new Date();
-    }
+    // Move patient in both consultation types
+    ["spiritual", "lightBath"].forEach((type) => {
+      const typeKey = type as IAttendanceType;
+      // Find and remove patient from scheduled in this type
+      const scheduledIndex = newAttendancesByDate[typeKey].scheduled.findIndex(
+        (p: IAttendanceStatusDetail) => p.name === patient.name
+      );
+      if (scheduledIndex !== -1) {
+        const patientToMove = newAttendancesByDate[typeKey].scheduled[scheduledIndex];
+        newAttendancesByDate[typeKey].scheduled.splice(scheduledIndex, 1);
 
-    attendancesByDate[dragged.type][multiSectionPending.toStatus].push(
-      updatedPatient
-    );
+        // Add to checkedIn with updated time
+        const updatedPatient = { ...patientToMove };
+        updatedPatient.checkedInTime = new Date();
+        newAttendancesByDate[typeKey].checkedIn.push(updatedPatient);
+      }
+    });
+
+    // Update state with new object
+    setAttendancesByDate(newAttendancesByDate);
 
     // Reset state
     setMultiSectionModalOpen(false);
     setMultiSectionPending(null);
     setDragged(null);
-
-    // Refresh to sync with backend
-    refreshCurrentDate();
   };
 
   const handleMultiSectionCancel = () => {
+    if (!dragged || !multiSectionPending) return;
+
+    // Move only in the current type (the one being dragged)
+    performMove(dragged.type, multiSectionPending.toStatus);
+
+    // Reset state
     setMultiSectionModalOpen(false);
     setMultiSectionPending(null);
     setDragged(null);

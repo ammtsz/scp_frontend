@@ -50,7 +50,15 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = ({
       <div className="flex-1 flex items-stretch border-1 border-dashed border-[color:var(--border)] rounded p-2">
         <ul
           onDragOver={(e) => {
-            if (dragged && dragged.type === type && dragged.status !== status) {
+            // Allow drop only if:
+            // 1. There's something being dragged
+            // 2. It's the same consultation type
+            // 3. It's not the exact same position (same type AND status)
+            if (
+              dragged &&
+              dragged.type === type &&
+              !(dragged.type === type && dragged.status === status)
+            ) {
               e.preventDefault();
             }
           }}
