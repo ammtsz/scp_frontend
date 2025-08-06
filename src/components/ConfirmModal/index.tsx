@@ -33,7 +33,11 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </div>
         <div className="flex gap-4 justify-end">
           {cancelLabel && (
-            <button className="button button-secondary" onClick={onCancel}>
+            <button
+              className="button button-secondary"
+              onClick={() => onCancel?.()}
+              type="button"
+            >
               {cancelLabel}
             </button>
           )}
@@ -44,6 +48,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 : ""
             }`}
             onClick={onConfirm}
+            type="button"
           >
             {confirmLabel}
           </button>

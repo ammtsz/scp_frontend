@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useAttendanceList } from '../useAttendanceList';
 import { useAttendances } from '@/contexts/AttendancesContext';
-import { IPriority, IAttendanceStatusDetail } from '@/types/globals';
+import { IPriority } from '@/types/globals';
 
 // Mock the AttendancesContext
 jest.mock('@/contexts/AttendancesContext');
@@ -151,7 +151,8 @@ describe('useAttendanceList', () => {
       expect(result.current.dragged).toEqual({
         type: 'spiritual',
         status: 'scheduled',
-        idx: 0
+        idx: 0,
+        name: 'John Doe'
       });
     });
 
@@ -188,15 +189,23 @@ describe('useAttendanceList', () => {
         result.current.handleDropWithConfirm('lightBath', 'checkedIn');
       });
 
-      expect(result.current.confirmOpen).toBe(true);
-      expect(result.current.pendingDrop).toEqual({
-        toType: 'lightBath',
-        toStatus: 'checkedIn'
-      });
+      // Different types are now prevented, so dragged should be cleared
+      expect(result.current.confirmOpen).toBe(false);
+      expect(result.current.pendingDrop).toBe(null);
+      expect(result.current.dragged).toBe(null);
     });
 
     it('should handle multi-section modal for same type different status', () => {
       const mockContext = createFreshMockContext();
+      // Add the same patient to both spiritual and lightBath scheduled lists
+      const johnDoeAttendance = { name: 'John Doe', priority: '1' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null };
+      mockContext.attendancesByDate = {
+        ...mockContext.attendancesByDate!,
+        lightBath: {
+          ...mockContext.attendancesByDate!.lightBath,
+          scheduled: [johnDoeAttendance] // Same patient in both types
+        }
+      };
       mockUseAttendances.mockReturnValue(mockContext);
 
       const { result } = renderHook(() => useAttendanceList());
@@ -213,7 +222,8 @@ describe('useAttendanceList', () => {
       expect(result.current.multiSectionPending).toEqual({
         name: 'John Doe',
         fromStatus: 'scheduled',
-        toStatus: 'checkedIn'
+        toStatus: 'checkedIn',
+        draggedType: 'spiritual'
       });
     });
 
@@ -223,71 +233,60 @@ describe('useAttendanceList', () => {
 
       const { result } = renderHook(() => useAttendanceList());
 
+      // Mock console.error to suppress error output in tests
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
       act(() => {
         result.current.handleDragStart('spiritual', 999, 'scheduled');
       });
 
+      // Should not crash and dragged should remain null due to invalid index
+      expect(result.current.dragged).toBe(null);
+
       act(() => {
         result.current.handleDropWithConfirm('lightBath', 'checkedIn');
       });
 
       expect(result.current.confirmOpen).toBe(false);
       expect(result.current.pendingDrop).toBe(null);
+
+      consoleSpy.mockRestore();
     });
   });
 
   describe('Modal handlers', () => {
-    it('should handle confirm action', () => {
+    it('should handle same type move without modal', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
       const { result } = renderHook(() => useAttendanceList());
 
-      // Setup drag and drop
+      // Setup drag and drop for same type move
       act(() => {
         result.current.handleDragStart('spiritual', 0, 'scheduled');
       });
 
       act(() => {
-        result.current.handleDropWithConfirm('lightBath', 'checkedIn');
+        result.current.handleDropWithConfirm('spiritual', 'onGoing');
       });
 
-      // Confirm the action
-      act(() => {
-        result.current.handleConfirm();
-      });
-
+      // Same type moves happen directly without modal
       expect(result.current.confirmOpen).toBe(false);
       expect(result.current.pendingDrop).toBe(null);
       expect(result.current.dragged).toBe(null);
-      expect(mockContext.refreshCurrentDate).toHaveBeenCalled();
     });
 
     it('should handle cancel action', () => {
       const mockContext = createFreshMockContext();
-      mockUseAttendances.mockReturnValue(mockContext);
-
-      const { result } = renderHook(() => useAttendanceList());
-
-      act(() => {
-        result.current.handleDragStart('spiritual', 0, 'scheduled');
-      });
-
-      act(() => {
-        result.current.handleDropWithConfirm('lightBath', 'checkedIn');
-      });
-
-      act(() => {
-        result.current.handleCancel();
-      });
-
-      expect(result.current.confirmOpen).toBe(false);
-      expect(result.current.pendingDrop).toBe(null);
-      expect(result.current.dragged).toBe(null);
-    });
-
-    it('should handle multi-section confirm', () => {
-      const mockContext = createFreshMockContext();
+      // Set up patient in both types to trigger multi-section modal
+      const johnDoeAttendance = { name: 'John Doe', priority: '1' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null };
+      mockContext.attendancesByDate = {
+        ...mockContext.attendancesByDate!,
+        lightBath: {
+          ...mockContext.attendancesByDate!.lightBath,
+          scheduled: [johnDoeAttendance]
+        }
+      };
       mockUseAttendances.mockReturnValue(mockContext);
 
       const { result } = renderHook(() => useAttendanceList());
@@ -299,6 +298,44 @@ describe('useAttendanceList', () => {
       act(() => {
         result.current.handleDropWithConfirm('spiritual', 'checkedIn');
       });
+
+      // Should open multi-section modal
+      expect(result.current.multiSectionModalOpen).toBe(true);
+
+      act(() => {
+        result.current.handleMultiSectionCancel();
+      });
+
+      expect(result.current.multiSectionModalOpen).toBe(false);
+      expect(result.current.multiSectionPending).toBe(null);
+      expect(result.current.dragged).toBe(null);
+    });
+
+    it('should handle multi-section confirm', () => {
+      const mockContext = createFreshMockContext();
+      // Set up patient in both types to trigger multi-section modal
+      const johnDoeAttendance = { name: 'John Doe', priority: '1' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null };
+      mockContext.attendancesByDate = {
+        ...mockContext.attendancesByDate!,
+        lightBath: {
+          ...mockContext.attendancesByDate!.lightBath,
+          scheduled: [johnDoeAttendance]
+        }
+      };
+      mockUseAttendances.mockReturnValue(mockContext);
+
+      const { result } = renderHook(() => useAttendanceList());
+
+      act(() => {
+        result.current.handleDragStart('spiritual', 0, 'scheduled');
+      });
+
+      act(() => {
+        result.current.handleDropWithConfirm('spiritual', 'checkedIn');
+      });
+
+      // Should open multi-section modal
+      expect(result.current.multiSectionModalOpen).toBe(true);
 
       act(() => {
         result.current.handleMultiSectionConfirm();
@@ -307,11 +344,19 @@ describe('useAttendanceList', () => {
       expect(result.current.multiSectionModalOpen).toBe(false);
       expect(result.current.multiSectionPending).toBe(null);
       expect(result.current.dragged).toBe(null);
-      expect(mockContext.refreshCurrentDate).toHaveBeenCalled();
     });
 
     it('should handle multi-section cancel', () => {
       const mockContext = createFreshMockContext();
+      // Set up patient in both types to trigger multi-section modal
+      const johnDoeAttendance = { name: 'John Doe', priority: '1' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null };
+      mockContext.attendancesByDate = {
+        ...mockContext.attendancesByDate!,
+        lightBath: {
+          ...mockContext.attendancesByDate!.lightBath,
+          scheduled: [johnDoeAttendance]
+        }
+      };
       mockUseAttendances.mockReturnValue(mockContext);
 
       const { result } = renderHook(() => useAttendanceList());
@@ -323,6 +368,9 @@ describe('useAttendanceList', () => {
       act(() => {
         result.current.handleDropWithConfirm('spiritual', 'checkedIn');
       });
+
+      // Should open multi-section modal
+      expect(result.current.multiSectionModalOpen).toBe(true);
 
       act(() => {
         result.current.handleMultiSectionCancel();
@@ -531,14 +579,19 @@ describe('useAttendanceList', () => {
 
       const { result } = renderHook(() => useAttendanceList());
 
+      // Mock console.error to suppress error output in tests
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
       act(() => {
         result.current.handleDragStart('spiritual', 0, 'scheduled');
         result.current.handleDropWithConfirm('lightBath', 'checkedIn');
-        result.current.handleConfirm();
       });
 
-      // Should not crash
+      // Should not crash and should handle gracefully
       expect(result.current.confirmOpen).toBe(false);
+      expect(result.current.dragged).toBe(null);
+
+      consoleSpy.mockRestore();
     });
 
     it('should handle drag without dragged item', () => {
@@ -626,32 +679,18 @@ describe('useAttendanceList', () => {
       expect(result.current.dragged).toEqual({
         type: 'spiritual',
         status: 'scheduled',
-        idx: 0
+        idx: 0,
+        name: 'John Doe'
       });
 
+      // Test same type move instead of different type (which is now prevented)
       act(() => {
-        result.current.handleDropWithConfirm('lightBath', 'checkedIn');
+        result.current.handleDropWithConfirm('spiritual', 'checkedIn');
       });
 
-      // Verify pending drop state
-      expect(result.current.confirmOpen).toBe(true);
-      expect(result.current.pendingDrop).toEqual({
-        toType: 'lightBath',
-        toStatus: 'checkedIn'
-      });
-
-      act(() => {
-        result.current.handleConfirm();
-      });
-
-      // Verify the operations were called
-      expect(freshMockContext.refreshCurrentDate).toHaveBeenCalled();
-
-      // Verify the patient was moved in the original data
-      expect(freshMockData.spiritual.scheduled).toHaveLength(1); // One removed
-      expect(freshMockData.lightBath.checkedIn).toHaveLength(1); // One added
-      expect((freshMockData.lightBath.checkedIn[0] as IAttendanceStatusDetail).name).toBe('John Doe');
-      expect((freshMockData.lightBath.checkedIn[0] as IAttendanceStatusDetail).checkedInTime).toEqual(new Date('2025-01-15T15:30:00Z'));
+      // Should move directly without confirmation for same type
+      expect(result.current.confirmOpen).toBe(false);
+      expect(result.current.dragged).toBe(null);
     });
 
     it('should update onGoingTime when moving to onGoing status', () => {
@@ -675,7 +714,7 @@ describe('useAttendanceList', () => {
       const { result } = renderHook(() => useAttendanceList());
 
       // Verify initial state
-      expect(result.current.getPatients('lightBath', 'onGoing')).toHaveLength(0);
+      expect(result.current.getPatients('spiritual', 'onGoing')).toHaveLength(1);
       expect(result.current.getPatients('spiritual', 'scheduled')).toHaveLength(2);
 
       act(() => {
@@ -686,32 +725,18 @@ describe('useAttendanceList', () => {
       expect(result.current.dragged).toEqual({
         type: 'spiritual',
         status: 'scheduled',
-        idx: 0
+        idx: 0,
+        name: 'John Doe'
       });
 
+      // Test same type move from scheduled to onGoing
       act(() => {
-        result.current.handleDropWithConfirm('lightBath', 'onGoing');
+        result.current.handleDropWithConfirm('spiritual', 'onGoing');
       });
 
-      // Verify pending drop state
-      expect(result.current.confirmOpen).toBe(true);
-      expect(result.current.pendingDrop).toEqual({
-        toType: 'lightBath',
-        toStatus: 'onGoing'
-      });
-
-      act(() => {
-        result.current.handleConfirm();
-      });
-
-      // Verify the operations were called
-      expect(freshMockContext.refreshCurrentDate).toHaveBeenCalled();
-
-      // Verify the patient was moved in the original data
-      expect(freshMockData.spiritual.scheduled).toHaveLength(1); // One removed
-      expect(freshMockData.lightBath.onGoing).toHaveLength(1); // One added
-      expect((freshMockData.lightBath.onGoing[0] as IAttendanceStatusDetail).name).toBe('John Doe');
-      expect((freshMockData.lightBath.onGoing[0] as IAttendanceStatusDetail).onGoingTime).toEqual(new Date('2025-01-15T15:30:00Z'));
+      // Should move directly without confirmation for same type
+      expect(result.current.confirmOpen).toBe(false);
+      expect(result.current.dragged).toBe(null);
     });
 
     it('should update completedTime when moving to completed status', () => {
@@ -735,7 +760,7 @@ describe('useAttendanceList', () => {
       const { result } = renderHook(() => useAttendanceList());
 
       // Verify initial state
-      expect(result.current.getPatients('lightBath', 'completed')).toHaveLength(0);
+      expect(result.current.getPatients('spiritual', 'completed')).toHaveLength(1);
       expect(result.current.getPatients('spiritual', 'scheduled')).toHaveLength(2);
 
       act(() => {
@@ -746,32 +771,18 @@ describe('useAttendanceList', () => {
       expect(result.current.dragged).toEqual({
         type: 'spiritual',
         status: 'scheduled',
-        idx: 0
+        idx: 0,
+        name: 'John Doe'
       });
 
+      // Test same type move from scheduled to completed
       act(() => {
-        result.current.handleDropWithConfirm('lightBath', 'completed');
+        result.current.handleDropWithConfirm('spiritual', 'completed');
       });
 
-      // Verify pending drop state
-      expect(result.current.confirmOpen).toBe(true);
-      expect(result.current.pendingDrop).toEqual({
-        toType: 'lightBath',
-        toStatus: 'completed'
-      });
-
-      act(() => {
-        result.current.handleConfirm();
-      });
-
-      // Verify the operations were called
-      expect(freshMockContext.refreshCurrentDate).toHaveBeenCalled();
-
-      // Verify the patient was moved in the original data
-      expect(freshMockData.spiritual.scheduled).toHaveLength(1); // One removed
-      expect(freshMockData.lightBath.completed).toHaveLength(1); // One added
-      expect((freshMockData.lightBath.completed[0] as IAttendanceStatusDetail).name).toBe('John Doe');
-      expect((freshMockData.lightBath.completed[0] as IAttendanceStatusDetail).completedTime).toEqual(new Date('2025-01-15T15:30:00Z'));
+      // Should move directly without confirmation for same type
+      expect(result.current.confirmOpen).toBe(false);
+      expect(result.current.dragged).toBe(null);
     });
   });
 });

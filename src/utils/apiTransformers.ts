@@ -192,7 +192,6 @@ export const transformAttendancesFromApi = (
 export const transformAttendancesFromApiSimple = (
   apiAttendances: AttendanceResponseDto[]
 ): IAttendanceByDate[] => {
-  console.log({apiAttendances})
   // Group attendances by date
   const attendancesByDate = new Map<string, AttendanceResponseDto[]>();
   
@@ -294,6 +293,9 @@ export const transformAttendanceWithPatientByDate = (
       checkedInTime: apiAttendance.checked_in_at ? new Date(apiAttendance.checked_in_at) : null,
       onGoingTime: apiAttendance.started_at ? new Date(apiAttendance.started_at) : null,
       completedTime: apiAttendance.completed_at ? new Date(apiAttendance.completed_at) : null,
+      // Include IDs for backend sync
+      attendanceId: apiAttendance.id,
+      patientId: apiAttendance.patient_id,
     };
 
     attendance[type][status].push(patient);

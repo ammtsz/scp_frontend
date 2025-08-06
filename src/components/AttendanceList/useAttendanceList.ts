@@ -7,6 +7,7 @@ import {
   IAttendanceStatusDetail,
 } from "@/types/globals";
 import { sortPatientsByPriority } from "@/utils/businessRules";
+import { updateAttendanceStatus } from "@/api/attendanceSync";
 import { IDraggedItem } from "./types";
 
 interface ExternalCheckIn {
@@ -47,6 +48,7 @@ export const useAttendanceList = ({
     name: string;
     fromStatus: IAttendanceProgression;
     toStatus: IAttendanceProgression;
+    draggedType: IAttendanceType;
   } | null>(null);
   const [checkInProcessed, setCheckInProcessed] = useState(false);
   const [collapsed, setCollapsed] = useState<{
@@ -88,6 +90,20 @@ export const useAttendanceList = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalCheckIn, checkInProcessed]); // attendancesByDate intentionally excluded to prevent infinite loop
 
+  // Helper function to find patient by name
+  const findPatient = (type: IAttendanceType, status: IAttendanceProgression, name: string): IAttendanceStatusDetail | undefined => {
+    return attendancesByDate?.[type]?.[status]?.find(p => p.name === name);
+  };
+
+  // Helper function to update patient timestamps
+  const updatePatientTimestamps = (patient: IAttendanceStatusDetail, status: IAttendanceProgression): IAttendanceStatusDetail => {
+    const updates: Partial<IAttendanceStatusDetail> = {};
+    if (status === "checkedIn") updates.checkedInTime = new Date();
+    if (status === "onGoing") updates.onGoingTime = new Date();
+    if (status === "completed") updates.completedTime = new Date();
+    return { ...patient, ...updates };
+  };
+
   // Get patients for a specific type and status
   const getPatients = (
     type: IAttendanceType,
@@ -113,6 +129,10 @@ export const useAttendanceList = ({
   ) => {
     const patients = getPatients(type, status);
     const patient = patients[idx];
+    if (!patient) {
+      console.error('Patient not found at index', idx);
+      return;
+    }
     setDragged({ type, status, idx, name: patient.name });
   };
 
@@ -126,10 +146,8 @@ export const useAttendanceList = ({
   ) => {
     if (!dragged || !attendancesByDate) return;
 
-    // Find patient by name in the original data structure
-    const sourceArray = attendancesByDate[dragged.type][dragged.status];
-    const patient = sourceArray.find(p => p.name === dragged.name);
-    
+    // Find patient by name using helper function
+    const patient = findPatient(dragged.type, dragged.status, dragged.name);
     if (!patient) return; // Patient not found
 
     // Prevent moves between different consultation types
@@ -139,8 +157,8 @@ export const useAttendanceList = ({
     }
 
     // Check if patient is scheduled in both consultation types
-    const isInBothTypes = attendancesByDate.spiritual.scheduled.some(p => p.name === patient.name) &&
-                         attendancesByDate.lightBath.scheduled.some(p => p.name === patient.name);
+    const isInBothTypes = findPatient("spiritual", "scheduled", patient.name) && 
+                         findPatient("lightBath", "scheduled", patient.name);
 
     // If patient is in both types and we're moving from scheduled to checkedIn, show multi-section modal
     if (isInBothTypes && dragged.status === "scheduled" && toStatus === "checkedIn") {
@@ -148,14 +166,16 @@ export const useAttendanceList = ({
         name: patient.name,
         fromStatus: dragged.status,
         toStatus: toStatus,
+        draggedType: dragged.type,
       });
       setMultiSectionModalOpen(true);
+      
       return;
     }
 
     // For same type moves (not involving multi-type scenarios), perform move directly
     if (dragged.type === toType && dragged.status !== toStatus) {
-      performMove(toType, toStatus);
+      performMove(toType, toStatus); // Note: not awaiting here to keep UI responsive
       setDragged(null);
       return;
     }
@@ -165,42 +185,54 @@ export const useAttendanceList = ({
   };
 
   // Helper function for performing the actual move
-  const performMove = (toType: IAttendanceType, toStatus: IAttendanceProgression) => {
+  const performMove = async (toType: IAttendanceType, toStatus: IAttendanceProgression) => {
     if (!dragged || !attendancesByDate || !setAttendancesByDate) return;
 
-    // Create a deep copy of attendancesByDate to avoid mutation
-    const newAttendancesByDate = JSON.parse(JSON.stringify(attendancesByDate));
+    // Find patient using helper function
+    const patient = findPatient(dragged.type, dragged.status, dragged.name);
+    if (!patient) return; // Patient not found
 
-    // Find and remove patient from source by name (handles sorted lists correctly)
-    const sourceArray = newAttendancesByDate[dragged.type][dragged.status];
-    const patientIndex = sourceArray.findIndex((p: IAttendanceStatusDetail) => p.name === dragged.name);
-    
-    if (patientIndex === -1) return; // Patient not found
-    
-    const patient = sourceArray[patientIndex];
-    sourceArray.splice(patientIndex, 1);
-
-    // Add to destination with updated times
-    const updatedPatient = { ...patient };
-    if (toStatus === "checkedIn") {
-      updatedPatient.checkedInTime = new Date();
-    } else if (toStatus === "onGoing") {
-      updatedPatient.onGoingTime = new Date();
-    } else if (toStatus === "completed") {
-      updatedPatient.completedTime = new Date();
+    // Sync with backend if attendanceId is available
+    if (patient.attendanceId) {
+      const result = await updateAttendanceStatus(patient.attendanceId, toStatus);
+      if (!result.success) {
+        console.warn('Backend sync failed, continuing with local update');
+      }
     }
 
-    newAttendancesByDate[toType][toStatus].push(updatedPatient);
+    // Create immutable update by spreading arrays
+    let newAttendancesByDate = { ...attendancesByDate };
+    
+    // Update source type (remove patient)
+    newAttendancesByDate = {
+      ...newAttendancesByDate,
+      [dragged.type]: {
+        ...newAttendancesByDate[dragged.type],
+        [dragged.status]: newAttendancesByDate[dragged.type][dragged.status].filter(p => p.name !== dragged.name)
+      }
+    };
+    
+    // Update destination type (add patient)
+    newAttendancesByDate = {
+      ...newAttendancesByDate,
+      [toType]: {
+        ...newAttendancesByDate[toType],
+        [toStatus]: [
+          ...newAttendancesByDate[toType][toStatus],
+          updatePatientTimestamps(patient, toStatus)
+        ]
+      }
+    };
 
     // Update state with new object
     setAttendancesByDate(newAttendancesByDate);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!dragged || !pendingDrop) return;
 
     // Use the helper function to perform the move
-    performMove(pendingDrop.toType, pendingDrop.toStatus);
+    await performMove(pendingDrop.toType, pendingDrop.toStatus);
 
     // Reset state
     setConfirmOpen(false);
@@ -208,7 +240,7 @@ export const useAttendanceList = ({
     setDragged(null);
 
     // Note: Not calling refreshCurrentDate() to avoid overwriting our changes
-    // TODO: In the future, we should update the backend and then refresh
+    // Backend sync is handled in performMove()
   };
 
   const handleCancel = () => {
@@ -217,33 +249,46 @@ export const useAttendanceList = ({
     setDragged(null);
   };
 
-  const handleMultiSectionConfirm = () => {
-    if (!dragged || !multiSectionPending || !attendancesByDate || !setAttendancesByDate) return;
+  const handleMultiSectionConfirm = async () => {
+    if (!multiSectionPending || !attendancesByDate || !setAttendancesByDate) return;
 
-    // Find patient by name in the source array
-    const sourceArray = attendancesByDate[dragged.type][dragged.status];
-    const patient = sourceArray.find(p => p.name === dragged.name);
-    
+    // Find patient using helper function
+    const patient = findPatient(multiSectionPending.draggedType, multiSectionPending.fromStatus, multiSectionPending.name);
     if (!patient) return; // Patient not found
 
-    // Create a deep copy of attendancesByDate to avoid mutation
-    const newAttendancesByDate = JSON.parse(JSON.stringify(attendancesByDate));
+    // Sync with backend for both types if attendanceIds are available
+    const syncPromises = (["spiritual", "lightBath"] as IAttendanceType[])
+      .map(type => findPatient(type, "scheduled", patient.name))
+      .filter(p => p?.attendanceId)
+      .map(p => updateAttendanceStatus(p!.attendanceId!, "checkedIn"));
 
-    // Move patient in both consultation types
-    ["spiritual", "lightBath"].forEach((type) => {
-      const typeKey = type as IAttendanceType;
-      // Find and remove patient from scheduled in this type
-      const scheduledIndex = newAttendancesByDate[typeKey].scheduled.findIndex(
-        (p: IAttendanceStatusDetail) => p.name === patient.name
-      );
-      if (scheduledIndex !== -1) {
-        const patientToMove = newAttendancesByDate[typeKey].scheduled[scheduledIndex];
-        newAttendancesByDate[typeKey].scheduled.splice(scheduledIndex, 1);
+    // Wait for all backend syncs to complete
+    if (syncPromises.length > 0) {
+      try {
+        await Promise.all(syncPromises);
+      } catch {
+        console.warn('Some backend syncs failed, continuing with local update');
+      }
+    }
 
-        // Add to checkedIn with updated time
-        const updatedPatient = { ...patientToMove };
-        updatedPatient.checkedInTime = new Date();
-        newAttendancesByDate[typeKey].checkedIn.push(updatedPatient);
+    // Create immutable update for both consultation types
+    let newAttendancesByDate = { ...attendancesByDate };
+    
+    (["spiritual", "lightBath"] as IAttendanceType[]).forEach((type) => {
+      const patientToMove = findPatient(type, "scheduled", patient.name);
+      
+      if (patientToMove) {
+        newAttendancesByDate = {
+          ...newAttendancesByDate,
+          [type]: {
+            ...newAttendancesByDate[type],
+            scheduled: newAttendancesByDate[type].scheduled.filter(p => p.name !== patient.name),
+            checkedIn: [
+              ...newAttendancesByDate[type].checkedIn,
+              updatePatientTimestamps(patientToMove, "checkedIn")
+            ]
+          }
+        };
       }
     });
 
@@ -256,11 +301,36 @@ export const useAttendanceList = ({
     setDragged(null);
   };
 
-  const handleMultiSectionCancel = () => {
-    if (!dragged || !multiSectionPending) return;
+  const handleMultiSectionCancel = async () => {
+    if (!multiSectionPending || !attendancesByDate || !setAttendancesByDate) return;
 
-    // Move only in the current type (the one being dragged)
-    performMove(dragged.type, multiSectionPending.toStatus);
+    // Find patient using helper function
+    const patient = findPatient(multiSectionPending.draggedType, multiSectionPending.fromStatus, multiSectionPending.name);
+    if (!patient) return;
+
+    // Sync with backend if attendanceId is available
+    if (patient.attendanceId) {
+      const result = await updateAttendanceStatus(patient.attendanceId, multiSectionPending.toStatus);
+      if (!result.success) {
+        console.warn('Backend sync failed, continuing with local update');
+      }
+    }
+
+    // Create immutable update (move only in the dragged type)
+    const newAttendancesByDate = {
+      ...attendancesByDate,
+      [multiSectionPending.draggedType]: {
+        ...attendancesByDate[multiSectionPending.draggedType],
+        [multiSectionPending.fromStatus]: attendancesByDate[multiSectionPending.draggedType][multiSectionPending.fromStatus].filter(p => p.name !== multiSectionPending.name),
+        [multiSectionPending.toStatus]: [
+          ...attendancesByDate[multiSectionPending.draggedType][multiSectionPending.toStatus],
+          updatePatientTimestamps(patient, multiSectionPending.toStatus)
+        ]
+      }
+    };
+
+    // Update state with new object
+    setAttendancesByDate(newAttendancesByDate);
 
     // Reset state
     setMultiSectionModalOpen(false);

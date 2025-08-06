@@ -14,7 +14,14 @@ export interface IRecommendations {
 }
 
 export interface IAttendanceStatusDetail {
-  name: string; priority: IPriority; checkedInTime?: Date | null; onGoingTime?: Date | null; completedTime?: Date | null
+  name: string; 
+  priority: IPriority; 
+  checkedInTime?: Date | null; 
+  onGoingTime?: Date | null; 
+  completedTime?: Date | null;
+  // Backend sync data
+  attendanceId?: number;
+  patientId?: number;
 }
 
 
