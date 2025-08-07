@@ -13,7 +13,8 @@ export default function TabNav() {
   const pathname = usePathname();
   return (
     <nav className="w-full flex flex-row items-center justify-center py-4 px-2 bg-[color:var(--surface)] z-20 sticky top-0">
-      <div className="flex gap-0 w-full border-b border-[color:var(--border)]">
+      <div className="flex w-full bg-gray-50 relative">
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-[#e2e8f0] z-0"></div>
         {tabs.map((tab) => {
           const isActive = pathname.startsWith(tab.href);
           return (

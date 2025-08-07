@@ -61,6 +61,8 @@ describe("NewAttendanceForm - Duplicate Patient Validation", () => {
       error:
         'O paciente "João Silva" já possui atendimento agendado para hoje. Verifique a lista de atendimentos.',
       handleRegisterNewAttendance: mockHandleRegister,
+      handleDeleteAttendance: undefined,
+      getPatientAttendanceDetails: undefined,
     });
 
     render(<NewAttendanceForm />);
@@ -84,6 +86,8 @@ describe("NewAttendanceForm - Duplicate Patient Validation", () => {
       selectedTypes: ["spiritual"],
       priority: "1",
       handleRegisterNewAttendance: mockHandleRegister,
+      handleDeleteAttendance: undefined,
+      getPatientAttendanceDetails: undefined,
     });
 
     render(<NewAttendanceForm />);
@@ -114,6 +118,8 @@ describe("NewAttendanceForm - Duplicate Patient Validation", () => {
       success:
         "Check-in realizado com sucesso! 1 atendimento(s) agendado(s) para 2025-08-12 às 21:00.",
       handleRegisterNewAttendance: mockHandleRegister,
+      handleDeleteAttendance: undefined,
+      getPatientAttendanceDetails: undefined,
     });
 
     render(<NewAttendanceForm />);
@@ -131,7 +137,9 @@ describe("NewAttendanceForm - Duplicate Patient Validation", () => {
     mockUseUnscheduledPatients.mockReturnValue({
       ...defaultHookReturn,
       selectedPatient: "", // No patient selected
-      selectedTypes: [], // No types selected
+      selectedTypes: [],
+      handleDeleteAttendance: undefined,
+      getPatientAttendanceDetails: undefined,
     });
 
     render(<NewAttendanceForm />);
@@ -148,6 +156,8 @@ describe("NewAttendanceForm - Duplicate Patient Validation", () => {
       selectedPatient: "João Silva",
       selectedTypes: ["spiritual"],
       priority: "1",
+      handleDeleteAttendance: undefined,
+      getPatientAttendanceDetails: undefined,
     });
 
     render(<NewAttendanceForm />);

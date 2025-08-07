@@ -104,6 +104,7 @@ This is a Next.js healthcare attendance management system with React, TypeScript
 - **ALWAYS check all changed files** to identify the primary feature/fix/change
 - **Tests are secondary**: Only mention tests in commit messages if the commit exclusively contains test changes
 - **Prioritize features over tests**: New features, fixes, and functional changes should be the focus of commit messages
+- **Use bullet points only for major changes**: Otherwise write a simple paragraph with 1-2 lines maximum
 
 ## Current Status
 
