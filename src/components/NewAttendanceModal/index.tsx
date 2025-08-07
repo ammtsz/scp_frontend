@@ -34,7 +34,7 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] border border-[color:var(--border)]">
+      <div className="bg-white rounded-lg shadow-lg p-6 min-w-96 border border-[color:var(--border)] pb-16">
         <div className="mb-4 text-lg font-bold text-[color:var(--primary-dark)]">
           Novo Agendamento
         </div>
@@ -43,10 +43,10 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
           submitLabel={undefined}
           showDateField
         />
-        <div className="absolute pt-2 -translate-y-12">
+        <div className="absolute w-full pt-2 -translate-y-4 translate-x-4">
           <button
             type="button"
-            className="button button-secondary"
+            className="button button-secondary w-[302px]"
             onClick={onClose}
           >
             Cancelar

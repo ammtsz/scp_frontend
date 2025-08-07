@@ -78,7 +78,7 @@ const AttendanceList: React.FC<{
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
+    <div className="w-full max-w-5xl mx-auto p-8 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
       <h2 className="text-xl font-bold mb-4 text-[color:var(--primary-dark)] flex items-center gap-2">
         Atendimentos de {selectedDate}
       </h2>

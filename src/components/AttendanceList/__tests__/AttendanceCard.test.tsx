@@ -133,6 +133,7 @@ describe("AttendanceCard Component", () => {
         type: "spiritual",
         status: "checkedIn",
         idx: 0,
+        name: "Test Patient",
       };
 
       render(<AttendanceCard {...defaultProps} dragged={draggedItem} />);
@@ -146,6 +147,7 @@ describe("AttendanceCard Component", () => {
         type: "lightBath", // Different type
         status: "checkedIn",
         idx: 0,
+        name: "Test Patient",
       };
 
       render(<AttendanceCard {...defaultProps} dragged={draggedItem} />);
@@ -222,6 +224,7 @@ describe("AttendanceCard Component", () => {
           type: "spiritual" as IAttendanceType,
           status: "checkedIn" as IAttendanceProgression,
           idx: 0,
+          name: "Test Patient",
         },
         cardProps: {
           type: "spiritual" as IAttendanceType,
@@ -236,6 +239,7 @@ describe("AttendanceCard Component", () => {
           type: "lightBath" as IAttendanceType,
           status: "checkedIn" as IAttendanceProgression,
           idx: 0,
+          name: "Test Patient",
         },
         cardProps: {
           type: "spiritual" as IAttendanceType,
@@ -250,6 +254,7 @@ describe("AttendanceCard Component", () => {
           type: "spiritual" as IAttendanceType,
           status: "scheduled" as IAttendanceProgression,
           idx: 0,
+          name: "Test Patient",
         },
         cardProps: {
           type: "spiritual" as IAttendanceType,
@@ -264,6 +269,7 @@ describe("AttendanceCard Component", () => {
           type: "spiritual" as IAttendanceType,
           status: "checkedIn" as IAttendanceProgression,
           idx: 1,
+          name: "Test Patient",
         },
         cardProps: {
           type: "spiritual" as IAttendanceType,

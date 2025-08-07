@@ -218,7 +218,7 @@ describe("AttendanceColumn Component", () => {
         type: "spiritual",
         status: "checkedIn",
         idx: 0,
-        name: "Test Patient",
+        name: "Test Patient"
       };
 
       render(<AttendanceColumn {...defaultProps} dragged={draggedItem} />);
@@ -234,7 +234,6 @@ describe("AttendanceColumn Component", () => {
         type: "spiritual",
         status: "checkedIn",
         idx: 0,
-        name: "Test Patient",
       };
 
       render(<AttendanceColumn {...defaultProps} dragged={draggedItem} />);
@@ -278,7 +277,6 @@ describe("AttendanceColumn Component", () => {
         type: "spiritual",
         status: "scheduled", // Different status to trigger preventDefault
         idx: 0,
-        name: "Test Patient",
       };
 
       render(<AttendanceColumn {...defaultProps} dragged={draggedItem} />);
@@ -399,7 +397,6 @@ describe("AttendanceColumn Component", () => {
         type: "lightBath",
         status: "scheduled",
         idx: 0,
-        name: "Test Patient",
       };
 
       render(<AttendanceColumn {...defaultProps} dragged={draggedItem} />);

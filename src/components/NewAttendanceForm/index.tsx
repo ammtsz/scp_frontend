@@ -6,6 +6,7 @@ import {
 } from "../UnscheduledPatients/useUnscheduledPatients";
 import { IPriority } from "@/types/globals";
 import ConfirmModal from "@/components/ConfirmModal";
+import Switch from "@/components/Switch";
 
 interface NewAttendanceFormProps {
   onRegisterNewAttendance?: (
@@ -42,36 +43,19 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
     handleInputChange,
     handleSelect,
     handleTypeCheckbox,
-  } = useUnscheduledPatients();
+    isSubmitting,
+    error,
+    success,
+  } = useUnscheduledPatients(onRegisterNewAttendance);
 
   const [modalOpen, setModalOpen] = React.useState(false);
   const [date, setDate] = React.useState("");
-  const [patientExists, setPatientExists] = React.useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isNewPatient) {
-      // Check if patient already exists
-      const exists = filteredPatients.some(
-        (p) => p.name.trim().toLowerCase() === search.trim().toLowerCase()
-      );
-      if (exists) {
-        setPatientExists(true);
-        return;
-      } else {
-        setPatientExists(false);
-      }
-    }
-    const success = handleRegisterNewAttendance(e);
-    if (success && onRegisterNewAttendance) {
-      onRegisterNewAttendance(
-        isNewPatient ? search : selectedPatient,
-        selectedTypes,
-        isNewPatient,
-        priority,
-        showDateField ? date : undefined
-      );
-    }
+
+    const success = await handleRegisterNewAttendance(e);
+
     if (success && showSuccessModal) {
       setModalOpen(true);
       setHasNewAttendance(false);
@@ -80,10 +64,10 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
 
   return (
     <>
-      <form className="" onSubmit={handleSubmit} autoComplete="off">
+      <form className="p-4" onSubmit={handleSubmit} autoComplete="off">
         {showDateField && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Data</label>
+          <div className="mb-8">
+            <label className="block font-bold mb-1">Data</label>
             <input
               type="date"
               className="input w-full"
@@ -94,7 +78,18 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
             />
           </div>
         )}
-        <div className="relative mb-2">
+        <label className="block font-bold mb-1">Nome do Paciente</label>
+        <Switch
+          id="new-patient-switch"
+          checked={isNewPatient}
+          onChange={setIsNewPatient}
+          disabled={isSubmitting}
+          label="Novo paciente"
+          labelPosition="right"
+          size="sm"
+          className="mb-2"
+        />
+        <div className="relative mb-8">
           {isNewPatient ? (
             <>
               <input
@@ -103,12 +98,8 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
                 value={search}
                 onChange={handleInputChange}
                 required
+                disabled={isSubmitting}
               />
-              {patientExists && (
-                <span className="mt-1 text-xs text-red-600">
-                  Paciente já cadastrado.
-                </span>
-              )}
             </>
           ) : (
             <>
@@ -119,6 +110,7 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
                 onChange={handleInputChange}
                 onFocus={() => setShowDropdown(true)}
                 required
+                disabled={isSubmitting}
               />
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
               {showDropdown && search && filteredPatients.length > 0 && (
@@ -137,25 +129,15 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
             </>
           )}
         </div>
-        <div className="flex items-center gap-2 mb-4">
-          <input
-            id="new-patient-checkbox"
-            type="checkbox"
-            checked={isNewPatient}
-            onChange={(e) => setIsNewPatient(e.target.checked)}
-          />
-          <label htmlFor="new-patient-checkbox" className="text-sm select-none">
-            Novo paciente
-          </label>
-        </div>
         <div className="mb-4">
           {isNewPatient ? (
             <>
               <label className="block font-bold mb-1">Prioridade</label>
               <select
-                className="input w-full"
+                className="input w-full h-10"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as IPriority)}
+                disabled={isSubmitting}
               >
                 <option value="1">1 - Alta</option>
                 <option value="2">2 - Média</option>
@@ -165,27 +147,54 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
           ) : null}
         </div>
         <div className="mb-4">
-          <label className="block font-bold mb-1">Tipo de atendimento</label>
-          <div className="flex gap-4">
+          <label className="block font-bold mb-2 mt-8">
+            Tipo de atendimento
+          </label>
+          <div className="flex flex-col gap-3">
             {attendanceTypes.map((type) => (
-              <label key={type.value} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  value={type.value}
-                  checked={selectedTypes.includes(type.value)}
-                  onChange={handleTypeCheckbox}
-                />
-                <span>{type.label}</span>
-              </label>
+              <Switch
+                key={type.value}
+                id={`attendance-type-${type.value}`}
+                checked={selectedTypes.includes(type.value)}
+                onChange={(checked) => {
+                  const event = {
+                    target: {
+                      value: type.value,
+                      checked: checked,
+                    },
+                  } as React.ChangeEvent<HTMLInputElement>;
+                  handleTypeCheckbox(event);
+                }}
+                disabled={isSubmitting}
+                label={type.label}
+                labelPosition="right"
+                size="sm"
+              />
             ))}
           </div>
         </div>
-        <div className="flex justify-end">
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
+            {success}
+          </div>
+        )}
+
+        <div className="w-full">
           <button
             type="submit"
-            className="button button-primary mt-6"
+            className="button button-primary mt-6 w-full"
             disabled={
-              isNewPatient
+              isSubmitting ||
+              (isNewPatient
                 ? !search ||
                   selectedTypes.length === 0 ||
                   !priority ||
@@ -193,19 +202,20 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
                 : !selectedPatient ||
                   selectedTypes.length === 0 ||
                   !priority ||
-                  (showDateField && !date)
+                  (showDateField && !date))
             }
           >
-            {submitLabel}
+            {isSubmitting ? "Processando..." : submitLabel}
           </button>
         </div>
       </form>
       {showSuccessModal && (
         <ConfirmModal
           open={modalOpen}
-          message="Salvo com sucesso!"
-          confirmLabel="Fechar"
+          message="Check-in realizado com sucesso!"
+          confirmLabel="Ok"
           onConfirm={() => setModalOpen(false)}
+          cancelLabel=""
         />
       )}
     </>
