@@ -101,6 +101,9 @@ This is a Next.js healthcare attendance management system with React, TypeScript
 - Write concise messages (1-4 lines max)
 - Format: `feat/fix/refactor: brief description`
 - Include main feature changes in commit message
+- **ALWAYS check all changed files** to identify the primary feature/fix/change
+- **Tests are secondary**: Only mention tests in commit messages if the commit exclusively contains test changes
+- **Prioritize features over tests**: New features, fixes, and functional changes should be the focus of commit messages
 
 ## Current Status
 
