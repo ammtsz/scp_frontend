@@ -29,6 +29,13 @@ This is a Next.js healthcare attendance management system with React, TypeScript
 - **Multi-Type Attendances**: Spiritual and Light Bath treatments
 - **Status Progression**: Scheduled → Checked In → In Progress → Completed
 - **Backend Synchronization**: Automatic API calls for status changes with proper timestamps
+- **Unscheduled Patients**: Complete backend integration for walk-in patients
+  - New patient creation with immediate check-in
+  - Existing patient attendance scheduling
+  - Multiple attendance type support
+  - Error handling and validation
+- **Switch Component**: Modern toggle interface replacing checkboxes
+- **Form Management**: Comprehensive validation and error states
 
 ## Development Guidelines
 

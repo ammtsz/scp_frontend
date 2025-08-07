@@ -27,24 +27,23 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Default input styles */
 .input, input[type="text"], input[type="date"], input[type="number"], input[type="tel"], input[type="email"] {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  background: var(--background);
+  border: none;
+  background: #ffffff;
   color: var(--primary);
   border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  box-shadow: 0 1px 4px 0 rgb(0 0 0 / 0.4);
   transition: all 0.2s;
   outline: none;
 }
 .input:focus, input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, input[type="tel"]:focus, input[type="email"]:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary);
+  box-shadow: 0 2px 6px 0 rgb(0 0 0 / 0.4), 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 .input::placeholder, input[type="text"]::placeholder, input[type="date"]::placeholder, input[type="number"]::placeholder, input[type="tel"]::placeholder, input[type="email"]::placeholder {
   color: var(--primary-light);
@@ -53,34 +52,32 @@ body {
 .select, select {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  background: var(--background);
+  border: none;
+  background: #ffffff;
   color: var(--primary);
   border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  box-shadow: 0 1px 4px 0 rgb(0 0 0 / 0.4);
   transition: all 0.2s;
   outline: none;
 }
 .select:focus, select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary);
+  box-shadow: 0 2px 6px 0 rgb(0 0 0 / 0.4), 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 .textarea, textarea {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  background: var(--background);
+  border: none;
+  background: #ffffff;
   color: var(--primary);
   border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  box-shadow: 0 1px 4px 0 rgb(0 0 0 / 0.4);
   transition: all 0.2s;
   outline: none;
   resize: none;
 }
 .textarea:focus, textarea:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary);
+  box-shadow: 0 2px 6px 0 rgb(0 0 0 / 0.4), 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 .textarea::placeholder, textarea::placeholder {
   color: var(--primary-light);
@@ -202,4 +199,11 @@ button[disabled] {
 }
 .group:hover .legend-tag {
   display: flex;
+}
+
+/* Card shadow utility class */
+.card-shadow {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px 0 rgba(0,0,0,0.30);
 }

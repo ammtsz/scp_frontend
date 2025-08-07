@@ -19,6 +19,7 @@ interface AttendanceColumnProps {
   ) => void;
   handleDragEnd: () => void;
   handleDrop: (type: IAttendanceType, status: IAttendanceProgression) => void;
+  onDelete?: (attendanceId: number, patientName: string) => void;
 }
 
 const AttendanceColumn: React.FC<AttendanceColumnProps> = ({
@@ -29,6 +30,7 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = ({
   handleDragStart,
   handleDragEnd,
   handleDrop,
+  onDelete,
 }) => {
   const getStatusConfig = (status: IAttendanceProgression) => {
     const statusConfig = {
@@ -47,7 +49,7 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = ({
       <div className={`mb-2 font-semibold text-center ${config.color}`}>
         {config.label}
       </div>
-      <div className="flex-1 flex items-stretch border-1 border-dashed border-[color:var(--border)] rounded p-2">
+      <div className="flex-1 flex items-stretch border-1 border-dashed border-gray-300 rounded p-2">
         <ul
           onDragOver={(e) => {
             // Allow drop only if:
@@ -81,6 +83,7 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = ({
               dragged={dragged}
               handleDragStart={handleDragStart}
               handleDragEnd={handleDragEnd}
+              onDelete={onDelete}
               isNextToBeAttended={status === "checkedIn" && idx === 0}
             />
           ))}

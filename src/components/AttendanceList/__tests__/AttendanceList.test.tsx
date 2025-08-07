@@ -4,6 +4,21 @@ import "@testing-library/jest-dom";
 import AttendanceList from "../index";
 import { useAttendanceList } from "../useAttendanceList";
 import { IPriority, IAttendanceByDate } from "@/types/globals";
+import { PatientsProvider } from "@/contexts/PatientsContext";
+import { AttendancesProvider } from "@/contexts/AttendancesContext";
+import { getPatients } from "@/api/patients";
+import { getAttendancesByDate, getNextAttendanceDate } from "@/api/attendances";
+
+// Mock the APIs
+jest.mock("@/api/patients");
+jest.mock("@/api/attendances");
+const mockGetPatients = getPatients as jest.MockedFunction<typeof getPatients>;
+const mockGetAttendancesByDate = getAttendancesByDate as jest.MockedFunction<
+  typeof getAttendancesByDate
+>;
+const mockGetNextAttendanceDate = getNextAttendanceDate as jest.MockedFunction<
+  typeof getNextAttendanceDate
+>;
 
 // Mock the custom hook
 jest.mock("../useAttendanceList");
@@ -42,6 +57,15 @@ jest.mock("@/components/ConfirmModal/index", () => {
 // Don't mock AttendanceColumn - use the real component for better coverage
 
 describe("AttendanceList Component", () => {
+  // Helper function to render with providers
+  const renderWithProviders = (component: React.ReactElement) => {
+    return render(
+      <PatientsProvider>
+        <AttendancesProvider>{component}</AttendancesProvider>
+      </PatientsProvider>
+    );
+  };
+
   const mockAttendancesByDate: IAttendanceByDate = {
     date: new Date("2025-01-15"),
     spiritual: {
@@ -124,6 +148,24 @@ describe("AttendanceList Component", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Setup patients API mock
+    mockGetPatients.mockResolvedValue({
+      success: true,
+      value: [],
+    });
+
+    // Setup attendances API mocks
+    mockGetAttendancesByDate.mockResolvedValue({
+      success: true,
+      value: [],
+    });
+
+    mockGetNextAttendanceDate.mockResolvedValue({
+      success: true,
+      value: { next_date: "2025-01-15" },
+    });
+
     // Setup default getPatients implementation
     defaultMockHookReturn.getPatients.mockImplementation(
       (type: string, status: string) => {
@@ -144,7 +186,7 @@ describe("AttendanceList Component", () => {
         loading: true,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       expect(
         screen.getByText("Carregando atendimentos...")
@@ -162,7 +204,7 @@ describe("AttendanceList Component", () => {
         error: errorMessage,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       expect(
         screen.getByText("Erro ao carregar atendimentos")
@@ -180,18 +222,16 @@ describe("AttendanceList Component", () => {
         refreshCurrentDate: mockRefreshCurrentDate,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       fireEvent.click(screen.getByText("Tentar novamente"));
       expect(mockRefreshCurrentDate).toHaveBeenCalled();
     });
 
     it("should render main content when data is loaded", () => {
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
-      expect(
-        screen.getByText("Atendimentos de 2025-01-15")
-      ).toBeInTheDocument();
+      expect(screen.getByText("Data selecionada:")).toBeInTheDocument();
       expect(screen.getByDisplayValue("2025-01-15")).toBeInTheDocument();
       expect(screen.getByText("▼ Consultas Espirituais")).toBeInTheDocument();
       expect(screen.getByText("▼ Banho de Luz/Bastão")).toBeInTheDocument();
@@ -200,7 +240,7 @@ describe("AttendanceList Component", () => {
 
   describe("Date Selection", () => {
     it("should display current selected date", () => {
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       const dateInput = screen.getByDisplayValue("2025-01-15");
       expect(dateInput).toBeInTheDocument();
@@ -214,7 +254,7 @@ describe("AttendanceList Component", () => {
         setSelectedDate: mockSetSelectedDate,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       const dateInput = screen.getByDisplayValue("2025-01-15");
       fireEvent.change(dateInput, { target: { value: "2025-01-16" } });
@@ -225,7 +265,7 @@ describe("AttendanceList Component", () => {
 
   describe("Attendance Type Sections", () => {
     it("should render both spiritual and lightBath sections", () => {
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       expect(screen.getByText("▼ Consultas Espirituais")).toBeInTheDocument();
       expect(screen.getByText("▼ Banho de Luz/Bastão")).toBeInTheDocument();
@@ -238,7 +278,7 @@ describe("AttendanceList Component", () => {
         toggleCollapsed: mockToggleCollapsed,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       fireEvent.click(screen.getByText("▼ Consultas Espirituais"));
       expect(mockToggleCollapsed).toHaveBeenCalledWith("spiritual");
@@ -251,7 +291,7 @@ describe("AttendanceList Component", () => {
         toggleCollapsed: mockToggleCollapsed,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       fireEvent.click(screen.getByText("▼ Banho de Luz/Bastão"));
       expect(mockToggleCollapsed).toHaveBeenCalledWith("lightBath");
@@ -263,7 +303,7 @@ describe("AttendanceList Component", () => {
         collapsed: { spiritual: true, lightBath: false },
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       expect(screen.getByText("▶ Consultas Espirituais")).toBeInTheDocument();
       expect(screen.getByText("▼ Banho de Luz/Bastão")).toBeInTheDocument();
@@ -275,7 +315,7 @@ describe("AttendanceList Component", () => {
         collapsed: { spiritual: true, lightBath: false },
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       // When spiritual is collapsed, there should be fewer "Agendados" titles
       // (only from lightBath section, not spiritual)
@@ -286,7 +326,7 @@ describe("AttendanceList Component", () => {
 
   describe("Attendance Columns", () => {
     it("should render all attendance columns for each type", () => {
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       // Check that real AttendanceColumn components are rendered
       // Each section (spiritual and lightBath) should have these column headers
@@ -300,7 +340,7 @@ describe("AttendanceList Component", () => {
     });
 
     it("should pass correct props to AttendanceColumn components", () => {
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       // Check if patients are rendered with the real component format
       // The patient name is now part of a larger text with priority
@@ -321,7 +361,7 @@ describe("AttendanceList Component", () => {
         getPatients: mockGetPatients,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       // Should be called for each type and status combination
       expect(mockGetPatients).toHaveBeenCalledWith("spiritual", "scheduled");
@@ -342,7 +382,7 @@ describe("AttendanceList Component", () => {
         confirmOpen: true,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
       expect(
@@ -360,7 +400,7 @@ describe("AttendanceList Component", () => {
         handleConfirm: mockHandleConfirm,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       fireEvent.click(screen.getByText("Confirmar"));
       expect(mockHandleConfirm).toHaveBeenCalled();
@@ -374,7 +414,7 @@ describe("AttendanceList Component", () => {
         handleCancel: mockHandleCancel,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       fireEvent.click(screen.getByText("Cancelar"));
       expect(mockHandleCancel).toHaveBeenCalled();
@@ -386,7 +426,7 @@ describe("AttendanceList Component", () => {
         multiSectionModalOpen: true,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
       expect(
@@ -406,7 +446,7 @@ describe("AttendanceList Component", () => {
         handleMultiSectionConfirm: mockHandleMultiSectionConfirm,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       fireEvent.click(screen.getByText("Mover em ambas"));
       expect(mockHandleMultiSectionConfirm).toHaveBeenCalled();
@@ -420,7 +460,7 @@ describe("AttendanceList Component", () => {
         handleMultiSectionCancel: mockHandleMultiSectionCancel,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       fireEvent.click(screen.getByText("Apenas nesta seção"));
       expect(mockHandleMultiSectionCancel).toHaveBeenCalled();
@@ -433,7 +473,7 @@ describe("AttendanceList Component", () => {
         multiSectionModalOpen: false,
       });
 
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       expect(screen.queryByTestId("confirm-modal")).not.toBeInTheDocument();
     });
@@ -448,7 +488,7 @@ describe("AttendanceList Component", () => {
         priority: "1" as IPriority,
       };
 
-      render(<AttendanceList externalCheckIn={externalCheckIn} />);
+      renderWithProviders(<AttendanceList externalCheckIn={externalCheckIn} />);
 
       expect(mockUseAttendanceList).toHaveBeenCalledWith({
         externalCheckIn,
@@ -459,7 +499,9 @@ describe("AttendanceList Component", () => {
     it("should pass onCheckInProcessed callback to hook", () => {
       const mockOnCheckInProcessed = jest.fn();
 
-      render(<AttendanceList onCheckInProcessed={mockOnCheckInProcessed} />);
+      renderWithProviders(
+        <AttendanceList onCheckInProcessed={mockOnCheckInProcessed} />
+      );
 
       expect(mockUseAttendanceList).toHaveBeenCalledWith({
         externalCheckIn: undefined,
@@ -476,7 +518,7 @@ describe("AttendanceList Component", () => {
       };
       const mockOnCheckInProcessed = jest.fn();
 
-      render(
+      renderWithProviders(
         <AttendanceList
           externalCheckIn={externalCheckIn}
           onCheckInProcessed={mockOnCheckInProcessed}
@@ -492,21 +534,21 @@ describe("AttendanceList Component", () => {
 
   describe("Accessibility", () => {
     it("should have proper language attribute on date input", () => {
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       const dateInput = screen.getByDisplayValue("2025-01-15");
       expect(dateInput).toHaveAttribute("lang", "pt-BR");
     });
 
     it("should have proper heading structure", () => {
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
-      const heading = screen.getByText("Atendimentos de 2025-01-15");
+      const heading = screen.getByText("Data selecionada:");
       expect(heading.tagName).toBe("H2");
     });
 
     it("should have buttons that are keyboard accessible", () => {
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       const spiritualButton = screen.getByText("▼ Consultas Espirituais");
       const lightBathButton = screen.getByText("▼ Banho de Luz/Bastão");
@@ -526,7 +568,7 @@ describe("AttendanceList Component", () => {
       };
       const mockCallback = jest.fn();
 
-      const { container } = render(
+      const { container } = renderWithProviders(
         <AttendanceList
           externalCheckIn={externalCheckIn}
           onCheckInProcessed={mockCallback}
@@ -537,17 +579,18 @@ describe("AttendanceList Component", () => {
     });
 
     it("should render without crashing when no props are provided", () => {
-      const { container } = render(<AttendanceList />);
+      const { container } = renderWithProviders(<AttendanceList />);
       expect(container).toBeInTheDocument();
     });
 
     it("should maintain consistent layout structure", () => {
-      render(<AttendanceList />);
+      renderWithProviders(<AttendanceList />);
 
       // Check main container
       const mainContainer = screen
-        .getByText("Atendimentos de 2025-01-15")
+        .getByText("Data selecionada:")
         .closest("div");
+
       expect(mainContainer).toHaveClass(
         "w-full",
         "max-w-5xl",

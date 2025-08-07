@@ -8,6 +8,7 @@ import {
 import ConfirmModal from "@/components/ConfirmModal/index";
 import AttendanceColumn from "./AttendanceColumn";
 import { useAttendanceList } from "./useAttendanceList";
+import { useUnscheduledPatients } from "@/components/UnscheduledPatients/useUnscheduledPatients";
 
 const AttendanceList: React.FC<{
   externalCheckIn?: {
@@ -44,14 +45,23 @@ const AttendanceList: React.FC<{
     refreshCurrentDate,
   } = useAttendanceList({ externalCheckIn, onCheckInProcessed });
 
+  // Add delete functionality
+  const { handleDeleteAttendance } = useUnscheduledPatients();
+
+  const handleDelete = async (attendanceId: number, patientName: string) => {
+    const success = await handleDeleteAttendance(attendanceId, patientName);
+    if (success) {
+      // Refresh the attendance list to reflect the deletion
+      refreshCurrentDate();
+    }
+  };
+
   // Show loading state
   if (loading) {
     return (
-      <div className="w-full max-w-5xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-[color:var(--text-muted)]">
-            Carregando atendimentos...
-          </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-[color:var(--text-muted)]">
+          Carregando atendimentos...
         </div>
       </div>
     );
@@ -60,36 +70,34 @@ const AttendanceList: React.FC<{
   // Show error state
   if (error) {
     return (
-      <div className="w-full max-w-5xl mx-auto p-4 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <div className="text-lg text-red-600">
-            Erro ao carregar atendimentos
-          </div>
-          <div className="text-sm text-[color:var(--text-muted)]">{error}</div>
-          <button
-            className="px-4 py-2 bg-[color:var(--primary)] text-white rounded hover:bg-[color:var(--primary-dark)]"
-            onClick={refreshCurrentDate}
-          >
-            Tentar novamente
-          </button>
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="text-lg text-red-600">
+          Erro ao carregar atendimentos
         </div>
+        <div className="text-sm text-[color:var(--text-muted)]">{error}</div>
+        <button
+          className="px-4 py-2 bg-[color:var(--primary)] text-white rounded hover:bg-[color:var(--primary-dark)]"
+          onClick={refreshCurrentDate}
+        >
+          Tentar novamente
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto p-8 bg-[color:var(--surface)] rounded shadow border border-[color:var(--border)]">
-      <h2 className="text-xl font-bold mb-4 text-[color:var(--primary-dark)] flex items-center gap-2">
-        Atendimentos de {selectedDate}
+    <>
+      <h2 className="text-lg mb-4 text-[color:var(--primary-dark)] flex items-center gap-2">
+        Data selecionada:
       </h2>
       <input
         type="date"
-        className="input mb-4"
+        className="input mb-4 h-11"
         value={selectedDate}
         onChange={(e) => setSelectedDate(e.target.value)}
         lang="pt-BR"
       />
-      <div className="flex flex-col gap-8 w-full">
+      <div className="flex flex-col w-full">
         {(["spiritual", "lightBath"] as IAttendanceType[]).map((type) => (
           <div key={type} className="w-full">
             <button
@@ -101,7 +109,7 @@ const AttendanceList: React.FC<{
                 : (collapsed[type] ? "▶ " : "▼ ") + "Banho de Luz/Bastão"}
             </button>
             {!collapsed[type] && (
-              <div className="flex flex-row gap-4 w-full">
+              <div className="flex flex-row gap-4 w-full mb-8">
                 {(
                   [
                     "scheduled",
@@ -119,6 +127,7 @@ const AttendanceList: React.FC<{
                     handleDragStart={handleDragStart}
                     handleDragEnd={handleDragEnd}
                     handleDrop={() => handleDropWithConfirm(type, status)}
+                    onDelete={handleDelete}
                   />
                 ))}
               </div>
@@ -140,7 +149,7 @@ const AttendanceList: React.FC<{
         onConfirm={handleMultiSectionConfirm}
         onCancel={handleMultiSectionCancel}
       />
-    </div>
+    </>
   );
 };
 

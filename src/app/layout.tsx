@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import TabNav from "@/components/TabNav";
 import { PatientsProvider } from "@/contexts/PatientsContext";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { AgendaProvider } from "@/contexts/AgendaContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -29,13 +25,15 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[color:var(--background)] text-[color:var(--foreground)]`}
+        className={`${inter.variable} antialiased bg-[color:var(--background)] text-[color:var(--foreground)]`}
       >
         <PatientsProvider>
           <AttendancesProvider>
             <AgendaProvider>
               <TabNav />
-              <main className="w-full min-h-screen p-4">{children}</main>
+              <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
+                {children}
+              </main>
             </AgendaProvider>
           </AttendancesProvider>
         </PatientsProvider>

@@ -3,8 +3,37 @@ import { usePatients } from "@/contexts/PatientsContext";
 import { useAttendances } from "@/contexts/AttendancesContext";
 import { IPriority } from "@/types/globals";
 import { createPatient } from "@/api/patients";
-import { createAttendance } from "@/api/attendances";
+import { createAttendance, getNextAttendanceDate, deleteAttendance } from "@/api/attendances";
 import { AttendanceType, PatientPriority } from "@/api/types";
+
+const SCHEDULED_TIME = "21:00";
+
+// Get the next available date based on schedule settings
+const getNextAvailableDate = async (): Promise<string> => {
+  try {
+    const result = await getNextAttendanceDate();
+    if (result.success && result.value?.next_date) {
+      return result.value.next_date;
+    }
+  } catch (error) {
+    console.warn('Error fetching next available date, falling back to next Tuesday:', error);
+  }
+  
+  // Fallback to next Tuesday if API call fails
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const daysUntilTuesday = (2 - dayOfWeek + 7) % 7; // 2 = Tuesday
+  const nextTuesday = new Date(today);
+  
+  // If today is Tuesday, schedule for today, otherwise next Tuesday
+  if (dayOfWeek === 2) {
+    nextTuesday.setDate(today.getDate());
+  } else {
+    nextTuesday.setDate(today.getDate() + (daysUntilTuesday || 7));
+  }
+  
+  return nextTuesday.toISOString().split('T')[0];
+};
 
 export const attendanceTypes = [
   { value: "spiritual", label: "Consulta Espiritual" },
@@ -46,7 +75,7 @@ export function useUnscheduledPatients(
   ) => void
 ) {
   const { patients, refreshPatients } = usePatients();
-  const { selectedDate, refreshCurrentDate } = useAttendances();
+  const { refreshCurrentDate, attendancesByDate } = useAttendances();
   
   // Form state
   const [search, setSearch] = useState("");
@@ -66,6 +95,74 @@ export function useUnscheduledPatients(
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Check if a patient is already scheduled for today
+  const isPatientAlreadyScheduled = (patientName: string): boolean => {
+    if (!attendancesByDate) return false;
+
+    // Check all attendance types (spiritual, lightBath)
+    const allStatuses = ['scheduled', 'checkedIn', 'onGoing', 'completed'] as const;
+    const attendanceTypes = ['spiritual', 'lightBath'] as const;
+
+    for (const type of attendanceTypes) {
+      const typeAttendances = attendancesByDate[type];
+      if (typeAttendances) {
+        for (const status of allStatuses) {
+          const statusAttendances = typeAttendances[status];
+          if (statusAttendances && statusAttendances.some(attendance => 
+            attendance.name.toLowerCase() === patientName.toLowerCase()
+          )) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  };
+
+  // Get attendance details for a specific patient and type
+  const getPatientAttendanceDetails = (patientName: string, attendanceType?: string) => {
+    if (!attendancesByDate) return [];
+
+    const allStatuses = ['scheduled', 'checkedIn', 'onGoing', 'completed'] as const;
+    const attendanceTypes = attendanceType ? [attendanceType] : ['spiritual', 'lightBath'] as const;
+    const attendanceDetails: Array<{
+      attendanceId: number;
+      patientId: number;
+      type: string;
+      status: string;
+      name: string;
+    }> = [];
+
+    for (const type of attendanceTypes) {
+      const typeAttendances = attendancesByDate[type as keyof typeof attendancesByDate];
+      if (typeAttendances && typeof typeAttendances === 'object' && 'scheduled' in typeAttendances) {
+        for (const status of allStatuses) {
+          const statusAttendances = (typeAttendances as any)[status];
+          if (statusAttendances && Array.isArray(statusAttendances)) {
+            const matchingAttendances = statusAttendances.filter((attendance: any) => 
+              attendance.name.toLowerCase() === patientName.toLowerCase() && 
+              attendance.attendanceId && 
+              attendance.patientId
+            );
+            
+            matchingAttendances.forEach((attendance: any) => {
+              attendanceDetails.push({
+                attendanceId: attendance.attendanceId!,
+                patientId: attendance.patientId!,
+                type: type,
+                status: status,
+                name: attendance.name,
+              });
+            });
+          }
+        }
+      }
+    }
+
+    return attendanceDetails;
+  };
 
   const resetForm = () => {
     setSearch("");
@@ -89,6 +186,12 @@ export function useUnscheduledPatients(
       
       if (!name || selectedTypes.length === 0) {
         setError("Por favor, preencha o nome do paciente e selecione pelo menos um tipo de atendimento.");
+        return false;
+      }
+
+      // Check if patient is already scheduled for today
+      if (isPatientAlreadyScheduled(name)) {
+        setError(`O paciente "${name}" já possui atendimento agendado para hoje. Verifique a lista de atendimentos.`);
         return false;
       }
 
@@ -131,22 +234,16 @@ export function useUnscheduledPatients(
         patientId = String(selectedPatientData.id);
       }
 
+      // Get the next available date once for all attendances
+      const nextAvailableDate = await getNextAvailableDate();
+
       // Create attendances for each selected type
       const attendancePromises = selectedTypes.map(async (type) => {
-        // Calculate time slots - stagger by 30 minutes for multiple types
-        const baseTime = new Date();
-        baseTime.setHours(baseTime.getHours() + 1); // Schedule 1 hour from now
-        baseTime.setMinutes(0, 0, 0); // Round to the hour
-        
-        const typeIndex = selectedTypes.indexOf(type);
-        const scheduledTime = new Date(baseTime);
-        scheduledTime.setMinutes(baseTime.getMinutes() + (typeIndex * 30));
-
         return createAttendance({
           patient_id: Number(patientId),
           type: mapAttendanceTypeToBackend(type),
-          scheduled_date: selectedDate || new Date().toISOString().split('T')[0],
-          scheduled_time: scheduledTime.toTimeString().slice(0, 5), // HH:mm format
+          scheduled_date: nextAvailableDate,
+          scheduled_time: SCHEDULED_TIME,
           notes: `Check-in sem agendamento - ${isNewPatient ? 'Novo paciente' : 'Paciente existente'}`,
         });
       });
@@ -156,27 +253,72 @@ export function useUnscheduledPatients(
       // Check if all attendances were created successfully
       const failedCreations = results.filter(result => !result.success);
       if (failedCreations.length > 0) {
-        setError(`Erro ao criar ${failedCreations.length} atendimento(s). Algumas podem ter sido criadas com sucesso.`);
+        // Check for specific error types
+        const hasConflictError = failedCreations.some(result => 
+          result.error?.includes('409') || result.error?.includes('Conflict') || result.error?.includes('slot')
+        );
+        
+        if (hasConflictError) {
+          setError(`Conflito de horário detectado. Tente agendar para outro horário ou data.`);
+        } else {
+          setError(`Erro ao criar ${failedCreations.length} atendimento(s). Algumas podem ter sido criadas com sucesso.`);
+        }
+        
+        // Refresh attendances to show any successful records
+        await refreshCurrentDate();
+        
+        return false; // Return false when there are failures
       } else {
-        setSuccess(`Check-in realizado com sucesso! ${selectedTypes.length} atendimento(s) criado(s).`);
+        const isToday = nextAvailableDate === new Date().toISOString().split('T')[0];
+        const dateMessage = isToday ? 'hoje' : `para ${nextAvailableDate}`;
+        
+        setSuccess(`Check-in realizado com sucesso! ${selectedTypes.length} atendimento(s) agendado(s) ${dateMessage} às ${SCHEDULED_TIME}.`);
+        
+        // Refresh attendances to show the new records
+        await refreshCurrentDate();
+
+        // Call parent callback if provided
+        if (onRegisterNewAttendance) {
+          onRegisterNewAttendance(name, selectedTypes, isNewPatient, priority);
+        }
+
+        // Reset form only on complete success
+        resetForm();
+        setCollapsed(true);
+        
+        return true;
       }
-
-      // Refresh attendances to show the new records
-      await refreshCurrentDate();
-
-      // Call parent callback if provided
-      if (onRegisterNewAttendance) {
-        onRegisterNewAttendance(name, selectedTypes, isNewPatient, priority);
-      }
-
-      // Reset form
-      resetForm();
-      setCollapsed(true);
-      
-      return true;
     } catch (error) {
       console.error("Error in handleRegisterNewAttendance:", error);
       setError("Erro inesperado ao processar check-in. Tente novamente.");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteAttendance = async (attendanceId: number, patientName: string): Promise<boolean> => {
+    setIsSubmitting(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const result = await deleteAttendance(String(attendanceId));
+      
+      if (result.success) {
+        setSuccess(`Atendimento de "${patientName}" removido com sucesso.`);
+        
+        // Refresh attendances to update the current view
+        await refreshCurrentDate();
+        
+        return true;
+      } else {
+        setError(result.error || "Erro ao remover atendimento.");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error in handleDeleteAttendance:", error);
+      setError("Erro inesperado ao remover atendimento. Tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);
@@ -239,6 +381,8 @@ export function useUnscheduledPatients(
     
     // Actions
     handleRegisterNewAttendance,
+    handleDeleteAttendance,
+    getPatientAttendanceDetails,
     handleInputChange,
     handleSelect,
     handleTypeCheckbox,

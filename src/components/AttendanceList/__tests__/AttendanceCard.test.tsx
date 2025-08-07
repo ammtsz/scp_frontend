@@ -10,6 +10,15 @@ import {
 } from "@/types/globals";
 import { IDraggedItem } from "../types";
 
+// Mock react-feather
+jest.mock("react-feather", () => ({
+  X: ({ className }: { className?: string }) => (
+    <div data-testid="x-icon" className={className}>
+      ✕
+    </div>
+  ),
+}));
+
 // Mock the AttendanceTimes component
 jest.mock("../AttendanceTimes", () => {
   return function MockAttendanceTimes({
@@ -38,6 +47,8 @@ describe("AttendanceCard Component", () => {
   const mockPatient: IAttendanceStatusDetail = {
     name: "João Silva",
     priority: "1" as IPriority,
+    attendanceId: 123,
+    patientId: 456,
     checkedInTime: new Date("2025-01-15T09:00:00Z"),
     onGoingTime: null,
     completedTime: null,
@@ -100,32 +111,32 @@ describe("AttendanceCard Component", () => {
   });
 
   describe("Styling", () => {
-    it("should apply correct border color for scheduled status", () => {
+    it("should apply correct styling for scheduled status", () => {
       render(<AttendanceCard {...defaultProps} status="scheduled" />);
 
       const card = screen.getByRole("listitem");
-      expect(card).toHaveClass("border-gray-400");
+      expect(card).toHaveClass("border-l-4", "border-l-blue-400");
     });
 
-    it("should apply correct border color for checkedIn status", () => {
+    it("should apply correct styling for checkedIn status", () => {
       render(<AttendanceCard {...defaultProps} status="checkedIn" />);
 
       const card = screen.getByRole("listitem");
-      expect(card).toHaveClass("border-yellow-400");
+      expect(card).toHaveClass("border-l-4", "border-l-red-400");
     });
 
-    it("should apply correct border color for onGoing status", () => {
+    it("should apply correct styling for onGoing status", () => {
       render(<AttendanceCard {...defaultProps} status="onGoing" />);
 
       const card = screen.getByRole("listitem");
-      expect(card).toHaveClass("border-red-400");
+      expect(card).toHaveClass("border-l-4", "border-l-yellow-400");
     });
 
-    it("should apply correct border color for completed status", () => {
+    it("should apply correct styling for completed status", () => {
       render(<AttendanceCard {...defaultProps} status="completed" />);
 
       const card = screen.getByRole("listitem");
-      expect(card).toHaveClass("border-green-400");
+      expect(card).toHaveClass("border-l-4", "border-l-green-400");
     });
 
     it("should apply dragged opacity when item is being dragged", () => {
@@ -168,8 +179,11 @@ describe("AttendanceCard Component", () => {
         "items-center",
         "justify-center",
         "p-2",
-        "rounded",
-        "border-2",
+        "rounded-lg",
+        "bg-white",
+        "text-center",
+        "font-medium",
+        "transition-all",
         "cursor-move",
         "select-none"
       );
@@ -421,6 +435,79 @@ describe("AttendanceCard Component", () => {
       render(<AttendanceCard {...defaultProps} status="checkedIn" idx={99} />);
 
       expect(screen.getByText(/100\. João Silva \(1\)/)).toBeInTheDocument(); // idx + 1
+    });
+  });
+
+  describe("Delete Functionality", () => {
+    it("shows delete button for scheduled status when onDelete is provided", () => {
+      const mockOnDelete = jest.fn();
+
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          status="scheduled"
+          onDelete={mockOnDelete}
+        />
+      );
+
+      expect(screen.getByTestId("x-icon")).toBeInTheDocument();
+      expect(screen.getByTitle("Apagar")).toBeInTheDocument();
+    });
+
+    it("does not show delete button when onDelete is not provided", () => {
+      render(<AttendanceCard {...defaultProps} status="scheduled" />);
+
+      expect(screen.queryByTestId("x-icon")).not.toBeInTheDocument();
+    });
+
+    it("does not show delete button for non-scheduled status", () => {
+      const mockOnDelete = jest.fn();
+
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          status="onGoing"
+          onDelete={mockOnDelete}
+        />
+      );
+
+      expect(screen.queryByTestId("x-icon")).not.toBeInTheDocument();
+    });
+
+    it("calls onDelete when delete button is clicked", () => {
+      const mockOnDelete = jest.fn();
+
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          status="scheduled"
+          onDelete={mockOnDelete}
+        />
+      );
+
+      const deleteButton = screen.getByTitle("Apagar");
+      fireEvent.click(deleteButton);
+
+      expect(mockOnDelete).toHaveBeenCalledTimes(1);
+      expect(mockOnDelete).toHaveBeenCalledWith(123, "João Silva");
+    });
+
+    it("prevents drag start when delete button is clicked", () => {
+      const mockOnDelete = jest.fn();
+      const mockEvent = { stopPropagation: jest.fn() };
+
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          status="scheduled"
+          onDelete={mockOnDelete}
+        />
+      );
+
+      const deleteButton = screen.getByTitle("Apagar");
+      fireEvent.click(deleteButton, mockEvent);
+
+      expect(mockOnDelete).toHaveBeenCalled();
     });
   });
 });

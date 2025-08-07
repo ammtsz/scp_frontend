@@ -3,12 +3,18 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AttendanceList from "../index";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
+import { PatientsProvider } from "@/contexts/PatientsContext";
 
 // Mock the API functions that AttendancesContext uses
 jest.mock("@/api/attendances", () => ({
   getAttendancesByDate: jest.fn(),
   bulkUpdateAttendanceStatus: jest.fn(),
   getNextAttendanceDate: jest.fn(),
+}));
+
+// Mock the API functions that PatientsContext uses
+jest.mock("@/api/patients", () => ({
+  getPatients: jest.fn(),
 }));
 
 // Mock ConfirmModal since it's external
@@ -44,7 +50,13 @@ import {
   bulkUpdateAttendanceStatus,
   getNextAttendanceDate,
 } from "@/api/attendances";
-import { AttendanceType, AttendanceStatus } from "@/api";
+import { getPatients } from "@/api/patients";
+import {
+  AttendanceType,
+  AttendanceStatus,
+  PatientPriority,
+  TreatmentStatus,
+} from "@/api";
 
 const mockGetAttendancesByDate = getAttendancesByDate as jest.MockedFunction<
   typeof getAttendancesByDate
@@ -56,6 +68,7 @@ const mockBulkUpdateAttendanceStatus =
 const mockGetNextAttendanceDate = getNextAttendanceDate as jest.MockedFunction<
   typeof getNextAttendanceDate
 >;
+const mockGetPatients = getPatients as jest.MockedFunction<typeof getPatients>;
 
 describe("AttendanceList Integration Tests", () => {
   const mockAttendancesData = [
@@ -101,6 +114,31 @@ describe("AttendanceList Integration Tests", () => {
       value: mockAttendancesData,
     });
 
+    // Setup patients API response
+    mockGetPatients.mockResolvedValue({
+      success: true,
+      value: [
+        {
+          id: 1,
+          name: "João Silva",
+          priority: PatientPriority.EMERGENCY,
+          treatment_status: TreatmentStatus.IN_TREATMENT,
+          start_date: "2025-01-01",
+          created_at: "2025-01-01T08:00:00.000Z",
+          updated_at: "2025-01-01T08:00:00.000Z",
+        },
+        {
+          id: 2,
+          name: "Maria Santos",
+          priority: PatientPriority.INTERMEDIATE,
+          treatment_status: TreatmentStatus.IN_TREATMENT,
+          start_date: "2025-01-02",
+          created_at: "2025-01-02T08:00:00.000Z",
+          updated_at: "2025-01-02T08:00:00.000Z",
+        },
+      ],
+    });
+
     mockGetNextAttendanceDate.mockResolvedValue({
       success: true,
       value: { next_date: "2025-01-15" },
@@ -120,9 +158,11 @@ describe("AttendanceList Integration Tests", () => {
 
   const renderWithProvider = (props = {}) => {
     return render(
-      <AttendancesProvider>
-        <AttendanceList {...props} />
-      </AttendancesProvider>
+      <PatientsProvider>
+        <AttendancesProvider>
+          <AttendanceList {...props} />
+        </AttendancesProvider>
+      </PatientsProvider>
     );
   };
 
@@ -220,7 +260,7 @@ describe("AttendanceList Integration Tests", () => {
       );
 
       // Check that the main container has proper structure
-      const mainHeading = screen.getByText(/Atendimentos de/);
+      const mainHeading = screen.getByText(/Data selecionada:/);
       expect(mainHeading).toBeInTheDocument();
 
       // Check date input
