@@ -1,5 +1,6 @@
-import { renderHook, act } from '@testing-library/react';
-import { useUnscheduledPatients } from '../useUnscheduledPatients';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { renderHook, act } from "@testing-library/react";
+import { useUnscheduledPatients } from "../useUnscheduledPatients";
 import { usePatients } from '@/contexts/PatientsContext';
 import { useAttendances } from '@/contexts/AttendancesContext';
 import { createAttendance, getNextAttendanceDate, deleteAttendance } from '@/api/attendances';
@@ -21,7 +22,7 @@ describe('useUnscheduledPatients - Tuesday Only Business Rule', () => {
     jest.clearAllMocks();
     
     // Setup context mocks
-    (mockUsePatients as any).mockReturnValue({
+    (mockUsePatients as jest.MockedFunction<typeof mockUsePatients>).mockReturnValue({
       patients: [{ id: '1', name: 'João Silva', priority: '1', status: 'T' }],
       refreshPatients: jest.fn(),
       setPatients: jest.fn(),
@@ -29,7 +30,7 @@ describe('useUnscheduledPatients - Tuesday Only Business Rule', () => {
       error: null,
     });
 
-    (mockUseAttendances as any).mockReturnValue({
+    (mockUseAttendances as jest.MockedFunction<typeof mockUseAttendances>).mockReturnValue({
       refreshCurrentDate: jest.fn(),
       attendancesByDate: null, // No existing attendances
       loading: false,

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { usePatients } from "@/contexts/PatientsContext";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { IPriority } from "@/types/globals";
+import { IPriority, IAttendanceStatus } from "@/types/globals";
 import { createPatient } from "@/api/patients";
 import { createAttendance, getNextAttendanceDate, deleteAttendance } from "@/api/attendances";
 import { AttendanceType, PatientPriority } from "@/api/types";
@@ -139,15 +139,15 @@ export function useUnscheduledPatients(
       const typeAttendances = attendancesByDate[type as keyof typeof attendancesByDate];
       if (typeAttendances && typeof typeAttendances === 'object' && 'scheduled' in typeAttendances) {
         for (const status of allStatuses) {
-          const statusAttendances = (typeAttendances as any)[status];
+          const statusAttendances = (typeAttendances as IAttendanceStatus)[status];
           if (statusAttendances && Array.isArray(statusAttendances)) {
-            const matchingAttendances = statusAttendances.filter((attendance: any) => 
+            const matchingAttendances = statusAttendances.filter((attendance) => 
               attendance.name.toLowerCase() === patientName.toLowerCase() && 
               attendance.attendanceId && 
               attendance.patientId
             );
             
-            matchingAttendances.forEach((attendance: any) => {
+            matchingAttendances.forEach((attendance) => {
               attendanceDetails.push({
                 attendanceId: attendance.attendanceId!,
                 patientId: attendance.patientId!,
