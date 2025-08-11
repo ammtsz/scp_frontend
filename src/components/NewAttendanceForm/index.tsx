@@ -54,7 +54,10 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const success = await handleRegisterNewAttendance(e);
+    const success = await handleRegisterNewAttendance(
+      e,
+      showDateField ? date : undefined
+    );
 
     if (success && showSuccessModal) {
       setModalOpen(true);
@@ -67,8 +70,11 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
       <form className="p-4" onSubmit={handleSubmit} autoComplete="off">
         {showDateField && (
           <div className="mb-8">
-            <label className="block font-bold mb-1">Data</label>
+            <label htmlFor="attendance-date" className="block font-bold mb-1">
+              Data
+            </label>
             <input
+              id="attendance-date"
               type="date"
               className="input w-full"
               value={date}

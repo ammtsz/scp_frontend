@@ -5,47 +5,195 @@ import React, {
   useContext,
   ReactNode,
   useCallback,
+  useState,
+  useEffect,
 } from "react";
-import { getAttendancesForAgenda } from "@/api/attendances";
-import { AttendanceAgendaDto } from "@/api/types";
+import {
+  getAttendancesForAgenda,
+  deleteAttendance,
+  createAttendance,
+} from "@/api/attendances";
+import {
+  AttendanceAgendaDto,
+  AttendanceType,
+  CreateAttendanceRequest,
+} from "@/api/types";
+import { IAgenda, IPriority } from "@/types/globals";
+
+// Transform backend data to frontend agenda format
+const transformToAgenda = (attendances: AttendanceAgendaDto[]): IAgenda => {
+  const spiritual: IAgenda["spiritual"] = [];
+  const lightBath: IAgenda["lightBath"] = [];
+
+  // Group attendances by date and type
+  const grouped = attendances.reduce((acc, attendance) => {
+    const dateKey = attendance.scheduled_date;
+    const type =
+      attendance.type === AttendanceType.SPIRITUAL ? "spiritual" : "lightBath";
+
+    if (!acc[type]) acc[type] = {};
+    if (!acc[type][dateKey]) acc[type][dateKey] = [];
+
+    acc[type][dateKey].push({
+      id: attendance.patient_id.toString(),
+      name: attendance.patient_name,
+      priority: attendance.patient_priority as IPriority,
+      attendanceId: attendance.id,
+    });
+
+    return acc;
+  }, {} as Record<string, Record<string, Array<{ id: string; name: string; priority: IPriority; attendanceId: number }>>>);
+
+  // Convert grouped data to frontend format
+  Object.entries(grouped.spiritual || {}).forEach(([date, patients]) => {
+    spiritual.push({
+      date: new Date(date),
+      patients: patients.map((p) => ({
+        id: p.id,
+        name: p.name,
+        priority: p.priority,
+        attendanceId: p.attendanceId,
+      })),
+    });
+  });
+
+  Object.entries(grouped.lightBath || {}).forEach(([date, patients]) => {
+    lightBath.push({
+      date: new Date(date),
+      patients: patients.map((p) => ({
+        id: p.id,
+        name: p.name,
+        priority: p.priority,
+        attendanceId: p.attendanceId,
+      })),
+    });
+  });
+
+  return { spiritual, lightBath };
+};
 
 interface AgendaContextProps {
+  agenda: IAgenda;
+  loading: boolean;
+  error: string | null;
   loadAgendaAttendances: (filters?: {
     status?: string;
     type?: string;
     limit?: number;
   }) => Promise<AttendanceAgendaDto[]>;
+  refreshAgenda: () => Promise<void>;
+  removePatientFromAgenda: (attendanceId: number) => Promise<boolean>;
+  addPatientToAgenda: (
+    attendanceData: CreateAttendanceRequest
+  ) => Promise<boolean>;
 }
 
 const AgendaContext = createContext<AgendaContextProps | undefined>(undefined);
 
 export const AgendaProvider = ({ children }: { children: ReactNode }) => {
+  const [agenda, setAgenda] = useState<IAgenda>({
+    spiritual: [],
+    lightBath: [],
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const loadAgendaAttendances = useCallback(
     async (filters?: {
       status?: string;
       type?: string;
       limit?: number;
     }): Promise<AttendanceAgendaDto[]> => {
-      try {
-        const result = await getAttendancesForAgenda(filters);
-        if (result.success && result.value) {
-          return result.value;
-        } else {
-          console.error("Failed to load agenda attendances:", result.error);
-          return [];
-        }
-      } catch (error) {
-        console.error("Error loading agenda attendances:", error);
-        return [];
+      const result = await getAttendancesForAgenda(filters);
+      if (result.success && result.value) {
+        return result.value;
+      } else {
+        const errorMessage = result.error || "Erro ao carregar agenda";
+        console.error("Failed to load agenda attendances:", errorMessage);
+        throw new Error(errorMessage);
       }
     },
     []
   );
 
+  const refreshAgenda = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Get only scheduled attendances for the agenda view
+      const attendances = await loadAgendaAttendances({ status: "scheduled" });
+      const transformedAgenda = transformToAgenda(attendances);
+      setAgenda(transformedAgenda);
+    } catch (err) {
+      // Always use user-friendly Portuguese error message
+      setError("Erro ao carregar agenda");
+      console.error("Error refreshing agenda:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadAgendaAttendances]);
+
+  const removePatientFromAgenda = useCallback(
+    async (attendanceId: number): Promise<boolean> => {
+      try {
+        const result = await deleteAttendance(attendanceId.toString());
+        if (result.success) {
+          // Refresh agenda after successful deletion
+          await refreshAgenda();
+          return true;
+        } else {
+          setError(result.error || "Failed to remove patient from agenda");
+          return false;
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to remove patient";
+        setError(errorMessage);
+        console.error("Error removing patient from agenda:", err);
+        return false;
+      }
+    },
+    [refreshAgenda]
+  );
+
+  const addPatientToAgenda = useCallback(
+    async (attendanceData: CreateAttendanceRequest): Promise<boolean> => {
+      try {
+        const result = await createAttendance(attendanceData);
+        if (result.success) {
+          // Refresh agenda after successful creation
+          await refreshAgenda();
+          return true;
+        } else {
+          setError(result.error || "Failed to add patient to agenda");
+          return false;
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to add patient";
+        setError(errorMessage);
+        console.error("Error adding patient to agenda:", err);
+        return false;
+      }
+    },
+    [refreshAgenda]
+  );
+
+  // Load agenda on mount
+  useEffect(() => {
+    refreshAgenda();
+  }, [refreshAgenda]);
+
   return (
     <AgendaContext.Provider
       value={{
+        agenda,
+        loading,
+        error,
         loadAgendaAttendances,
+        refreshAgenda,
+        removePatientFromAgenda,
+        addPatientToAgenda,
       }}
     >
       {children}

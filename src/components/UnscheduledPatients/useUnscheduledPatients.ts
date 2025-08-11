@@ -175,7 +175,7 @@ export function useUnscheduledPatients(
     setSuccess(null);
   };
 
-  const handleRegisterNewAttendance = async (e: React.FormEvent): Promise<boolean> => {
+  const handleRegisterNewAttendance = async (e: React.FormEvent, selectedDate?: string): Promise<boolean> => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
@@ -234,8 +234,8 @@ export function useUnscheduledPatients(
         patientId = String(selectedPatientData.id);
       }
 
-      // Get the next available date once for all attendances
-      const nextAvailableDate = await getNextAvailableDate();
+      // Get the next available date once for all attendances, or use the selected date
+      const nextAvailableDate = selectedDate || await getNextAvailableDate();
 
       // Create attendances for each selected type
       const attendancePromises = selectedTypes.map(async (type) => {
@@ -279,7 +279,7 @@ export function useUnscheduledPatients(
 
         // Call parent callback if provided
         if (onRegisterNewAttendance) {
-          onRegisterNewAttendance(name, selectedTypes, isNewPatient, priority);
+          onRegisterNewAttendance(name, selectedTypes, isNewPatient, priority, selectedDate);
         }
 
         // Reset form only on complete success

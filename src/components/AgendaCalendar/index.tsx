@@ -145,7 +145,7 @@ const AgendaCalendar: React.FC = () => {
                           </span>
                         </div>
                         <div className="space-y-2">
-                          {patients.map(({ name, id }, i) => (
+                          {patients.map(({ name, id, attendanceId }, i) => (
                             <div
                               key={id}
                               className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg transition-all hover:shadow-sm"
@@ -165,6 +165,7 @@ const AgendaCalendar: React.FC = () => {
                                     date,
                                     name,
                                     type: activeTab,
+                                    attendanceId,
                                   })
                                 }
                                 aria-label="Cancelar agendamento"

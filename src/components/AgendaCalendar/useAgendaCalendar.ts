@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { IAgenda, IAttendanceType, IPriority } from "@/types/globals";
+import { IAttendanceType, IPriority } from "@/types/globals";
 import { usePatients } from "@/contexts/PatientsContext";
-import { mockAgenda } from "@/api/mockData";
+import { useAgenda } from "@/contexts/AgendaContext";
+import { getNextAttendanceDate } from "@/api/attendances";
+import { AttendanceType } from "@/api/types";
 
 export const TABS: { key: IAttendanceType; label: string }[] = [
   { key: "spiritual", label: "Consultas Espirituais" },
@@ -9,16 +11,16 @@ export const TABS: { key: IAttendanceType; label: string }[] = [
 ];
 
 export function useAgendaCalendar() {
-  const contextAgenda = mockAgenda as IAgenda; // Replace with useAgenda() when backend is ready
+  const { agenda, loading, error, refreshAgenda, removePatientFromAgenda, addPatientToAgenda } = useAgenda();
   const { patients } = usePatients();
   const [selectedDate, setSelectedDate] = useState("");
   const [activeTab, setActiveTab] = useState<IAttendanceType>("spiritual");
-  const [agendaState, setAgendaState] = useState<IAgenda>(contextAgenda);
   const [confirmRemove, setConfirmRemove] = useState<{
     id: string;
     date: Date;
     name: string;
     type: IAttendanceType;
+    attendanceId?: number;
   } | null>(null);
   const [showNewAttendance, setShowNewAttendance] = useState(false);
   const [openAgendaIdx, setOpenAgendaIdx] = useState<number | null>(null);
@@ -31,14 +33,14 @@ export function useAgendaCalendar() {
 
   const filteredAgenda = useMemo(
     () => ({
-      spiritual: agendaState.spiritual.filter(
+      spiritual: agenda.spiritual.filter(
         (a) => !selectedDate || toInputDateString(a.date) === selectedDate
       ),
-      lightBath: agendaState.lightBath.filter(
+      lightBath: agenda.lightBath.filter(
         (a) => !selectedDate || toInputDateString(a.date) === selectedDate
       ),
     }),
-    [agendaState.spiritual, agendaState.lightBath, selectedDate]
+    [agenda.spiritual, agenda.lightBath, selectedDate]
   );
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export function useAgendaCalendar() {
     } else {
       setOpenAgendaIdx(null);
     }
-  }, [activeTab, agendaState.spiritual, agendaState.lightBath, selectedDate, filteredAgenda]);
+  }, [activeTab, agenda.spiritual, agenda.lightBath, selectedDate, filteredAgenda]);
 
   useEffect(() => {
     if (isTabTransitioning) {
@@ -64,75 +66,73 @@ export function useAgendaCalendar() {
     }
   }
 
-  function handleRemovePatient() {
+  async function handleRemovePatient() {
     if (!confirmRemove) return;
-    setAgendaState((prev) => {
-      const newAgenda = { ...prev };
-      const type = confirmRemove.type;
-      newAgenda[type] = newAgenda[type].map((a) => {
-        if (toInputDateString(a.date) === toInputDateString(confirmRemove.date)) {
-          return {
-            ...a,
-            patients: a.patients.filter((p) => p.id !== confirmRemove.id),
-          };
-        }
-        return a;
-      });
-      return newAgenda;
-    });
-    setConfirmRemove(null);
+    
+    // If we have an attendanceId, use the backend to remove it
+    if (confirmRemove.attendanceId) {
+      const success = await removePatientFromAgenda(confirmRemove.attendanceId);
+      if (success) {
+        setConfirmRemove(null);
+      }
+      // Error handling is done in the context
+    } else {
+      // Fallback for cases where attendanceId is not available (shouldn't happen with backend)
+      console.warn('No attendanceId found for patient removal:', confirmRemove);
+      setConfirmRemove(null);
+    }
   }
 
-  function handleNewAttendance(
+  // Get next available date
+  const getNextAvailableDate = async (): Promise<string> => {
+    try {
+      const result = await getNextAttendanceDate();
+      if (result.success && result.value?.next_date) {
+        return result.value.next_date;
+      }
+    } catch (error) {
+      console.warn('Error fetching next available date:', error);
+    }
+    
+    // Fallback to today if API call fails
+    return new Date().toISOString().split('T')[0];
+  };
+
+  async function handleNewAttendance(
     patientName: string,
     types: string[],
     isNew: boolean,
     priority: IPriority,
     date?: string
   ) {
-    let patient = patients.find((p) => p.name === patientName);
-    if (!patient) {
-      // If new, generate a new id (simple random for demo)
-      patient = {
-        id: Math.random().toString(36).slice(2, 10),
-        name: patientName,
-        phone: "",
-        priority,
-        status: "T",
-      };
+    try {
+      const patient = patients.find((p) => p.name === patientName);
+      if (!patient) {
+        console.warn('Patient not found for new attendance:', patientName);
+        return;
+      }
+
+      const scheduleDate = date || await getNextAvailableDate();
+      
+      // Create attendances for each selected type
+      for (const type of types) {
+        const attendanceType = type === 'spiritual' ? AttendanceType.SPIRITUAL : AttendanceType.LIGHT_BATH;
+        
+        const attendanceData = {
+          patient_id: Number(patient.id),
+          type: attendanceType,
+          scheduled_date: scheduleDate,
+          scheduled_time: '21:00',
+          notes: `Agendamento via agenda - ${isNew ? 'Novo paciente' : 'Paciente existente'}`,
+        };
+
+        await addPatientToAgenda(attendanceData);
+      }
+      
+      setShowNewAttendance(false);
+    } catch (error) {
+      console.error('Error creating new attendance:', error);
     }
-    // For each selected type, add to agenda
-    types.forEach((type) => {
-      setAgendaState((prev) => {
-        const agendaArr = prev[type as IAttendanceType] || [];
-        // Find agenda item for the date
-        const agendaDate = date ? new Date(date) : new Date();
-        const dateStr = agendaDate.toISOString().slice(0, 10);
-        let found = false;
-        const newArr = agendaArr.map((item) => {
-          if (item.date.toISOString().slice(0, 10) === dateStr) {
-            found = true;
-            // Avoid duplicate patient
-            if (!item.patients.some((p) => p.id === patient!.id)) {
-              return {
-                ...item,
-                patients: [...item.patients, { id: patient!.id, name: patient!.name, priority: patient!.priority }],
-              };
-            }
-          }
-          return item;
-        });
-        if (!found) {
-          // Add new agenda item for this date
-          newArr.push({
-            date: agendaDate,
-            patients: [{ id: patient.id, name: patient.name, priority: patient.priority }],
-          });
-        }
-        return { ...prev, [type]: newArr };
-      });
-    });
-    setShowNewAttendance(false);
   }
 
   return {
@@ -141,8 +141,6 @@ export function useAgendaCalendar() {
     setSelectedDate,
     activeTab,
     setActiveTab: handleTabChange,
-    agendaState,
-    setAgendaState,
     confirmRemove,
     setConfirmRemove,
     showNewAttendance,
@@ -153,5 +151,8 @@ export function useAgendaCalendar() {
     filteredAgenda,
     handleRemovePatient,
     handleNewAttendance,
+    loading,
+    error,
+    refreshAgenda,
   };
 }

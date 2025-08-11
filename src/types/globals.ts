@@ -44,6 +44,7 @@ export interface IAgendaItem {
     id: string;
     name: string;
     priority: IPriority;
+    attendanceId?: number; // Backend attendance ID for deletion
   }[];
 }
 
