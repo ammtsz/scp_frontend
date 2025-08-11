@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { usePatients } from "@/contexts/PatientsContext";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { IPriority, IAttendanceStatus } from "@/types/globals";
+import { IPriority, IAttendanceStatus, IAttendanceStatusDetail } from "@/types/globals";
 import { createPatient } from "@/api/patients";
-import { createAttendance, getNextAttendanceDate, deleteAttendance } from "@/api/attendances";
+import { createAttendance, getNextAttendanceDate, deleteAttendance, checkInAttendance } from "@/api/attendances";
 import { AttendanceType, PatientPriority } from "@/api/types";
 
 const SCHEDULED_TIME = "21:00";
@@ -96,20 +96,19 @@ export function useUnscheduledPatients(
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Check if a patient is already scheduled for today
-  const isPatientAlreadyScheduled = (patientName: string): boolean => {
+  // Check if a patient is already scheduled for the specific attendance types being selected
+  const isPatientAlreadyScheduled = (patientName: string, selectedAttendanceTypes: string[]): boolean => {
     if (!attendancesByDate) return false;
 
-    // Check all attendance types (spiritual, lightBath)
+    // Check only the selected attendance types
     const allStatuses = ['scheduled', 'checkedIn', 'onGoing', 'completed'] as const;
-    const attendanceTypes = ['spiritual', 'lightBath'] as const;
 
-    for (const type of attendanceTypes) {
-      const typeAttendances = attendancesByDate[type];
-      if (typeAttendances) {
+    for (const type of selectedAttendanceTypes) {
+      const typeAttendances = attendancesByDate[type as keyof typeof attendancesByDate];
+      if (typeAttendances && typeof typeAttendances === 'object' && 'scheduled' in typeAttendances) {
         for (const status of allStatuses) {
-          const statusAttendances = typeAttendances[status];
-          if (statusAttendances && statusAttendances.some(attendance => 
+          const statusAttendances = (typeAttendances as IAttendanceStatus)[status];
+          if (statusAttendances && statusAttendances.some((attendance: IAttendanceStatusDetail) => 
             attendance.name.toLowerCase() === patientName.toLowerCase()
           )) {
             return true;
@@ -189,9 +188,9 @@ export function useUnscheduledPatients(
         return false;
       }
 
-      // Check if patient is already scheduled for today
-      if (isPatientAlreadyScheduled(name)) {
-        setError(`O paciente "${name}" já possui atendimento agendado para hoje. Verifique a lista de atendimentos.`);
+      // Check if patient is already scheduled for the specific selected types
+      if (isPatientAlreadyScheduled(name, selectedTypes)) {
+        setError(`O paciente "${name}" já possui atendimento agendado para hoje nos tipos selecionados. Verifique a lista de atendimentos.`);
         return false;
       }
 
@@ -239,13 +238,35 @@ export function useUnscheduledPatients(
 
       // Create attendances for each selected type
       const attendancePromises = selectedTypes.map(async (type) => {
-        return createAttendance({
+        // First create the attendance
+        const createResult = await createAttendance({
           patient_id: Number(patientId),
           type: mapAttendanceTypeToBackend(type),
           scheduled_date: nextAvailableDate,
           scheduled_time: SCHEDULED_TIME,
           notes: `Check-in sem agendamento - ${isNewPatient ? 'Novo paciente' : 'Paciente existente'}`,
         });
+
+        if (!createResult.success || !createResult.value) {
+          return createResult;
+        }
+
+        // For unscheduled patients (walk-ins), immediately check them in
+        // This will move them from "scheduled" to "checked-in" column
+        try {
+          const checkInResult = await checkInAttendance(createResult.value.id.toString());
+          
+          if (!checkInResult.success) {
+            console.warn(`Failed to check in attendance ${createResult.value.id}:`, checkInResult.error);
+            // Return the original creation result even if check-in fails
+            // The attendance will remain in "scheduled" status
+          }
+        } catch (error) {
+          console.warn(`Error during check-in for attendance ${createResult.value.id}:`, error);
+          // Continue with the original creation result
+        }
+
+        return createResult;
       });
 
       const results = await Promise.all(attendancePromises);
