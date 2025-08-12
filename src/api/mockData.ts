@@ -61,6 +61,16 @@ export const mockAttendance: IAttendanceByDate[] = [
       onGoing: [],
       completed: [],
     },
+    rod: {
+      scheduled: [
+        { name: "Roberto Santos", priority: "2" },
+        { name: "Claudia Pereira", priority: "1" },
+        { name: "Felipe Rocha", priority: "3" },
+      ],
+      checkedIn: [],
+      onGoing: [],
+      completed: [],
+    },
   },
   {
     date: new Date(2025, 7, 14),
@@ -88,6 +98,15 @@ export const mockAttendance: IAttendanceByDate[] = [
       onGoing: [],
       completed: [],
     },
+    rod: {
+      scheduled: [
+        { name: "Amanda Silva", priority: "1" },
+        { name: "Bruno Costa", priority: "3" },
+      ],
+      checkedIn: [],
+      onGoing: [],
+      completed: [],
+    },
   },
   {
     date: new Date(2025, 7, 21),
@@ -110,6 +129,16 @@ export const mockAttendance: IAttendanceByDate[] = [
         { name: "Natália Rocha", priority: "1"},
         { name: "Patrícia Silva", priority: "3"},
         { name: "Rafael Teixeira", priority: "2"},
+      ],
+      checkedIn: [],
+      onGoing: [],
+      completed: [],
+    },
+    rod: {
+      scheduled: [
+        { name: "Carla Fernandes", priority: "2" },
+        { name: "Diego Almeida", priority: "1" },
+        { name: "Elaine Souza", priority: "3" },
       ],
       checkedIn: [],
       onGoing: [],
@@ -187,6 +216,29 @@ export const mockAgenda: IAgenda = {
       { id: "16", name: "Patrícia Silva", priority: "3" },
       { id: "17", name: "Rafael Teixeira", priority: "2" },
       { id: "18", name: "Tiago Moreira", priority: "1" },
+    ],
+  }],
+  rod: [{
+    date: new Date(2025, 7, 7),
+    patients: [
+      { id: "20", name: "Roberto Santos", priority: "2" },
+      { id: "21", name: "Claudia Pereira", priority: "1" },
+      { id: "22", name: "Felipe Rocha", priority: "3" },
+    ],
+  },
+  {
+    date: new Date(2025, 7, 14),
+    patients: [
+      { id: "23", name: "Amanda Silva", priority: "1" },
+      { id: "24", name: "Bruno Costa", priority: "3" },
+    ],
+  },
+  {
+    date: new Date(2025, 7, 21),
+    patients: [
+      { id: "25", name: "Carla Fernandes", priority: "2" },
+      { id: "26", name: "Diego Almeida", priority: "1" },
+      { id: "27", name: "Elaine Souza", priority: "3" },
     ],
   }],
 };

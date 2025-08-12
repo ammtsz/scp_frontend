@@ -33,6 +33,12 @@ const createMockAttendancesByDate = () => ({
     onGoing: [],
     completed: [],
   },
+  rod: {
+    scheduled: [],
+    checkedIn: [],
+    onGoing: [],
+    completed: [],
+  },
 });
 
 describe('useAttendanceList', () => {
@@ -72,7 +78,7 @@ describe('useAttendanceList', () => {
       expect(result.current.dragged).toBe(null);
       expect(result.current.confirmOpen).toBe(false);
       expect(result.current.multiSectionModalOpen).toBe(false);
-      expect(result.current.collapsed).toEqual({ spiritual: false, lightBath: false });
+      expect(result.current.collapsed).toEqual({ spiritual: false, lightBath: false, rod: false });
     });
 
     it('should handle loading state', () => {

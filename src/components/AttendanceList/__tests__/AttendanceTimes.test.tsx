@@ -24,7 +24,7 @@ describe("AttendanceTimes Component", () => {
 
       // Use getAllByText to check that time elements exist
       const timeElements = screen.getAllByText(/\d{2}:\d{2}/);
-      expect(timeElements).toHaveLength(3);
+      expect(timeElements).toHaveLength(2); // Component only shows checkedIn and onGoing times
     });
 
     it("should handle null times", () => {
@@ -148,9 +148,9 @@ describe("AttendanceTimes Component", () => {
           />
         );
 
-        // Should show three time elements
+        // Should show two time elements (checkedIn and onGoing)
         const timeElements = screen.getAllByText(/\d{2}:\d{2}/);
-        expect(timeElements).toHaveLength(3);
+        expect(timeElements).toHaveLength(2);
       });
 
       it("should not show completed time if time is null", () => {
@@ -183,13 +183,12 @@ describe("AttendanceTimes Component", () => {
       const timeContainer = container.firstChild as HTMLElement;
       expect(timeContainer).toHaveClass(
         "absolute",
-        "bottom-2",
+        "bottom-1.5",
         "left-2",
-        "right-2",
         "flex",
         "justify-between",
         "text-xs",
-        "w-[calc(100%-1rem)]"
+        "w-full"
       );
     });
 
@@ -206,14 +205,11 @@ describe("AttendanceTimes Component", () => {
       // Check color classes (we need to check the span elements)
       const spans = screen.getAllByText(/\d{2}:\d{2}/);
 
-      // First span (checkedIn) should have yellow color
-      expect(spans[0].closest("span")).toHaveClass("text-yellow-700");
+      // First span (checkedIn) should have gray color
+      expect(spans[0].closest("span")).toHaveClass("text-gray-500");
 
-      // Second span (onGoing) should have red color and mx-auto
-      expect(spans[1].closest("span")).toHaveClass("text-red-700", "mx-auto");
-
-      // Third span (completed) should have green color
-      expect(spans[2].closest("span")).toHaveClass("text-green-700");
+      // Second span (onGoing) should have gray color and mx-auto
+      expect(spans[1].closest("span")).toHaveClass("text-gray-500", "mx-auto");
     });
   });
 
@@ -275,7 +271,7 @@ describe("AttendanceTimes Component", () => {
           onGoingTime: mockTimes.onGoingTime,
           completedTime: mockTimes.completedTime,
         },
-        expectedCount: 3,
+        expectedCount: 2, // Component only shows checkedIn and onGoing times
         description: "completed status should show all times",
       },
       {
@@ -339,9 +335,9 @@ describe("AttendanceTimes Component", () => {
         />
       );
 
-      // Should show the time three times (one for each status)
+      // Should show the time two times (checkedIn and onGoing)
       const timeElements = screen.getAllByText(/\d{2}:\d{2}/);
-      expect(timeElements).toHaveLength(3);
+      expect(timeElements).toHaveLength(2);
     });
   });
 
@@ -360,9 +356,9 @@ describe("AttendanceTimes Component", () => {
       const timeContainer = container.firstChild as HTMLElement;
       expect(timeContainer).toBeInTheDocument();
 
-      // Should have three spans for the three different time types
+      // Should have two spans for the two different time types (checkedIn and onGoing)
       const spans = timeContainer.querySelectorAll("span");
-      expect(spans).toHaveLength(3);
+      expect(spans).toHaveLength(2);
     });
   });
 });

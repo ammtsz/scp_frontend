@@ -1,7 +1,10 @@
 export type IPriority = "1" | "2" | "3";
 export type IStatus = "T" | "A" | "F";
-export type IAttendanceType = "spiritual" | "lightBath";
+export type IAttendanceType = "spiritual" | "lightBath" | "rod";
 export type IAttendanceProgression = "scheduled" | "checkedIn" | "onGoing" | "completed";
+
+// UI section types for the room layout
+export type IUISection = "spiritual" | "mixed"; // spiritual room and mixed room (lightBath + rod)
 
 export interface IRecommendations {
   food: string;
@@ -50,6 +53,12 @@ export interface IAgendaItem {
 
 export type IAgenda = {
   [K in IAttendanceType]: IAgendaItem[];
+};
+
+// Specialized agenda type for calendar view (combines lightBath and rod into lightBath)
+export type ICalendarAgenda = {
+  spiritual: IAgendaItem[];
+  lightBath: IAgendaItem[];
 };
 
 export interface IPatients {

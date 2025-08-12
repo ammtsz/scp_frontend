@@ -6,7 +6,7 @@
 // Base types
 export type Priority = "1" | "2" | "3";
 export type TreatmentStatus = "T" | "A" | "F";
-export type AttendanceType = "spiritual" | "lightBath";
+export type AttendanceType = "spiritual" | "lightBath" | "rod";
 export type AttendanceProgression = "scheduled" | "checkedIn" | "onGoing" | "completed" | "cancelled";
 
 // Patient types

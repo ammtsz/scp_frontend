@@ -18,16 +18,19 @@ import {
   AttendanceType,
   CreateAttendanceRequest,
 } from "@/api/types";
-import { IAgenda, IPriority } from "@/types/globals";
+import { IAgenda, ICalendarAgenda, IPriority } from "@/types/globals";
 
 // Transform backend data to frontend agenda format
-const transformToAgenda = (attendances: AttendanceAgendaDto[]): IAgenda => {
+const transformToAgenda = (
+  attendances: AttendanceAgendaDto[]
+): ICalendarAgenda => {
   const spiritual: IAgenda["spiritual"] = [];
   const lightBath: IAgenda["lightBath"] = [];
 
   // Group attendances by date and type
   const grouped = attendances.reduce((acc, attendance) => {
     const dateKey = attendance.scheduled_date;
+    // Rod attendances should be grouped with lightBath in calendar view
     const type =
       attendance.type === AttendanceType.SPIRITUAL ? "spiritual" : "lightBath";
 
@@ -73,7 +76,7 @@ const transformToAgenda = (attendances: AttendanceAgendaDto[]): IAgenda => {
 };
 
 interface AgendaContextProps {
-  agenda: IAgenda;
+  agenda: ICalendarAgenda;
   loading: boolean;
   error: string | null;
   loadAgendaAttendances: (filters?: {
@@ -91,7 +94,7 @@ interface AgendaContextProps {
 const AgendaContext = createContext<AgendaContextProps | undefined>(undefined);
 
 export const AgendaProvider = ({ children }: { children: ReactNode }) => {
-  const [agenda, setAgenda] = useState<IAgenda>({
+  const [agenda, setAgenda] = useState<ICalendarAgenda>({
     spiritual: [],
     lightBath: [],
   });

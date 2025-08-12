@@ -53,7 +53,7 @@ export const useAttendanceList = ({
   const [checkInProcessed, setCheckInProcessed] = useState(false);
   const [collapsed, setCollapsed] = useState<{
     [key in IAttendanceType]: boolean;
-  }>({ spiritual: false, lightBath: false });
+  }>({ spiritual: false, lightBath: false, rod: false });
 
   // Reset processed flag when externalCheckIn changes
   useEffect(() => {
@@ -256,8 +256,8 @@ export const useAttendanceList = ({
     const patient = findPatient(multiSectionPending.draggedType, multiSectionPending.fromStatus, multiSectionPending.name);
     if (!patient) return; // Patient not found
 
-    // Sync with backend for both types if attendanceIds are available
-    const syncPromises = (["spiritual", "lightBath"] as IAttendanceType[])
+    // Sync with backend for all types if attendanceIds are available
+    const syncPromises = (["spiritual", "lightBath", "rod"] as IAttendanceType[])
       .map(type => findPatient(type, "scheduled", patient.name))
       .filter(p => p?.attendanceId)
       .map(p => updateAttendanceStatus(p!.attendanceId!, "checkedIn"));
@@ -271,10 +271,10 @@ export const useAttendanceList = ({
       }
     }
 
-    // Create immutable update for both consultation types
+    // Create immutable update for all consultation types
     let newAttendancesByDate = { ...attendancesByDate };
     
-    (["spiritual", "lightBath"] as IAttendanceType[]).forEach((type) => {
+    (["spiritual", "lightBath", "rod"] as IAttendanceType[]).forEach((type) => {
       const patientToMove = findPatient(type, "scheduled", patient.name);
       
       if (patientToMove) {

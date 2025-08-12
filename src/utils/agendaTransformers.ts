@@ -22,6 +22,7 @@ export const transformAttendancesToAgenda = (
   // Group attendances by type and date
   const spiritualAttendances: IAgendaItem[] = [];
   const lightBathAttendances: IAgendaItem[] = [];
+  const rodAttendances: IAgendaItem[] = [];
   
   // Group by date first
   const attendancesByDate = new Map<string, AttendanceResponseDto[]>();
@@ -43,6 +44,7 @@ export const transformAttendancesToAgenda = (
     
     const spiritualPatientsForDate: { id: string; name: string; priority: IPriority }[] = [];
     const lightBathPatientsForDate: { id: string; name: string; priority: IPriority }[] = [];
+    const rodPatientsForDate: { id: string; name: string; priority: IPriority }[] = [];
     
     dateAttendances.forEach(attendance => {
       const patient = patientsMap.get(attendance.patient_id);
@@ -56,6 +58,8 @@ export const transformAttendancesToAgenda = (
         spiritualPatientsForDate.push(patientInfo);
       } else if (attendance.type === AttendanceType.LIGHT_BATH) {
         lightBathPatientsForDate.push(patientInfo);
+      } else if (attendance.type === AttendanceType.ROD) {
+        rodPatientsForDate.push(patientInfo);
       }
     });
     
@@ -72,10 +76,18 @@ export const transformAttendancesToAgenda = (
         patients: lightBathPatientsForDate,
       });
     }
+    
+    if (rodPatientsForDate.length > 0) {
+      rodAttendances.push({
+        date,
+        patients: rodPatientsForDate,
+      });
+    }
   });
   
   return {
     spiritual: spiritualAttendances.sort((a, b) => a.date.getTime() - b.date.getTime()),
     lightBath: lightBathAttendances.sort((a, b) => a.date.getTime() - b.date.getTime()),
+    rod: rodAttendances.sort((a, b) => a.date.getTime() - b.date.getTime()),
   };
 };

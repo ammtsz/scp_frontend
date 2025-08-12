@@ -120,6 +120,12 @@ describe("AttendanceList Component", () => {
       onGoing: [],
       completed: [],
     },
+    rod: {
+      scheduled: [],
+      checkedIn: [],
+      onGoing: [],
+      completed: [],
+    },
   };
 
   const defaultMockHookReturn = {
@@ -133,7 +139,7 @@ describe("AttendanceList Component", () => {
     pendingDrop: null,
     multiSectionModalOpen: false,
     multiSectionPending: null,
-    collapsed: { spiritual: false, lightBath: false },
+    collapsed: { spiritual: false, lightBath: false, rod: false },
     getPatients: jest.fn(),
     handleDragStart: jest.fn(),
     handleDragEnd: jest.fn(),
@@ -234,7 +240,7 @@ describe("AttendanceList Component", () => {
       expect(screen.getByText("Data selecionada:")).toBeInTheDocument();
       expect(screen.getByDisplayValue("2025-01-15")).toBeInTheDocument();
       expect(screen.getByText("▼ Consultas Espirituais")).toBeInTheDocument();
-      expect(screen.getByText("▼ Banho de Luz/Bastão")).toBeInTheDocument();
+      expect(screen.getByText("▼ Banhos de Luz + Bastão")).toBeInTheDocument();
     });
   });
 
@@ -268,7 +274,7 @@ describe("AttendanceList Component", () => {
       renderWithProviders(<AttendanceList />);
 
       expect(screen.getByText("▼ Consultas Espirituais")).toBeInTheDocument();
-      expect(screen.getByText("▼ Banho de Luz/Bastão")).toBeInTheDocument();
+      expect(screen.getByText("▼ Banhos de Luz + Bastão")).toBeInTheDocument();
     });
 
     it("should toggle spiritual section when clicked", () => {
@@ -293,26 +299,26 @@ describe("AttendanceList Component", () => {
 
       renderWithProviders(<AttendanceList />);
 
-      fireEvent.click(screen.getByText("▼ Banho de Luz/Bastão"));
+      fireEvent.click(screen.getByText("▼ Banhos de Luz + Bastão"));
       expect(mockToggleCollapsed).toHaveBeenCalledWith("lightBath");
     });
 
     it("should show collapsed state indicator", () => {
       mockUseAttendanceList.mockReturnValue({
         ...defaultMockHookReturn,
-        collapsed: { spiritual: true, lightBath: false },
+        collapsed: { spiritual: true, lightBath: false, rod: false },
       });
 
       renderWithProviders(<AttendanceList />);
 
       expect(screen.getByText("▶ Consultas Espirituais")).toBeInTheDocument();
-      expect(screen.getByText("▼ Banho de Luz/Bastão")).toBeInTheDocument();
+      expect(screen.getByText("▼ Banhos de Luz + Bastão")).toBeInTheDocument();
     });
 
     it("should hide attendance columns when section is collapsed", () => {
       mockUseAttendanceList.mockReturnValue({
         ...defaultMockHookReturn,
-        collapsed: { spiritual: true, lightBath: false },
+        collapsed: { spiritual: true, lightBath: false, rod: false },
       });
 
       renderWithProviders(<AttendanceList />);
@@ -334,9 +340,9 @@ describe("AttendanceList Component", () => {
       expect(screen.getAllByText("Sala de Espera")).toHaveLength(2);
       expect(screen.getAllByText("Em Atendimento")).toHaveLength(2);
 
-      // Check that "Atendidos" columns exist (the real label for completed status)
-      const atendidosElements = screen.queryAllByText("Atendidos");
-      expect(atendidosElements.length).toBeGreaterThan(0);
+      // Check that "Finalizados" columns exist (the real label for completed status)
+      const finalizadosElements = screen.queryAllByText("Finalizados");
+      expect(finalizadosElements.length).toBeGreaterThan(0);
     });
 
     it("should pass correct props to AttendanceColumn components", () => {
@@ -551,7 +557,7 @@ describe("AttendanceList Component", () => {
       renderWithProviders(<AttendanceList />);
 
       const spiritualButton = screen.getByText("▼ Consultas Espirituais");
-      const lightBathButton = screen.getByText("▼ Banho de Luz/Bastão");
+      const lightBathButton = screen.getByText("▼ Banhos de Luz + Bastão");
 
       expect(spiritualButton.tagName).toBe("BUTTON");
       expect(lightBathButton.tagName).toBe("BUTTON");
@@ -593,7 +599,7 @@ describe("AttendanceList Component", () => {
 
       expect(mainContainer).toHaveClass(
         "w-full",
-        "max-w-5xl",
+        "max-w-6xl",
         "mx-auto",
         "p-4"
       );

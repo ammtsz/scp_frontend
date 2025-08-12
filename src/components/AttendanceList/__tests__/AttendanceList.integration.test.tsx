@@ -185,7 +185,7 @@ describe("AttendanceList Integration Tests", () => {
 
       // Check that sections are rendered
       expect(screen.getByText("▼ Consultas Espirituais")).toBeInTheDocument();
-      expect(screen.getByText("▼ Banho de Luz/Bastão")).toBeInTheDocument();
+      expect(screen.getByText("▼ Banhos de Luz + Bastão")).toBeInTheDocument();
     });
 
     it("should render real AttendanceColumn components", async () => {
@@ -204,7 +204,7 @@ describe("AttendanceList Integration Tests", () => {
       expect(screen.getAllByText("Agendados")).toHaveLength(2); // Both spiritual and light bath have this column
       expect(screen.getAllByText("Sala de Espera")).toHaveLength(2);
       expect(screen.getAllByText("Em Atendimento")).toHaveLength(2);
-      expect(screen.getAllByText("Atendidos")).toHaveLength(2); // "Atendidos" not "Finalizados"
+      expect(screen.getAllByText("Finalizados")).toHaveLength(2); // "Finalizados" not "Atendidos"
     });
 
     it("should handle section collapse with real functionality", async () => {
@@ -269,7 +269,7 @@ describe("AttendanceList Integration Tests", () => {
 
       // Check sections
       const spiritualSection = screen.getByText("▼ Consultas Espirituais");
-      const lightBathSection = screen.getByText("▼ Banho de Luz/Bastão");
+      const lightBathSection = screen.getByText("▼ Banhos de Luz + Bastão");
       expect(spiritualSection).toBeInTheDocument();
       expect(lightBathSection).toBeInTheDocument();
     });

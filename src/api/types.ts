@@ -15,7 +15,8 @@ export enum TreatmentStatus {
 
 export enum AttendanceType {
   SPIRITUAL = 'spiritual',
-  LIGHT_BATH = 'light_bath'
+  LIGHT_BATH = 'light_bath',
+  ROD = 'rod'
 }
 
 export enum AttendanceStatus {

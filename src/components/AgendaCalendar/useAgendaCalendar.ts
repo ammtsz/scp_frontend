@@ -5,7 +5,10 @@ import { useAgenda } from "@/contexts/AgendaContext";
 import { getNextAttendanceDate } from "@/api/attendances";
 import { AttendanceType } from "@/api/types";
 
-export const TABS: { key: IAttendanceType; label: string }[] = [
+// For calendar, we only support two tab types (rod is combined with lightBath)
+type CalendarTabType = "spiritual" | "lightBath";
+
+export const TABS: { key: CalendarTabType; label: string }[] = [
   { key: "spiritual", label: "Consultas Espirituais" },
   { key: "lightBath", label: "Banhos de Luz/Bastão" },
 ];
@@ -14,7 +17,7 @@ export function useAgendaCalendar() {
   const { agenda, loading, error, refreshAgenda, removePatientFromAgenda, addPatientToAgenda } = useAgenda();
   const { patients } = usePatients();
   const [selectedDate, setSelectedDate] = useState("");
-  const [activeTab, setActiveTab] = useState<IAttendanceType>("spiritual");
+  const [activeTab, setActiveTab] = useState<CalendarTabType>("spiritual");
   const [confirmRemove, setConfirmRemove] = useState<{
     id: string;
     date: Date;
@@ -60,9 +63,11 @@ export function useAgendaCalendar() {
   }, [isTabTransitioning]);
 
   function handleTabChange(tabKey: IAttendanceType) {
-    if (tabKey !== activeTab) {
+    // Map rod to lightBath since they share the same calendar tab
+    const calendarTab: CalendarTabType = tabKey === "spiritual" ? "spiritual" : "lightBath";
+    if (calendarTab !== activeTab) {
       setIsTabTransitioning(true);
-      setTimeout(() => setActiveTab(tabKey), 100);
+      setTimeout(() => setActiveTab(calendarTab), 100);
     }
   }
 

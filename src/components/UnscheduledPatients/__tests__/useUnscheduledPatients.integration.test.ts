@@ -119,19 +119,19 @@ describe('useUnscheduledPatients - Tuesday Only Business Rule', () => {
   });
 
   it('should prevent duplicate check-in for patient in different statuses', async () => {
-    // Mock attendances with patient in "checkedIn" status
+    // Mock attendances with patient in "checkedIn" status for SAME type
     (mockUseAttendances as any).mockReturnValue({
       refreshCurrentDate: jest.fn(),
       attendancesByDate: {
         spiritual: {
           scheduled: [],
-          checkedIn: [{ name: 'João Silva', priority: '1', attendanceId: 1, patientId: 1 }],
+          checkedIn: [],
           onGoing: [],
           completed: [],
         },
         lightBath: {
           scheduled: [],
-          checkedIn: [],
+          checkedIn: [{ name: 'João Silva', priority: '1', attendanceId: 1, patientId: 1 }],
           onGoing: [],
           completed: [],
         },
@@ -159,7 +159,7 @@ describe('useUnscheduledPatients - Tuesday Only Business Rule', () => {
 
     // Should return false and show error
     expect(submitResult).toBe(false);
-    expect(result.current.error).toContain('já possui atendimento agendado para hoje');
+    expect(result.current.error).toContain('já possui atendimento agendado para hoje nos tipos selecionados');
     expect(mockCreateAttendance).not.toHaveBeenCalled();
   });
 

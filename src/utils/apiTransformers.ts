@@ -52,6 +52,8 @@ export const transformAttendanceType = (apiType: AttendanceType): IAttendanceTyp
       return "spiritual";
     case AttendanceType.LIGHT_BATH:
       return "lightBath";
+    case AttendanceType.ROD:
+      return "rod";
     default:
       return "spiritual";
   }
@@ -155,6 +157,12 @@ export const transformAttendancesFromApi = (
         onGoing: [],
         completed: [],
       },
+      rod: {
+        scheduled: [],
+        checkedIn: [],
+        onGoing: [],
+        completed: [],
+      },
     };
     
     // Process each attendance for this date
@@ -224,6 +232,12 @@ export const transformAttendancesFromApiSimple = (
         onGoing: [],
         completed: [],
       },
+      rod: {
+        scheduled: [],
+        checkedIn: [],
+        onGoing: [],
+        completed: [],
+      },
     };
     
     // Process each attendance for this date
@@ -270,6 +284,12 @@ export const transformAttendanceWithPatientByDate = (
       completed: [],
     },
     lightBath: {
+      scheduled: [],
+      checkedIn: [],
+      onGoing: [],
+      completed: [],
+    },
+    rod: {
       scheduled: [],
       checkedIn: [],
       onGoing: [],

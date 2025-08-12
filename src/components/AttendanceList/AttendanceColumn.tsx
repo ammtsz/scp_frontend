@@ -4,27 +4,30 @@ import {
   IAttendanceType,
   IAttendanceStatusDetail,
 } from "@/types/globals";
-import AttendanceCard from "./AttendanceCard";
 import { IDraggedItem } from "./types";
+import AttendanceCard from "./AttendanceCard";
+import { getStatusColor, getStatusLabel } from "./cardStyles";
+
+interface PatientWithType extends IAttendanceStatusDetail {
+  originalType: IAttendanceType;
+}
 
 interface AttendanceColumnProps {
   status: IAttendanceProgression;
-  type: IAttendanceType;
-  patients: IAttendanceStatusDetail[];
+  patients: PatientWithType[];
   dragged: IDraggedItem | null;
   handleDragStart: (
     type: IAttendanceType,
-    idx: number,
+    index: number,
     status: IAttendanceProgression
   ) => void;
   handleDragEnd: () => void;
-  handleDrop: (type: IAttendanceType, status: IAttendanceProgression) => void;
-  onDelete?: (attendanceId: number, patientName: string) => void;
+  handleDrop: () => void;
+  onDelete: (attendanceId: number, patientName: string) => void;
 }
 
 const AttendanceColumn: React.FC<AttendanceColumnProps> = ({
   status,
-  type,
   patients,
   dragged,
   handleDragStart,
@@ -32,62 +35,78 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = ({
   handleDrop,
   onDelete,
 }) => {
-  const getStatusConfig = (status: IAttendanceProgression) => {
-    const statusConfig = {
-      scheduled: { color: "text-gray-700", label: "Agendados" },
-      checkedIn: { color: "text-yellow-700", label: "Sala de Espera" },
-      onGoing: { color: "text-red-700", label: "Em Atendimento" },
-      completed: { color: "text-green-700", label: "Atendidos" },
-    };
-    return statusConfig[status] || statusConfig.scheduled;
-  };
+  // Sort patients by priority (1 = highest)
+  const sortedPatients = patients.sort((a, b) => {
+    const priorityA = parseInt(a.priority);
+    const priorityB = parseInt(b.priority);
+    return priorityA - priorityB;
+  });
 
-  const config = getStatusConfig(status);
+  // Get type counts for the legend
+  const typeCounts = patients.reduce((acc, patient) => {
+    acc[patient.originalType] = (acc[patient.originalType] || 0) + 1;
+    return acc;
+  }, {} as Record<IAttendanceType, number>);
+
+  // Check if we should show the legend (only for non-spiritual types)
+  const shouldShowLegend = patients.some((p) => p.originalType !== "spiritual");
 
   return (
-    <div className="flex-1 min-w-[220px] max-w-[1fr] flex flex-col">
-      <div className={`mb-2 font-semibold text-center ${config.color}`}>
-        {config.label}
+    <div className="flex-1 min-h-[300px]">
+      {/* Title outside the dashed box */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className={`font-semibold ${getStatusColor(status)}`}>
+          {getStatusLabel(status)}
+        </h3>
+        {/* Dynamic legend based on available types - only show for non-spiritual */}
+        {shouldShowLegend && (
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            {typeCounts.lightBath > 0 && (
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-yellow-400 rounded"></div>
+                BL ({typeCounts.lightBath})
+              </span>
+            )}
+            {typeCounts.rod > 0 && (
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                BS ({typeCounts.rod})
+              </span>
+            )}
+          </div>
+        )}
       </div>
-      <div className="flex-1 flex items-stretch border-1 border-dashed border-gray-300 rounded p-2">
-        <ul
-          onDragOver={(e) => {
-            // Allow drop only if:
-            // 1. There's something being dragged
-            // 2. It's the same consultation type
-            // 3. It's not the exact same position (same type AND status)
-            if (
-              dragged &&
-              dragged.type === type &&
-              !(dragged.type === type && dragged.status === status)
-            ) {
-              e.preventDefault();
-            }
-          }}
-          onDrop={() => handleDrop(type, status)}
-          className="w-full flex flex-col gap-2 justify-start items-stretch bg-[color:var(--surface-light)] rounded min-h-[300px]"
-          style={{ minHeight: "100%" }}
-        >
-          {patients.length === 0 && (
-            <li className="flex items-center justify-center text-gray-400 italic select-none pointer-events-none h-full">
-              Arraste aqui para mover
-            </li>
-          )}
-          {patients.map((patient, idx) => (
+
+      {/* Grey dashed box for drag and drop */}
+      <div
+        className="bg-gray-100 p-4 rounded-lg border-2 border-dashed border-gray-300 min-h-[250px] h-[calc(100%-2rem)]"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
+        <div className="space-y-2">
+          {sortedPatients.map((patient, index) => (
             <AttendanceCard
-              key={patient.name}
+              key={`${patient.originalType}-${
+                patient.attendanceId || patient.name
+              }-${index}`}
               patient={patient}
+              type={patient.originalType}
               status={status}
-              type={type}
-              idx={idx}
               dragged={dragged}
               handleDragStart={handleDragStart}
               handleDragEnd={handleDragEnd}
               onDelete={onDelete}
-              isNextToBeAttended={status === "checkedIn" && idx === 0}
+              index={index}
+              isNextToBeAttended={status === "checkedIn" && index === 0}
             />
           ))}
-        </ul>
+
+          {sortedPatients.length === 0 && (
+            <div className="text-gray-400 text-center py-8 text-sm italic">
+              Arraste para mover
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

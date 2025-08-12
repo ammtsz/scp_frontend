@@ -37,7 +37,8 @@ const getNextAvailableDate = async (): Promise<string> => {
 
 export const attendanceTypes = [
   { value: "spiritual", label: "Consulta Espiritual" },
-  { value: "lightBath", label: "Banho de Luz/Bastão" },
+  { value: "lightBath", label: "Banho de Luz" },
+  { value: "rod", label: "Bastão" },
 ];
 
 // Map frontend priority to backend enum
@@ -60,6 +61,8 @@ const mapAttendanceTypeToBackend = (type: string): AttendanceType => {
       return AttendanceType.SPIRITUAL;
     case "lightBath":
       return AttendanceType.LIGHT_BATH;
+    case "rod":
+      return AttendanceType.ROD;
     default:
       return AttendanceType.SPIRITUAL;
   }
