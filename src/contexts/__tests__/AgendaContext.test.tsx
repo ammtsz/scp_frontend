@@ -297,6 +297,7 @@ describe("AgendaContext", () => {
             name: "João Silva",
             priority: "1",
             attendanceId: 1,
+            attendanceType: "spiritual",
           },
         ],
       });
@@ -311,6 +312,7 @@ describe("AgendaContext", () => {
             name: "Maria Santos",
             priority: "2",
             attendanceId: 2,
+            attendanceType: "lightBath",
           },
         ],
       });

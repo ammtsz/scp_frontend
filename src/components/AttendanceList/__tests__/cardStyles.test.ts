@@ -77,7 +77,7 @@ describe("cardStyles utilities", () => {
     it("should return correct config for each type", () => {
       expect(getTypeIndicatorConfig("spiritual")).toEqual({
         className: "text-gray-600",
-        label: "Espiritual",
+        label: "Consulta Espiritual",
       });
       expect(getTypeIndicatorConfig("lightBath")).toEqual({
         className: "text-yellow-600",

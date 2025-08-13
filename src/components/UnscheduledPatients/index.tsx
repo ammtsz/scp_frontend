@@ -46,6 +46,8 @@ const UnscheduledPatients: React.FC<UnscheduledPatientsProps> = ({
               onRegisterNewAttendance={onRegisterNewAttendance}
               showSuccessModal
               submitLabel="Fazer Check-in"
+              autoCheckIn={true}
+              customNotes="Check-in sem agendamento"
             />
           </div>
         )}

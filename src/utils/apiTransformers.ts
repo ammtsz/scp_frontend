@@ -1,6 +1,6 @@
 import { 
   PatientResponseDto, 
-  PatientPriority, 
+  PatientPriority,
   TreatmentStatus,
   AttendanceResponseDto,
   AttendanceType,
@@ -13,11 +13,10 @@ import {
   IStatus, 
   IAttendanceType,
   IAttendanceProgression,
-  IAttendanceByDate,
-  IAttendanceStatusDetail
+  IAttendanceStatusDetail,
+  IAttendanceByDate
 } from '@/types/globals';
 
-// Transform API Priority to local Priority
 export const transformPriority = (apiPriority: PatientPriority): IPriority => {
   switch (apiPriority) {
     case PatientPriority.NORMAL:
@@ -31,7 +30,6 @@ export const transformPriority = (apiPriority: PatientPriority): IPriority => {
   }
 };
 
-// Transform API Status to local Status
 export const transformStatus = (apiStatus: TreatmentStatus): IStatus => {
   switch (apiStatus) {
     case TreatmentStatus.IN_TREATMENT:
@@ -86,22 +84,20 @@ export const transformPatientFromApi = (apiPatient: PatientResponseDto): IPatien
   };
 };
 
-// Transform Patients array from API to local format
-export const transformPatientsFromApi = (apiPatients: PatientResponseDto[]): IPatients[] => {
-  return apiPatients.map(transformPatientFromApi);
-};
-
-// Transform detailed Patient from API to local format (for patient detail view)
-export const transformPatientDetailFromApi = (apiPatient: PatientResponseDto): IPatient => {
-  const basePatient = transformPatientFromApi(apiPatient);
-  
+// Transform single patient to IPatient format for editing
+export const transformSinglePatientFromApi = (apiPatient: PatientResponseDto): IPatient => {
   return {
-    ...basePatient,
+    id: apiPatient.id.toString(),
+    name: apiPatient.name,
+    phone: apiPatient.phone || '',
+    priority: transformPriority(apiPatient.priority),
+    status: transformStatus(apiPatient.treatment_status),
+    // Required IPatient properties with default values
     birthDate: apiPatient.birth_date ? new Date(apiPatient.birth_date) : new Date(),
     mainComplaint: apiPatient.main_complaint || '',
     startDate: new Date(apiPatient.start_date),
     dischargeDate: apiPatient.discharge_date ? new Date(apiPatient.discharge_date) : null,
-    nextAttendanceDates: [], // This would need to be populated from attendances API
+    nextAttendanceDates: [],
     currentRecommendations: {
       date: new Date(),
       food: '',
@@ -110,216 +106,301 @@ export const transformPatientDetailFromApi = (apiPatient: PatientResponseDto): I
       lightBath: false,
       rod: false,
       spiritualTreatment: false,
-      returnWeeks: 0,
+      returnWeeks: 0
     },
-    previousAttendances: [], // This would need to be populated from attendances API
+    previousAttendances: []
   };
 };
 
-// Transform attendances from API to local IAttendanceByDate format
-// This groups attendances by date and type, organizing them by status
-export const transformAttendancesFromApi = (
-  apiAttendances: AttendanceResponseDto[], 
-  apiPatients: PatientResponseDto[]
-): IAttendanceByDate[] => {
-  // Create a map of patient ID to patient data for quick lookup
-  const patientsMap = new Map(apiPatients.map(p => [p.id, p]));
-  
-  // Group attendances by date
-  const attendancesByDate = new Map<string, AttendanceResponseDto[]>();
-  
-  apiAttendances.forEach(attendance => {
-    const dateKey = attendance.scheduled_date;
-    if (!attendancesByDate.has(dateKey)) {
-      attendancesByDate.set(dateKey, []);
-    }
-    attendancesByDate.get(dateKey)!.push(attendance);
-  });
-  
-  // Transform each date's attendances into IAttendanceByDate format
-  const result: IAttendanceByDate[] = [];
-  
-  attendancesByDate.forEach((dateAttendances, dateKey) => {
-    const date = new Date(dateKey);
-    
-    // Initialize the attendance structure for this date
-    const attendanceForDate: IAttendanceByDate = {
-      date,
-      spiritual: {
-        scheduled: [],
-        checkedIn: [],
-        onGoing: [],
-        completed: [],
-      },
-      lightBath: {
-        scheduled: [],
-        checkedIn: [],
-        onGoing: [],
-        completed: [],
-      },
-      rod: {
-        scheduled: [],
-        checkedIn: [],
-        onGoing: [],
-        completed: [],
-      },
-    };
-    
-    // Process each attendance for this date
-    dateAttendances.forEach(attendance => {
-      const patient = patientsMap.get(attendance.patient_id);
-      if (!patient) return; // Skip if patient not found
-      
-      const attendanceDetail: IAttendanceStatusDetail = {
-        name: patient.name,
-        priority: transformPriority(patient.priority),
-        checkedInTime: attendance.checked_in_at ? new Date(attendance.checked_in_at) : null,
-        onGoingTime: attendance.started_at ? new Date(attendance.started_at) : null,
-        completedTime: attendance.completed_at ? new Date(attendance.completed_at) : null,
-      };
-      
-      const type = transformAttendanceType(attendance.type);
-      const progression = transformAttendanceProgression(attendance.status);
-      
-      // Skip cancelled attendances
-      if (attendance.status === AttendanceStatus.CANCELLED) {
-        return;
-      }
-      
-      attendanceForDate[type][progression].push(attendanceDetail);
-    });
-    
-    result.push(attendanceForDate);
-  });
-  
-  return result.sort((a, b) => a.date.getTime() - b.date.getTime());
-};
-
-// Simplified transformation for attendances when patient data is not available
-// This version uses patient_id as name placeholder
-export const transformAttendancesFromApiSimple = (
-  apiAttendances: AttendanceResponseDto[]
-): IAttendanceByDate[] => {
-  // Group attendances by date
-  const attendancesByDate = new Map<string, AttendanceResponseDto[]>();
-  
-  apiAttendances.forEach(attendance => {
-    const dateKey = attendance.scheduled_date;
-    if (!attendancesByDate.has(dateKey)) {
-      attendancesByDate.set(dateKey, []);
-    }
-    attendancesByDate.get(dateKey)!.push(attendance);
-  });
-  
-  // Transform each date's attendances into IAttendanceByDate format
-  const result: IAttendanceByDate[] = [];
-  
-  attendancesByDate.forEach((dateAttendances, dateKey) => {
-    const date = new Date(dateKey);
-    
-    // Initialize the attendance structure for this date
-    const attendanceForDate: IAttendanceByDate = {
-      date,
-      spiritual: {
-        scheduled: [],
-        checkedIn: [],
-        onGoing: [],
-        completed: [],
-      },
-      lightBath: {
-        scheduled: [],
-        checkedIn: [],
-        onGoing: [],
-        completed: [],
-      },
-      rod: {
-        scheduled: [],
-        checkedIn: [],
-        onGoing: [],
-        completed: [],
-      },
-    };
-    
-    // Process each attendance for this date
-    dateAttendances.forEach(attendance => {
-      const attendanceDetail: IAttendanceStatusDetail = {
-        name: `Paciente ${attendance.patient_id}`, // Placeholder until we have patient data
-        priority: "3" as IPriority, // Default priority
-        checkedInTime: attendance.checked_in_at ? new Date(attendance.checked_in_at) : null,
-        onGoingTime: attendance.started_at ? new Date(attendance.started_at) : null,
-        completedTime: attendance.completed_at ? new Date(attendance.completed_at) : null,
-      };
-      
-      const type = transformAttendanceType(attendance.type);
-      const progression = transformAttendanceProgression(attendance.status);
-      
-      // Skip cancelled attendances
-      if (attendance.status === AttendanceStatus.CANCELLED) {
-        return;
-      }
-      
-      attendanceForDate[type][progression].push(attendanceDetail);
-    });
-    
-    result.push(attendanceForDate);
-  });
-  
-  return result.sort((a, b) => a.date.getTime() - b.date.getTime());
-};
-
-// Transform API attendance array (with patient data) to single IAttendanceByDate
+// Transform array of attendances by date into IAttendanceByDate format
 export const transformAttendanceWithPatientByDate = (
-  apiAttendances: AttendanceResponseDto[],
+  apiAttendances: AttendanceResponseDto[], 
   date: string
 ): IAttendanceByDate => {
-  const dateObj = new Date(date);
-  
-  // Initialize the structure
-  const attendance: IAttendanceByDate = {
-    date: dateObj,
+  const result: IAttendanceByDate = {
+    date: new Date(date),
     spiritual: {
       scheduled: [],
       checkedIn: [],
       onGoing: [],
-      completed: [],
+      completed: []
     },
     lightBath: {
       scheduled: [],
       checkedIn: [],
       onGoing: [],
-      completed: [],
+      completed: []
     },
     rod: {
       scheduled: [],
       checkedIn: [],
       onGoing: [],
-      completed: [],
-    },
+      completed: []
+    }
   };
 
   // Group attendances by type and status
-  apiAttendances.forEach((apiAttendance) => {
-    // Skip cancelled attendances
-    if (apiAttendance.status === AttendanceStatus.CANCELLED) {
-      return;
-    }
+  apiAttendances.forEach(attendance => {
+    const attendanceType = transformAttendanceType(attendance.type);
+    const attendanceStatus = transformAttendanceProgression(attendance.status);
+    const statusDetail = transformAttendanceStatusFromApi(attendance);
 
-    const type = transformAttendanceType(apiAttendance.type);
-    const status = transformAttendanceProgression(apiAttendance.status);
-
-    const patient: IAttendanceStatusDetail = {
-      name: apiAttendance.patient?.name || `Paciente ${apiAttendance.patient_id}`,
-      priority: apiAttendance.patient?.priority ? transformPriority(apiAttendance.patient.priority) : "3",
-      checkedInTime: apiAttendance.checked_in_at ? new Date(apiAttendance.checked_in_at) : null,
-      onGoingTime: apiAttendance.started_at ? new Date(apiAttendance.started_at) : null,
-      completedTime: apiAttendance.completed_at ? new Date(apiAttendance.completed_at) : null,
-      // Include IDs for backend sync
-      attendanceId: apiAttendance.id,
-      patientId: apiAttendance.patient_id,
-    };
-
-    attendance[type][status].push(patient);
+    // Add to the appropriate category
+    result[attendanceType][attendanceStatus].push(statusDetail);
   });
 
-  return attendance;
+  return result;
+};
+
+// Transform array of patients from API to local format  
+export const transformPatientsFromApi = (apiPatients: PatientResponseDto[]): IPatients[] => {
+  return apiPatients.map(transformPatientFromApi);
+};
+
+// Transform IPatient to create/update payload for API
+export const transformPatientToApi = (patient: IPatient, isCreate: boolean = false) => {
+  const apiPatient = {
+    name: patient.name.trim(),
+    phone: patient.phone?.trim() || null,
+    priority: transformPriorityToApi(patient.priority),
+    treatment_status: transformStatusToApi(patient.status),
+  };
+
+  // For updates, include the id
+  if (!isCreate && patient.id) {
+    return {
+      id: parseInt(patient.id, 10),
+      ...apiPatient,
+    };
+  }
+
+  return apiPatient;
+};
+
+// Transform local priority to API priority
+export const transformPriorityToApi = (localPriority: IPriority): PatientPriority => {
+  switch (localPriority) {
+    case "1":
+      return PatientPriority.EMERGENCY;
+    case "2":
+      return PatientPriority.INTERMEDIATE;
+    case "3":
+      return PatientPriority.NORMAL;
+    default:
+      return PatientPriority.NORMAL;
+  }
+};
+
+// Transform local status to API status
+export const transformStatusToApi = (localStatus: IStatus): TreatmentStatus => {
+  switch (localStatus) {
+    case "T":
+      return TreatmentStatus.IN_TREATMENT;
+    case "A":
+      return TreatmentStatus.DISCHARGED;
+    case "F":
+      return TreatmentStatus.ABSENT;
+    default:
+      return TreatmentStatus.IN_TREATMENT;
+  }
+};
+
+// Transform local attendance type to API attendance type
+export const transformAttendanceTypeToApi = (localType: IAttendanceType): AttendanceType => {
+  switch (localType) {
+    case "spiritual":
+      return AttendanceType.SPIRITUAL;
+    case "lightBath":
+      return AttendanceType.LIGHT_BATH;
+    case "rod":
+      return AttendanceType.ROD;
+    default:
+      return AttendanceType.SPIRITUAL;
+  }
+};
+
+// Transform local attendance progression to API attendance status
+export const transformAttendanceProgressionToApi = (localProgression: IAttendanceProgression): AttendanceStatus => {
+  switch (localProgression) {
+    case "scheduled":
+      return AttendanceStatus.SCHEDULED;
+    case "checkedIn":
+      return AttendanceStatus.CHECKED_IN;
+    case "onGoing":
+      return AttendanceStatus.IN_PROGRESS;
+    case "completed":
+      return AttendanceStatus.COMPLETED;
+    default:
+      return AttendanceStatus.SCHEDULED;
+  }
+};
+
+// Define interface for individual attendance records
+interface IAttendanceRecord {
+  attendanceId: number;
+  patientId: string;
+  patientName: string;
+  attendanceType: IAttendanceType;
+  attendanceProgression: IAttendanceProgression;
+  scheduledDate: string;
+  scheduledTime: string;
+  priority: IPriority;
+  notes: string;
+  checkedInAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+}
+
+// Transform a single attendance from API to local format
+export const transformAttendanceFromApi = (apiAttendance: AttendanceResponseDto): IAttendanceRecord => {
+  // Get patient info from nested patient object if available
+  const patientName = apiAttendance.patient?.name || `Patient ${apiAttendance.patient_id}`;
+  const patientPriority = apiAttendance.patient?.priority || PatientPriority.NORMAL;
+  
+  return {
+    attendanceId: apiAttendance.id,
+    patientId: apiAttendance.patient_id.toString(),
+    patientName: patientName,
+    attendanceType: transformAttendanceType(apiAttendance.type),
+    attendanceProgression: transformAttendanceProgression(apiAttendance.status),
+    scheduledDate: apiAttendance.scheduled_date.toString(),
+    scheduledTime: apiAttendance.scheduled_time,
+    priority: transformPriority(patientPriority),
+    notes: apiAttendance.notes || '',
+    checkedInAt: apiAttendance.checked_in_at ? new Date(apiAttendance.checked_in_at).toISOString() : null,
+    startedAt: apiAttendance.started_at ? new Date(apiAttendance.started_at).toISOString() : null,
+    completedAt: apiAttendance.completed_at ? new Date(apiAttendance.completed_at).toISOString() : null,
+  };
+};
+
+// Transform attendance status details from API
+export const transformAttendanceStatusFromApi = (apiAttendance: AttendanceResponseDto): IAttendanceStatusDetail => {
+  const patientName = apiAttendance.patient?.name || `Patient ${apiAttendance.patient_id}`;
+  const patientPriority = apiAttendance.patient?.priority || PatientPriority.NORMAL;
+  
+  return {
+    name: patientName,
+    priority: transformPriority(patientPriority),
+    checkedInTime: apiAttendance.checked_in_at ? new Date(apiAttendance.checked_in_at) : null,
+    onGoingTime: apiAttendance.started_at ? new Date(apiAttendance.started_at) : null,
+    completedTime: apiAttendance.completed_at ? new Date(apiAttendance.completed_at) : null,
+    attendanceId: apiAttendance.id,
+    patientId: apiAttendance.patient_id,
+  };
+};
+
+/**
+ * Transform an array of API attendances for the attendances list
+ */
+export const transformAttendancesForList = (apiAttendances: AttendanceResponseDto[]): {
+  attendances: IAttendanceRecord[];
+  columns: {
+    scheduled: IAttendanceRecord[];
+    checkedIn: IAttendanceRecord[];
+    onGoing: IAttendanceRecord[];
+    completed: IAttendanceRecord[];
+  };
+} => {
+  const attendances = apiAttendances.map(transformAttendanceFromApi);
+  
+  const columns = {
+    scheduled: attendances.filter(a => a.attendanceProgression === 'scheduled'),
+    checkedIn: attendances.filter(a => a.attendanceProgression === 'checkedIn'),
+    onGoing: attendances.filter(a => a.attendanceProgression === 'onGoing'),
+    completed: attendances.filter(a => a.attendanceProgression === 'completed'),
+  };
+
+  return { attendances, columns };
+};
+
+/**
+ * Helper function to format date for API requests (YYYY-MM-DD)
+ */
+export const formatDateForApi = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+/**
+ * Helper function to format time for API requests (HH:MM:SS)
+ */
+export const formatTimeForApi = (time: string): string => {
+  // If time is already in HH:MM:SS format, return as is
+  if (/^\d{2}:\d{2}:\d{2}$/.test(time)) {
+    return time;
+  }
+  
+  // If time is in HH:MM format, add seconds
+  if (/^\d{2}:\d{2}$/.test(time)) {
+    return `${time}:00`;
+  }
+  
+  // Default to current time in proper format
+  const now = new Date();
+  return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:00`;
+};
+
+/**
+ * Transform priority label for display
+ */
+export const getPriorityLabel = (priority: IPriority): string => {
+  switch (priority) {
+    case "1":
+      return "Urgente";
+    case "2":
+      return "Intermediário";
+    case "3":
+      return "Normal";
+    default:
+      return "Normal";
+  }
+};
+
+/**
+ * Transform attendance type label for display
+ */
+export const getAttendanceTypeLabel = (type: IAttendanceType): string => {
+  switch (type) {
+    case "spiritual":
+      return "Consulta Espiritual";
+    case "lightBath":
+      return "Banho de Luz";
+    case "rod":
+      return "Bastão";
+    default:
+      return "Consulta Espiritual";
+  }
+};
+
+/**
+ * Transform status label for display
+ */
+export const getStatusLabel = (status: IStatus): string => {
+  switch (status) {
+    case "T":
+      return "Em Tratamento";
+    case "A":
+      return "Alta Médica";
+    case "F":
+      return "Faltas Consecutivas";
+    default:
+      return "Em Tratamento";
+  }
+};
+
+/**
+ * Transform attendance progression label for display
+ */
+export const getAttendanceProgressionLabel = (progression: IAttendanceProgression): string => {
+  switch (progression) {
+    case "scheduled":
+      return "Agendado";
+    case "checkedIn":
+      return "Chegou";
+    case "onGoing":
+      return "Em Andamento";
+    case "completed":
+      return "Finalizado";
+    default:
+      return "Agendado";
+  }
 };

@@ -19,6 +19,9 @@ interface NewAttendanceFormProps {
   submitLabel?: string;
   showSuccessModal?: boolean;
   showDateField?: boolean;
+  autoCheckIn?: boolean;
+  customNotes?: string;
+  showNotesField?: boolean;
 }
 
 const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
@@ -26,6 +29,9 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
   submitLabel = "Salvar",
   showSuccessModal = false,
   showDateField = false,
+  autoCheckIn = true,
+  customNotes = "",
+  showNotesField = false,
 }) => {
   const {
     search,
@@ -46,10 +52,13 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
     isSubmitting,
     error,
     success,
-  } = useUnscheduledPatients(onRegisterNewAttendance);
+    notes,
+    setNotes,
+  } = useUnscheduledPatients(onRegisterNewAttendance, autoCheckIn, customNotes);
 
   const [modalOpen, setModalOpen] = React.useState(false);
   const [date, setDate] = React.useState("");
+  // Remove local notes state since we're using the one from the hook
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,6 +188,22 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
             ))}
           </div>
         </div>
+
+        {showNotesField && (
+          <div className="mb-4">
+            <label htmlFor="attendance-notes" className="block font-bold mb-1">
+              Observações
+            </label>
+            <textarea
+              id="attendance-notes"
+              className="input w-full min-h-[80px] resize-y"
+              placeholder="Observações sobre o atendimento (opcional)..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              disabled={isSubmitting}
+            />
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (

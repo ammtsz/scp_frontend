@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AgendaCalendar from "../index";
 import { useAgendaCalendar } from "../useAgendaCalendar";
-import { formatDateBR } from "@/utils/dateHelpers";
+import { formatDateBR, formatDateWithDayOfWeekBR } from "@/utils/dateHelpers";
 
 // Mock the hook
 jest.mock("../useAgendaCalendar");
@@ -60,6 +60,11 @@ const mockFormatDateBR = formatDateBR as jest.MockedFunction<
   typeof formatDateBR
 >;
 
+const mockFormatDateWithDayOfWeekBR =
+  formatDateWithDayOfWeekBR as jest.MockedFunction<
+    typeof formatDateWithDayOfWeekBR
+  >;
+
 describe("AgendaCalendar Component", () => {
   const defaultHookReturn = {
     TABS: [
@@ -80,12 +85,14 @@ describe("AgendaCalendar Component", () => {
               name: "João Silva",
               priority: "1" as const,
               attendanceId: 101,
+              attendanceType: "spiritual" as const,
             },
             {
               id: "2",
               name: "Maria Santos",
               priority: "2" as const,
               attendanceId: 102,
+              attendanceType: "spiritual" as const,
             },
           ],
         },
@@ -110,6 +117,7 @@ describe("AgendaCalendar Component", () => {
     jest.clearAllMocks();
     mockUseAgendaCalendar.mockReturnValue(defaultHookReturn);
     mockFormatDateBR.mockReturnValue("07/08/2025");
+    mockFormatDateWithDayOfWeekBR.mockReturnValue("Quarta-feira, 07/08/2025");
   });
 
   describe("Rendering", () => {
@@ -252,7 +260,7 @@ describe("AgendaCalendar Component", () => {
     it("should render agenda items when data exists", () => {
       render(<AgendaCalendar />);
 
-      expect(screen.getByText("07/08/2025")).toBeInTheDocument();
+      expect(screen.getByText("Quarta-feira, 07/08/2025")).toBeInTheDocument();
       expect(screen.getByText("2 pacientes agendados")).toBeInTheDocument();
     });
 
@@ -265,7 +273,7 @@ describe("AgendaCalendar Component", () => {
 
       render(<AgendaCalendar />);
 
-      fireEvent.click(screen.getByText("07/08/2025"));
+      fireEvent.click(screen.getByText("Quarta-feira, 07/08/2025"));
       expect(setOpenAgendaIdx).toHaveBeenCalledWith(0);
     });
 
@@ -277,7 +285,7 @@ describe("AgendaCalendar Component", () => {
 
       render(<AgendaCalendar />);
 
-      expect(screen.getByText("2 Pacientes agendados:")).toBeInTheDocument();
+      expect(screen.getByText("2 pacientes agendados")).toBeInTheDocument();
       expect(screen.getByText("João Silva")).toBeInTheDocument();
       expect(screen.getByText("Maria Santos")).toBeInTheDocument();
     });
@@ -467,7 +475,7 @@ describe("AgendaCalendar Component", () => {
       render(<AgendaCalendar />);
 
       const transitionContainer = screen
-        .getByText("07/08/2025")
+        .getByText("Quarta-feira, 07/08/2025")
         .closest(".transition-opacity");
       expect(transitionContainer).toHaveClass(
         "opacity-0",
@@ -479,7 +487,7 @@ describe("AgendaCalendar Component", () => {
       render(<AgendaCalendar />);
 
       const transitionContainer = screen
-        .getByText("07/08/2025")
+        .getByText("Quarta-feira, 07/08/2025")
         .closest(".transition-opacity");
       expect(transitionContainer).toHaveClass("opacity-100");
       expect(transitionContainer).not.toHaveClass("pointer-events-none");
@@ -490,7 +498,9 @@ describe("AgendaCalendar Component", () => {
     it("should have proper ARIA attributes for expandable sections", () => {
       render(<AgendaCalendar />);
 
-      const expandButton = screen.getByRole("button", { name: /07\/08\/2025/ });
+      const expandButton = screen.getByRole("button", {
+        name: /Quarta-feira, 07\/08\/2025/,
+      });
       expect(expandButton).toHaveAttribute("aria-expanded", "false");
       expect(expandButton).toHaveAttribute(
         "aria-controls",
@@ -506,7 +516,9 @@ describe("AgendaCalendar Component", () => {
 
       render(<AgendaCalendar />);
 
-      const expandButton = screen.getByRole("button", { name: /07\/08\/2025/ });
+      const expandButton = screen.getByRole("button", {
+        name: /Quarta-feira, 07\/08\/2025/,
+      });
       expect(expandButton).toHaveAttribute("aria-expanded", "true");
     });
 
@@ -545,6 +557,7 @@ describe("AgendaCalendar Component", () => {
                   name: "João Silva",
                   priority: "1" as const,
                   attendanceId: 101,
+                  attendanceType: "spiritual" as const,
                 },
               ],
             },
@@ -588,6 +601,7 @@ describe("AgendaCalendar Component", () => {
                   name: "João Silva",
                   priority: "1" as const,
                   attendanceId: 101,
+                  attendanceType: "spiritual" as const,
                 },
               ],
             },
@@ -599,6 +613,7 @@ describe("AgendaCalendar Component", () => {
                   name: "Maria Santos",
                   priority: "2" as const,
                   attendanceId: 102,
+                  attendanceType: "spiritual" as const,
                 },
               ],
             },
@@ -607,14 +622,14 @@ describe("AgendaCalendar Component", () => {
         },
       });
 
-      mockFormatDateBR
-        .mockReturnValueOnce("07/08/2025")
-        .mockReturnValueOnce("08/08/2025");
+      mockFormatDateWithDayOfWeekBR
+        .mockReturnValueOnce("Quarta-feira, 07/08/2025")
+        .mockReturnValueOnce("Quinta-feira, 08/08/2025");
 
       render(<AgendaCalendar />);
 
-      expect(screen.getByText("07/08/2025")).toBeInTheDocument();
-      expect(screen.getByText("08/08/2025")).toBeInTheDocument();
+      expect(screen.getByText("Quarta-feira, 07/08/2025")).toBeInTheDocument();
+      expect(screen.getByText("Quinta-feira, 08/08/2025")).toBeInTheDocument();
     });
   });
 });

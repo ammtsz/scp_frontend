@@ -19,6 +19,7 @@ import {
   CreateAttendanceRequest,
 } from "@/api/types";
 import { IAgenda, ICalendarAgenda, IPriority } from "@/types/globals";
+import { transformAttendanceType } from "@/utils/apiTransformers";
 
 // Transform backend data to frontend agenda format
 const transformToAgenda = (
@@ -42,32 +43,34 @@ const transformToAgenda = (
       name: attendance.patient_name,
       priority: attendance.patient_priority as IPriority,
       attendanceId: attendance.id,
+      type: attendance.type, // Use the specific attendance type
     });
-
     return acc;
-  }, {} as Record<string, Record<string, Array<{ id: string; name: string; priority: IPriority; attendanceId: number }>>>);
+  }, {} as Record<string, Record<string, Array<{ id: string; name: string; priority: IPriority; attendanceId: number; type: AttendanceType }>>>);
 
   // Convert grouped data to frontend format
   Object.entries(grouped.spiritual || {}).forEach(([date, patients]) => {
     spiritual.push({
-      date: new Date(date),
+      date: new Date(date + "T00:00:00"), // Add time to ensure local timezone interpretation
       patients: patients.map((p) => ({
         id: p.id,
         name: p.name,
         priority: p.priority,
         attendanceId: p.attendanceId,
+        attendanceType: transformAttendanceType(p.type),
       })),
     });
   });
 
   Object.entries(grouped.lightBath || {}).forEach(([date, patients]) => {
     lightBath.push({
-      date: new Date(date),
+      date: new Date(date + "T00:00:00"), // Add time to ensure local timezone interpretation
       patients: patients.map((p) => ({
         id: p.id,
         name: p.name,
         priority: p.priority,
         attendanceId: p.attendanceId,
+        attendanceType: transformAttendanceType(p.type),
       })),
     });
   });

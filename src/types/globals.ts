@@ -48,6 +48,7 @@ export interface IAgendaItem {
     name: string;
     priority: IPriority;
     attendanceId?: number; // Backend attendance ID for deletion
+    attendanceType?: IAttendanceType; // Specific attendance type for individual patients
   }[];
 }
 

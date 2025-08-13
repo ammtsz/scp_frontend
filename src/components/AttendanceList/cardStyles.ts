@@ -39,7 +39,7 @@ export const getTypeIndicatorConfig = (attendanceType: IAttendanceType) => {
     },
     spiritual: {
       className: "text-gray-600",
-      label: "Espiritual",
+      label: "Consulta Espiritual",
     },
   };
   

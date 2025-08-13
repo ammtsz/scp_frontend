@@ -75,7 +75,9 @@ export function useUnscheduledPatients(
     isNew: boolean,
     priority: IPriority,
     date?: string
-  ) => void
+  ) => void,
+  autoCheckIn: boolean = true,
+  defaultNotes: string = ""
 ) {
   const { patients, refreshPatients } = usePatients();
   const { refreshCurrentDate, attendancesByDate } = useAttendances();
@@ -89,6 +91,7 @@ export function useUnscheduledPatients(
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [priority, setPriority] = useState<IPriority>("3");
   const [collapsed, setCollapsed] = useState(true);
+  const [notes, setNotes] = useState<string>(defaultNotes);
   
   // Loading and error states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -173,6 +176,7 @@ export function useUnscheduledPatients(
     setSelectedTypes([]);
     setIsNewPatient(false);
     setHasNewAttendance(false);
+    setNotes(defaultNotes);
     setError(null);
     setSuccess(null);
   };
@@ -241,13 +245,17 @@ export function useUnscheduledPatients(
 
       // Create attendances for each selected type
       const attendancePromises = selectedTypes.map(async (type) => {
+        // Determine the notes to use
+        const attendanceNotes = notes.trim() || 
+          (autoCheckIn ? `Check-in sem agendamento - ${isNewPatient ? 'Novo paciente' : 'Paciente existente'}` : '');
+        
         // First create the attendance
         const createResult = await createAttendance({
           patient_id: Number(patientId),
           type: mapAttendanceTypeToBackend(type),
           scheduled_date: nextAvailableDate,
           scheduled_time: SCHEDULED_TIME,
-          notes: `Check-in sem agendamento - ${isNewPatient ? 'Novo paciente' : 'Paciente existente'}`,
+          notes: attendanceNotes,
         });
 
         if (!createResult.success || !createResult.value) {
@@ -256,17 +264,19 @@ export function useUnscheduledPatients(
 
         // For unscheduled patients (walk-ins), immediately check them in
         // This will move them from "scheduled" to "checked-in" column
-        try {
-          const checkInResult = await checkInAttendance(createResult.value.id.toString());
-          
-          if (!checkInResult.success) {
-            console.warn(`Failed to check in attendance ${createResult.value.id}:`, checkInResult.error);
-            // Return the original creation result even if check-in fails
-            // The attendance will remain in "scheduled" status
+        if (autoCheckIn) {
+          try {
+            const checkInResult = await checkInAttendance(createResult.value.id.toString());
+            
+            if (!checkInResult.success) {
+              console.warn(`Failed to check in attendance ${createResult.value.id}:`, checkInResult.error);
+              // Return the original creation result even if check-in fails
+              // The attendance will remain in "scheduled" status
+            }
+          } catch (error) {
+            console.warn(`Error during check-in for attendance ${createResult.value.id}:`, error);
+            // Continue with the original creation result
           }
-        } catch (error) {
-          console.warn(`Error during check-in for attendance ${createResult.value.id}:`, error);
-          // Continue with the original creation result
         }
 
         return createResult;
@@ -295,8 +305,9 @@ export function useUnscheduledPatients(
       } else {
         const isToday = nextAvailableDate === new Date().toISOString().split('T')[0];
         const dateMessage = isToday ? 'hoje' : `para ${nextAvailableDate}`;
+        const statusMessage = autoCheckIn ? 'Check-in realizado' : 'Agendamento criado';
         
-        setSuccess(`Check-in realizado com sucesso! ${selectedTypes.length} atendimento(s) agendado(s) ${dateMessage} às ${SCHEDULED_TIME}.`);
+        setSuccess(`${statusMessage} com sucesso! ${selectedTypes.length} atendimento(s) agendado(s) ${dateMessage} às ${SCHEDULED_TIME}.`);
         
         // Refresh attendances to show the new records
         await refreshCurrentDate();
@@ -399,6 +410,8 @@ export function useUnscheduledPatients(
     setPriority,
     collapsed,
     setCollapsed,
+    notes,
+    setNotes,
     
     // Data
     filteredPatients,

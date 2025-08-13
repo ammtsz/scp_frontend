@@ -3,8 +3,9 @@
 import React from "react";
 import ConfirmModal from "@/components/ConfirmModal/index";
 import NewAttendanceModal from "@/components/NewAttendanceModal";
+import AttendanceTypeTag from "@/components/AttendanceList/AttendanceTypeTag";
 import { useAgendaCalendar } from "./useAgendaCalendar";
-import { formatDateBR } from "@/utils/dateHelpers";
+import { formatDateWithDayOfWeekBR } from "@/utils/dateHelpers";
 
 const AgendaCalendar: React.FC = () => {
   const {
@@ -60,7 +61,7 @@ const AgendaCalendar: React.FC = () => {
             <input
               id="agenda-date"
               type="date"
-              className="input"
+              className="input h-11"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               lang="pt-BR"
@@ -109,7 +110,7 @@ const AgendaCalendar: React.FC = () => {
                     >
                       <span className="text-left">
                         <div className="font-semibold">
-                          {formatDateBR(date.toISOString())}
+                          {formatDateWithDayOfWeekBR(date.toISOString())}
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
                           {patients.length} paciente
@@ -118,13 +119,6 @@ const AgendaCalendar: React.FC = () => {
                         </div>
                       </span>
                       <div className="flex items-center gap-3">
-                        {openAgendaIdx === idx && (
-                          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                            {activeTab === "spiritual"
-                              ? "Consultas Espirituais"
-                              : "Banhos de Luz/Bastão"}
-                          </span>
-                        )}
                         <span
                           className={`ml-2 transition-transform text-gray-400 ${
                             openAgendaIdx === idx ? "rotate-90" : ""
@@ -139,41 +133,43 @@ const AgendaCalendar: React.FC = () => {
                         id={`agenda-patients-${idx}`}
                         className="p-4 pt-0 border-t border-gray-100"
                       >
-                        <div className="mb-3">
-                          <span className="text-sm font-medium text-gray-700">
-                            {patients.length} Pacientes agendados:
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {patients.map(({ name, id, attendanceId }, i) => (
-                            <div
-                              key={id}
-                              className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg transition-all hover:shadow-sm"
-                            >
-                              <span className="w-6 h-6 flex items-center justify-center text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded-full">
-                                {i + 1}
-                              </span>
-                              <span className="font-medium text-gray-800 flex-1">
-                                {name}
-                              </span>
-                              <button
-                                type="button"
-                                className="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 border border-red-200 rounded transition-colors"
-                                onClick={() =>
-                                  setConfirmRemove({
-                                    id,
-                                    date,
-                                    name,
-                                    type: activeTab,
-                                    attendanceId,
-                                  })
-                                }
-                                aria-label="Cancelar agendamento"
+                        <div className="space-y-2 mt-4">
+                          {patients.map(
+                            ({ name, id, attendanceId, attendanceType }, i) => (
+                              <div
+                                key={`${id}-${attendanceType}`}
+                                className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg transition-all hover:shadow-sm"
                               >
-                                Cancelar
-                              </button>
-                            </div>
-                          ))}
+                                <span className="w-6 h-6 flex items-center justify-center text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded-full">
+                                  {i + 1}
+                                </span>
+                                <div className="flex items-center gap-2 flex-1">
+                                  <span className="font-medium text-gray-800">
+                                    {name}
+                                  </span>
+                                  {attendanceType && (
+                                    <AttendanceTypeTag type={attendanceType} />
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  className="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 border border-red-200 rounded transition-colors"
+                                  onClick={() =>
+                                    setConfirmRemove({
+                                      id,
+                                      date,
+                                      name,
+                                      type: activeTab,
+                                      attendanceId,
+                                    })
+                                  }
+                                  aria-label="Cancelar agendamento"
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            )
+                          )}
                         </div>
                       </div>
                     )}
