@@ -4,6 +4,7 @@ import React from "react";
 import ConfirmModal from "@/components/ConfirmModal/index";
 import NewAttendanceModal from "@/components/NewAttendanceModal";
 import AttendanceTypeTag from "@/components/AttendanceList/AttendanceTypeTag";
+import Switch from "@/components/Switch";
 import { useAgendaCalendar } from "./useAgendaCalendar";
 import { formatDateWithDayOfWeekBR } from "@/utils/dateHelpers";
 
@@ -14,6 +15,8 @@ const AgendaCalendar: React.FC = () => {
     setSelectedDate,
     activeTab,
     setActiveTab,
+    showNext5Dates,
+    setShowNext5Dates,
     filteredAgenda,
     openAgendaIdx,
     setOpenAgendaIdx,
@@ -68,6 +71,35 @@ const AgendaCalendar: React.FC = () => {
             />
           </div>
 
+          {/* Date Range Filter Toggle */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-xs">
+                  {selectedDate
+                    ? !showNext5Dates
+                      ? `Próximas 5 datas a partir de ${new Date(
+                          selectedDate + "T00:00:00"
+                        ).toLocaleDateString("pt-BR")}`
+                      : `Todos os atendimentos a partir de ${new Date(
+                          selectedDate + "T00:00:00"
+                        ).toLocaleDateString("pt-BR")}`
+                    : !showNext5Dates
+                    ? "Mostrando próximas 5 datas"
+                    : "Mostrando todos os atendimentos futuros"}
+                  <Switch
+                    checked={showNext5Dates}
+                    onChange={(checked) => setShowNext5Dates(checked)}
+                    label="Mostrar todos os atendimentos futuros"
+                    size="sm"
+                    id="date-range-filter"
+                    className="text-gray-500 mt-2"
+                  />
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Tabs */}
           <div className="flex w-full bg-gray-50 relative mb-6">
             <div className="absolute bottom-0 left-0 right-0 h-px bg-[#e2e8f0] z-0"></div>
@@ -97,7 +129,9 @@ const AgendaCalendar: React.FC = () => {
                 ({ date, patients }, idx: number) => (
                   <div
                     key={date + "-" + activeTab + "-" + idx}
-                    className="mb-4 border border-gray-200 rounded-lg bg-white shadow-sm"
+                    className={`mb-4 border border-gray-200 rounded-lg  shadow-sm ${
+                      openAgendaIdx !== idx ? "bg-white" : "bg-gray-100"
+                    }`}
                   >
                     <button
                       type="button"
@@ -131,16 +165,16 @@ const AgendaCalendar: React.FC = () => {
                     {openAgendaIdx === idx && (
                       <div
                         id={`agenda-patients-${idx}`}
-                        className="p-4 pt-0 border-t border-gray-100"
+                        className="p-4 pt-0 border-t border-gray-200 bg-gray-100"
                       >
                         <div className="space-y-2 mt-4">
                           {patients.map(
                             ({ name, id, attendanceId, attendanceType }, i) => (
                               <div
                                 key={`${id}-${attendanceType}`}
-                                className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg transition-all hover:shadow-sm"
+                                className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg transition-all hover:shadow-sm"
                               >
-                                <span className="w-6 h-6 flex items-center justify-center text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded-full">
+                                <span className="w-6 h-6 flex items-center justify-center text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-full">
                                   {i + 1}
                                 </span>
                                 <div className="flex items-center gap-2 flex-1">

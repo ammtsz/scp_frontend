@@ -18,6 +18,7 @@ export function useAgendaCalendar() {
   const { patients } = usePatients();
   const [selectedDate, setSelectedDate] = useState("");
   const [activeTab, setActiveTab] = useState<CalendarTabType>("spiritual");
+  const [showNext5Dates, setShowNext5Dates] = useState(false); // Default to showing next 5 dates
   const [confirmRemove, setConfirmRemove] = useState<{
     id: string;
     date: Date;
@@ -29,35 +30,69 @@ export function useAgendaCalendar() {
   const [openAgendaIdx, setOpenAgendaIdx] = useState<number | null>(null);
   const [isTabTransitioning, setIsTabTransitioning] = useState(false);
 
-  // Helper to convert a Date to 'YYYY-MM-DD' string for input[type=date] comparison
-  // This function handles timezone-safe date conversion to avoid off-by-one day issues
-  function toInputDateString(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   const filteredAgenda = useMemo(
-    () => ({
-      spiritual: agenda.spiritual.filter(
-        (a) => !selectedDate || toInputDateString(a.date) === selectedDate
-      ),
-      lightBath: agenda.lightBath.filter(
-        (a) => !selectedDate || toInputDateString(a.date) === selectedDate
-      ),
-    }),
-    [agenda.spiritual, agenda.lightBath, selectedDate]
+    () => {
+      // Helper function to get next 5 unique attendance dates from a reference date forward
+      const getNext5AttendanceDates = (agendaItems: { date: Date; patients: unknown[] }[], fromDate?: string): Date[] => {
+        // Use selected date as reference, or today if no date selected
+        const referenceDate = fromDate ? new Date(fromDate + 'T00:00:00') : new Date();
+        referenceDate.setHours(0, 0, 0, 0);
+        
+        // Get all dates from reference date forward, sorted chronologically
+        const futureDates = agendaItems
+          .map(item => item.date)
+          .filter(date => {
+            const itemDate = new Date(date);
+            itemDate.setHours(0, 0, 0, 0);
+            return itemDate >= referenceDate;
+          })
+          .sort((a, b) => a.getTime() - b.getTime());
+        
+        // Get unique dates (remove duplicates)
+        const uniqueDates = futureDates.filter((date, index, arr) => 
+          index === 0 || date.getTime() !== arr[index - 1].getTime()
+        );
+        
+        // Return first 5 dates
+        return uniqueDates.slice(0, 5);
+      };
+
+      // Get combined agenda items for date calculation
+      const allAgendaItems = [...agenda.spiritual, ...agenda.lightBath];
+      const next5Dates = !showNext5Dates ? getNext5AttendanceDates(allAgendaItems, selectedDate) : [];
+      
+      // Helper function to check if date should be included
+      const shouldIncludeDate = (date: Date): boolean => {
+        if (showNext5Dates) {
+          // Show all future dates when toggle is ON (from selected date or today)
+          const referenceDate = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date();
+          referenceDate.setHours(0, 0, 0, 0);
+          const itemDate = new Date(date);
+          itemDate.setHours(0, 0, 0, 0);
+          return itemDate >= referenceDate;
+        }
+        
+        // Show only next 5 dates when toggle is OFF
+        return next5Dates.some(nextDate => {
+          const nextDateTime = new Date(nextDate).getTime();
+          const itemDateTime = new Date(date).getTime();
+          return Math.abs(nextDateTime - itemDateTime) < 24 * 60 * 60 * 1000; // Same day
+        });
+      };
+
+      return {
+        spiritual: agenda.spiritual.filter((a) => {
+          // Apply date range filter (which already considers selected date as reference)
+          return shouldIncludeDate(a.date);
+        }),
+        lightBath: agenda.lightBath.filter((a) => {
+          // Apply date range filter (which already considers selected date as reference)
+          return shouldIncludeDate(a.date);
+        }),
+      };
+    },
+    [agenda.spiritual, agenda.lightBath, selectedDate, showNext5Dates]
   );
-
-  useEffect(() => {
-
-    if (filteredAgenda[activeTab].length > 0) {
-      setOpenAgendaIdx(0);
-    } else {
-      setOpenAgendaIdx(null);
-    }
-  }, [activeTab, agenda.spiritual, agenda.lightBath, selectedDate, filteredAgenda]);
 
   useEffect(() => {
     if (isTabTransitioning) {
@@ -150,6 +185,8 @@ export function useAgendaCalendar() {
     setSelectedDate,
     activeTab,
     setActiveTab: handleTabChange,
+    showNext5Dates,
+    setShowNext5Dates,
     confirmRemove,
     setConfirmRemove,
     showNewAttendance,

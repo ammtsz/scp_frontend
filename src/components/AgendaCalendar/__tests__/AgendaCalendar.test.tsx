@@ -75,6 +75,8 @@ describe("AgendaCalendar Component", () => {
     setSelectedDate: jest.fn(),
     activeTab: "spiritual" as const,
     setActiveTab: jest.fn(),
+    showNext5Dates: true,
+    setShowNext5Dates: jest.fn(),
     filteredAgenda: {
       spiritual: [
         {
@@ -217,6 +219,115 @@ describe("AgendaCalendar Component", () => {
       render(<AgendaCalendar />);
 
       expect(screen.getByDisplayValue("2025-12-25")).toBeInTheDocument();
+    });
+  });
+
+  describe("Date Range Filter", () => {
+    it("should render date range filter toggle", () => {
+      // Test with no date selected to get the basic text
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        selectedDate: "",
+        showNext5Dates: false, // Default: showing next 5 dates
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(screen.getByText("Filtro de datas")).toBeInTheDocument();
+      expect(
+        screen.getByText("Mostrando próximas 5 datas")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByLabelText("Mostrar todos os próximos atendimentos")
+      ).toBeInTheDocument();
+    });
+
+    it("should toggle date range filter when clicked", () => {
+      const setShowNext5Dates = jest.fn();
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        showNext5Dates: false, // Default: showing next 5 dates
+        setShowNext5Dates,
+      });
+
+      render(<AgendaCalendar />);
+
+      const toggleSwitch = screen.getByLabelText(
+        "Mostrar todos os próximos atendimentos"
+      );
+      fireEvent.click(toggleSwitch);
+
+      expect(setShowNext5Dates).toHaveBeenCalledWith(true);
+    });
+
+    it("should show correct text when specific date is selected", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        selectedDate: "2025-08-15",
+        showNext5Dates: false, // Showing next 5 dates
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(
+        screen.getByText(/Próximas 5 datas a partir de 15\/08\/2025/)
+      ).toBeInTheDocument();
+    });
+
+    it("should show all attendances text when filter enabled with selected date", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        selectedDate: "2025-08-15",
+        showNext5Dates: true, // Showing all attendances
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(
+        screen.getByText(/Todos os atendimentos a partir de 15\/08\/2025/)
+      ).toBeInTheDocument();
+    });
+
+    it("should show correct text when filter is enabled and no date selected", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        selectedDate: "",
+        showNext5Dates: true, // Showing all attendances
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(
+        screen.getByText("Mostrando todos os atendimentos futuros")
+      ).toBeInTheDocument();
+    });
+
+    it("should apply correct switch state when showing next 5 dates", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        showNext5Dates: false, // Default: showing next 5 dates
+      });
+
+      render(<AgendaCalendar />);
+
+      const toggleSwitch = screen.getByLabelText(
+        "Mostrar todos os próximos atendimentos"
+      );
+      expect(toggleSwitch).not.toBeChecked();
+    });
+
+    it("should apply correct switch state when showing all attendances", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        showNext5Dates: true, // Showing all attendances
+      });
+
+      render(<AgendaCalendar />);
+
+      const toggleSwitch = screen.getByLabelText(
+        "Mostrar todos os próximos atendimentos"
+      );
+      expect(toggleSwitch).toBeChecked();
     });
   });
 
