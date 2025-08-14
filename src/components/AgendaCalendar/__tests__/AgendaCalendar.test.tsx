@@ -210,6 +210,35 @@ describe("AgendaCalendar Component", () => {
       expect(setSelectedDate).toHaveBeenCalledWith("2025-08-08");
     });
 
+    it("should handle today button click", () => {
+      const setSelectedDate = jest.fn();
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        setSelectedDate,
+      });
+
+      // Mock the current date to ensure consistent test results
+      const mockDate = new Date("2025-08-13T00:00:00.000Z");
+      jest.spyOn(global, "Date").mockImplementation(() => mockDate);
+      Date.prototype.toISOString = jest.fn(() => "2025-08-13T00:00:00.000Z");
+
+      render(<AgendaCalendar />);
+
+      const todayButton = screen.getByRole("button", { name: /hoje/i });
+      fireEvent.click(todayButton);
+
+      expect(setSelectedDate).toHaveBeenCalledWith("2025-08-13");
+
+      // Restore Date
+      jest.restoreAllMocks();
+    });
+
+    it("should render today button", () => {
+      render(<AgendaCalendar />);
+
+      expect(screen.getByRole("button", { name: /hoje/i })).toBeInTheDocument();
+    });
+
     it("should display selected date value", () => {
       mockUseAgendaCalendar.mockReturnValue({
         ...defaultHookReturn,

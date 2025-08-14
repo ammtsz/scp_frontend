@@ -267,6 +267,28 @@ describe("AttendanceList Component", () => {
 
       expect(mockSetSelectedDate).toHaveBeenCalledWith("2025-01-16");
     });
+
+    it("should set today's date when 'Hoje' button is clicked", () => {
+      const mockSetSelectedDate = jest.fn();
+      mockUseAttendanceList.mockReturnValue({
+        ...defaultMockHookReturn,
+        setSelectedDate: mockSetSelectedDate,
+      });
+
+      // Mock today's date
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+
+      renderWithProviders(<AttendanceList />);
+
+      const hojeButton = screen.getByText("Hoje");
+      expect(hojeButton).toBeInTheDocument();
+      expect(hojeButton).toHaveClass("button", "button-outline", "card-shadow");
+
+      fireEvent.click(hojeButton);
+
+      expect(mockSetSelectedDate).toHaveBeenCalledWith(todayString);
+    });
   });
 
   describe("Attendance Type Sections", () => {
@@ -606,7 +628,7 @@ describe("AttendanceList Component", () => {
 
       // Check date input
       const dateInput = screen.getByDisplayValue("2025-01-15");
-      expect(dateInput).toHaveClass("input", "mb-4");
+      expect(dateInput).toHaveClass("input", "h-11", "flex-1");
     });
   });
 });

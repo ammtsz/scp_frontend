@@ -12,12 +12,14 @@ interface NewAttendanceModalProps {
     priority: IPriority,
     date?: string
   ) => void;
+  validationDate?: string;
 }
 
 const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
   open,
   onClose,
   onSubmit,
+  validationDate,
 }) => {
   if (!open) return null;
 
@@ -44,6 +46,7 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
           showDateField
           autoCheckIn={false}
           showNotesField={true}
+          validationDate={validationDate}
         />
         <div className="absolute w-full pt-2 -translate-y-4 translate-x-4">
           <button

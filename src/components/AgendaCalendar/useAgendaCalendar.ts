@@ -1,23 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { IAttendanceType, IPriority } from "@/types/globals";
 import { usePatients } from "@/contexts/PatientsContext";
 import { useAgenda } from "@/contexts/AgendaContext";
 import { getNextAttendanceDate } from "@/api/attendances";
 import { AttendanceType } from "@/api/types";
 
-// For calendar, we only support two tab types (rod is combined with lightBath)
-type CalendarTabType = "spiritual" | "lightBath";
-
-export const TABS: { key: CalendarTabType; label: string }[] = [
-  { key: "spiritual", label: "Consultas Espirituais" },
-  { key: "lightBath", label: "Banhos de Luz/Bastão" },
-];
-
 export function useAgendaCalendar() {
   const { agenda, loading, error, refreshAgenda, removePatientFromAgenda, addPatientToAgenda } = useAgenda();
   const { patients } = usePatients();
   const [selectedDate, setSelectedDate] = useState("");
-  const [activeTab, setActiveTab] = useState<CalendarTabType>("spiritual");
   const [showNext5Dates, setShowNext5Dates] = useState(false); // Default to showing next 5 dates
   const [confirmRemove, setConfirmRemove] = useState<{
     id: string;
@@ -27,8 +18,8 @@ export function useAgendaCalendar() {
     attendanceId?: number;
   } | null>(null);
   const [showNewAttendance, setShowNewAttendance] = useState(false);
-  const [openAgendaIdx, setOpenAgendaIdx] = useState<number | null>(null);
-  const [isTabTransitioning, setIsTabTransitioning] = useState(false);
+  const [openSpiritualIdx, setOpenSpiritualIdx] = useState<number | null>(null);
+  const [openLightBathIdx, setOpenLightBathIdx] = useState<number | null>(null);
 
   const filteredAgenda = useMemo(
     () => {
@@ -94,23 +85,17 @@ export function useAgendaCalendar() {
     [agenda.spiritual, agenda.lightBath, selectedDate, showNext5Dates]
   );
 
-  useEffect(() => {
-    if (isTabTransitioning) {
-      const timeout = setTimeout(() => setIsTabTransitioning(false), 100);
-      return () => clearTimeout(timeout);
-    }
-  }, [isTabTransitioning]);
-
-  function handleTabChange(tabKey: IAttendanceType) {
-    // Map rod to lightBath since they share the same calendar tab
-    const calendarTab: CalendarTabType = tabKey === "spiritual" ? "spiritual" : "lightBath";
-    if (calendarTab !== activeTab) {
-      setIsTabTransitioning(true);
-      setTimeout(() => setActiveTab(calendarTab), 100);
-    }
+  function handleRemovePatient(params: {
+    id: string;
+    date: Date;
+    name: string;
+    type: IAttendanceType;
+    attendanceId?: number;
+  }) {
+    setConfirmRemove(params);
   }
 
-  async function handleRemovePatient() {
+  async function handleConfirmRemove() {
     if (!confirmRemove) return;
     
     // If we have an attendanceId, use the backend to remove it
@@ -180,22 +165,21 @@ export function useAgendaCalendar() {
   }
 
   return {
-    TABS,
     selectedDate,
     setSelectedDate,
-    activeTab,
-    setActiveTab: handleTabChange,
     showNext5Dates,
     setShowNext5Dates,
     confirmRemove,
     setConfirmRemove,
     showNewAttendance,
     setShowNewAttendance,
-    openAgendaIdx,
-    setOpenAgendaIdx,
-    isTabTransitioning,
+    openSpiritualIdx,
+    setOpenSpiritualIdx,
+    openLightBathIdx,
+    setOpenLightBathIdx,
     filteredAgenda,
     handleRemovePatient,
+    handleConfirmRemove,
     handleNewAttendance,
     loading,
     error,

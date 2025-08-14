@@ -1,10 +1,16 @@
 import { useState } from "react";
+import { IPriority } from "@/types/globals";
 import { usePatients } from "@/contexts/PatientsContext";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { IPriority, IAttendanceStatus, IAttendanceStatusDetail } from "@/types/globals";
+import { IAttendanceStatus, IAttendanceStatusDetail } from "@/types/globals";
+import { 
+  createAttendance, 
+  getNextAttendanceDate,
+  checkInAttendance,
+  deleteAttendance
+} from "@/api/attendances";
 import { createPatient } from "@/api/patients";
-import { createAttendance, getNextAttendanceDate, deleteAttendance, checkInAttendance } from "@/api/attendances";
-import { AttendanceType, PatientPriority } from "@/api/types";
+import { PatientPriority, AttendanceType } from "@/api/types";
 
 const SCHEDULED_TIME = "21:00";
 
@@ -77,7 +83,8 @@ export function useUnscheduledPatients(
     date?: string
   ) => void,
   autoCheckIn: boolean = true,
-  defaultNotes: string = ""
+  defaultNotes: string = "",
+  validationDate?: string // Optional date for validation (defaults to today)
 ) {
   const { patients, refreshPatients } = usePatients();
   const { refreshCurrentDate, attendancesByDate } = useAttendances();
@@ -104,6 +111,8 @@ export function useUnscheduledPatients(
 
   // Check if a patient is already scheduled for the specific attendance types being selected
   const isPatientAlreadyScheduled = (patientName: string, selectedAttendanceTypes: string[]): boolean => {
+    // Check against the current attendancesByDate
+    // This works for both today's validation and when the context has loaded data for the target date
     if (!attendancesByDate) return false;
 
     // Check only the selected attendance types
@@ -197,7 +206,10 @@ export function useUnscheduledPatients(
 
       // Check if patient is already scheduled for the specific selected types
       if (isPatientAlreadyScheduled(name, selectedTypes)) {
-        setError(`O paciente "${name}" já possui atendimento agendado para hoje nos tipos selecionados. Verifique a lista de atendimentos.`);
+        const dateText = validationDate && validationDate !== new Date().toISOString().split('T')[0] 
+          ? `para ${new Date(validationDate + 'T00:00:00').toLocaleDateString('pt-BR')}`
+          : 'para hoje';
+        setError(`O paciente "${name}" já possui atendimento agendado ${dateText} nos tipos selecionados. Verifique a lista de atendimentos.`);
         return false;
       }
 

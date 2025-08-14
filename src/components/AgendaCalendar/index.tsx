@@ -3,30 +3,29 @@
 import React from "react";
 import ConfirmModal from "@/components/ConfirmModal/index";
 import NewAttendanceModal from "@/components/NewAttendanceModal";
-import AttendanceTypeTag from "@/components/AttendanceList/AttendanceTypeTag";
 import Switch from "@/components/Switch";
+import AgendaColumn from "./AgendaColumn";
 import { useAgendaCalendar } from "./useAgendaCalendar";
-import { formatDateWithDayOfWeekBR } from "@/utils/dateHelpers";
 
 const AgendaCalendar: React.FC = () => {
   const {
-    TABS,
     selectedDate,
     setSelectedDate,
-    activeTab,
-    setActiveTab,
     showNext5Dates,
     setShowNext5Dates,
     filteredAgenda,
-    openAgendaIdx,
-    setOpenAgendaIdx,
-    isTabTransitioning,
+    openSpiritualIdx,
+    setOpenSpiritualIdx,
+    openLightBathIdx,
+    setOpenLightBathIdx,
     confirmRemove,
     setConfirmRemove,
     showNewAttendance,
     setShowNewAttendance,
     handleRemovePatient,
+    handleConfirmRemove,
     handleNewAttendance,
+    loading,
   } = useAgendaCalendar();
 
   return (
@@ -61,14 +60,26 @@ const AgendaCalendar: React.FC = () => {
             >
               Selecione uma data para filtrar
             </label>
-            <input
-              id="agenda-date"
-              type="date"
-              className="input h-11"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              lang="pt-BR"
-            />
+            <div className="flex gap-2">
+              <input
+                id="agenda-date"
+                type="date"
+                className="input h-11 flex-1"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                lang="pt-BR"
+              />
+              <button
+                type="button"
+                className="button button-outline card-shadow"
+                onClick={() => {
+                  const today = new Date().toISOString().split("T")[0];
+                  setSelectedDate(today);
+                }}
+              >
+                Hoje
+              </button>
+            </div>
           </div>
 
           {/* Date Range Filter Toggle */}
@@ -100,128 +111,29 @@ const AgendaCalendar: React.FC = () => {
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex w-full bg-gray-50 relative mb-6">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-[#e2e8f0] z-0"></div>
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                className={`tab-button${
-                  activeTab === tab.key ? " active" : ""
-                } flex-1 text-center`}
-                onClick={() => setActiveTab(tab.key)}
-                type="button"
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Spiritual Attendances Column */}
+            <AgendaColumn
+              title="Consultas Espirituais"
+              agendaItems={filteredAgenda.spiritual}
+              openAgendaIdx={openSpiritualIdx}
+              setOpenAgendaIdx={setOpenSpiritualIdx}
+              onRemovePatient={handleRemovePatient}
+              columnType="spiritual"
+              isLoading={loading}
+            />
 
-          <div
-            className={`transition-opacity duration-200 ${
-              isTabTransitioning
-                ? "opacity-0 pointer-events-none"
-                : "opacity-100"
-            }`}
-          >
-            {filteredAgenda[activeTab].length > 0 ? (
-              filteredAgenda[activeTab].map(
-                ({ date, patients }, idx: number) => (
-                  <div
-                    key={date + "-" + activeTab + "-" + idx}
-                    className={`mb-4 border border-gray-200 rounded-lg  shadow-sm ${
-                      openAgendaIdx !== idx ? "bg-white" : "bg-gray-100"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      className="w-full flex justify-between items-center p-4 font-medium text-gray-800 hover:bg-gray-50 transition rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      onClick={() =>
-                        setOpenAgendaIdx(openAgendaIdx === idx ? null : idx)
-                      }
-                      aria-expanded={openAgendaIdx === idx}
-                      aria-controls={`agenda-patients-${idx}`}
-                    >
-                      <span className="text-left">
-                        <div className="font-semibold">
-                          {formatDateWithDayOfWeekBR(date.toISOString())}
-                        </div>
-                        <div className="text-sm text-gray-600 mt-1">
-                          {patients.length} paciente
-                          {patients.length !== 1 ? "s" : ""} agendado
-                          {patients.length !== 1 ? "s" : ""}
-                        </div>
-                      </span>
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`ml-2 transition-transform text-gray-400 ${
-                            openAgendaIdx === idx ? "rotate-90" : ""
-                          }`}
-                        >
-                          ▶
-                        </span>
-                      </div>
-                    </button>
-                    {openAgendaIdx === idx && (
-                      <div
-                        id={`agenda-patients-${idx}`}
-                        className="p-4 pt-0 border-t border-gray-200 bg-gray-100"
-                      >
-                        <div className="space-y-2 mt-4">
-                          {patients.map(
-                            ({ name, id, attendanceId, attendanceType }, i) => (
-                              <div
-                                key={`${id}-${attendanceType}`}
-                                className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg transition-all hover:shadow-sm"
-                              >
-                                <span className="w-6 h-6 flex items-center justify-center text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-full">
-                                  {i + 1}
-                                </span>
-                                <div className="flex items-center gap-2 flex-1">
-                                  <span className="font-medium text-gray-800">
-                                    {name}
-                                  </span>
-                                  {attendanceType && (
-                                    <AttendanceTypeTag type={attendanceType} />
-                                  )}
-                                </div>
-                                <button
-                                  type="button"
-                                  className="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 border border-red-200 rounded transition-colors"
-                                  onClick={() =>
-                                    setConfirmRemove({
-                                      id,
-                                      date,
-                                      name,
-                                      type: activeTab,
-                                      attendanceId,
-                                    })
-                                  }
-                                  aria-label="Cancelar agendamento"
-                                >
-                                  Cancelar
-                                </button>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              )
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <div className="text-sm">
-                  {activeTab === "spiritual"
-                    ? "Nenhuma consulta espiritual encontrada."
-                    : "Nenhum banho de luz/bastão encontrado."}
-                </div>
-                <div className="text-xs mt-1">
-                  Selecione uma data diferente ou crie um novo agendamento.
-                </div>
-              </div>
-            )}
+            {/* Light Bath / Rod Attendances Column */}
+            <AgendaColumn
+              title="Banhos de Luz / Bastão"
+              agendaItems={filteredAgenda.lightBath}
+              openAgendaIdx={openLightBathIdx}
+              setOpenAgendaIdx={setOpenLightBathIdx}
+              onRemovePatient={handleRemovePatient}
+              columnType="lightBath"
+              isLoading={loading}
+            />
           </div>
         </div>
       </div>
@@ -241,7 +153,7 @@ const AgendaCalendar: React.FC = () => {
         confirmLabel="Remover"
         cancelLabel="Cancelar"
         onCancel={() => setConfirmRemove(null)}
-        onConfirm={handleRemovePatient}
+        onConfirm={handleConfirmRemove}
       />
       <NewAttendanceModal
         open={showNewAttendance}
@@ -249,6 +161,7 @@ const AgendaCalendar: React.FC = () => {
           setShowNewAttendance(false);
         }}
         onSubmit={handleNewAttendance}
+        validationDate={selectedDate || new Date().toISOString().split("T")[0]}
       />
     </div>
   );

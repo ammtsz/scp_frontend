@@ -90,13 +90,25 @@ const AttendanceList: React.FC<{
       <h2 className="text-lg mb-4 text-[color:var(--primary-dark)] flex items-center gap-2">
         Data selecionada:
       </h2>
-      <input
-        type="date"
-        className="input mb-4 h-11"
-        value={selectedDate}
-        onChange={(e) => setSelectedDate(e.target.value)}
-        lang="pt-BR"
-      />
+      <div className="flex gap-2 mb-4">
+        <input
+          type="date"
+          className="input h-11 flex-1"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          lang="pt-BR"
+        />
+        <button
+          type="button"
+          className="button button-outline card-shadow"
+          onClick={() => {
+            const today = new Date().toISOString().split("T")[0];
+            setSelectedDate(today);
+          }}
+        >
+          Hoje
+        </button>
+      </div>
       <div className="flex flex-col w-full">
         {/* Spiritual Section - unchanged */}
         <div key="spiritual" className="w-full">

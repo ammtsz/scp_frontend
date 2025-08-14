@@ -22,6 +22,7 @@ interface NewAttendanceFormProps {
   autoCheckIn?: boolean;
   customNotes?: string;
   showNotesField?: boolean;
+  validationDate?: string; // Date to use for validation (when scheduling for future)
 }
 
 const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
@@ -32,9 +33,15 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
   autoCheckIn = true,
   customNotes = "",
   showNotesField = false,
+  validationDate,
 }) => {
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [date, setDate] = React.useState("");
+
   const {
     search,
+    setSearch,
+    hasNewAttendance,
     setHasNewAttendance,
     selectedPatient,
     showDropdown,
@@ -44,21 +51,24 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
     selectedTypes,
     priority,
     setPriority,
-    filteredPatients,
-    handleRegisterNewAttendance,
-    handleInputChange,
-    handleSelect,
-    handleTypeCheckbox,
+    collapsed,
+    setCollapsed,
+    notes,
+    setNotes,
     isSubmitting,
     error,
     success,
-    notes,
-    setNotes,
-  } = useUnscheduledPatients(onRegisterNewAttendance, autoCheckIn, customNotes);
-
-  const [modalOpen, setModalOpen] = React.useState(false);
-  const [date, setDate] = React.useState("");
-  // Remove local notes state since we're using the one from the hook
+    filteredPatients,
+    handleInputChange,
+    handleSelect,
+    handleTypeCheckbox,
+    handleRegisterNewAttendance,
+  } = useUnscheduledPatients(
+    onRegisterNewAttendance,
+    autoCheckIn,
+    customNotes,
+    showDateField ? date : validationDate
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

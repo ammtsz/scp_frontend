@@ -101,7 +101,7 @@ export const AgendaProvider = ({ children }: { children: ReactNode }) => {
     spiritual: [],
     lightBath: [],
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with true for initial load
   const [error, setError] = useState<string | null>(null);
 
   const loadAgendaAttendances = useCallback(
