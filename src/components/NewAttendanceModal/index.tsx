@@ -45,7 +45,6 @@ const NewAttendanceModal: React.FC<NewAttendanceModalProps> = ({
           submitLabel="Agendar"
           showDateField
           autoCheckIn={false}
-          showNotesField={true}
           validationDate={validationDate}
         />
         <div className="absolute w-full pt-2 -translate-y-4 translate-x-4">

@@ -21,7 +21,6 @@ interface NewAttendanceFormProps {
   showDateField?: boolean;
   autoCheckIn?: boolean;
   customNotes?: string;
-  showNotesField?: boolean;
   validationDate?: string; // Date to use for validation (when scheduling for future)
 }
 
@@ -32,7 +31,6 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
   showDateField = false,
   autoCheckIn = true,
   customNotes = "",
-  showNotesField = false,
   validationDate,
 }) => {
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -40,8 +38,6 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
 
   const {
     search,
-    setSearch,
-    hasNewAttendance,
     setHasNewAttendance,
     selectedPatient,
     showDropdown,
@@ -51,8 +47,6 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
     selectedTypes,
     priority,
     setPriority,
-    collapsed,
-    setCollapsed,
     notes,
     setNotes,
     isSubmitting,
@@ -199,21 +193,19 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
           </div>
         </div>
 
-        {showNotesField && (
-          <div className="mb-4">
-            <label htmlFor="attendance-notes" className="block font-bold mb-1">
-              Observações
-            </label>
-            <textarea
-              id="attendance-notes"
-              className="input w-full min-h-[80px] resize-y"
-              placeholder="Observações sobre o atendimento (opcional)..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              disabled={isSubmitting}
-            />
-          </div>
-        )}
+        <div className="mb-4">
+          <label htmlFor="attendance-notes" className="block font-bold mb-1">
+            Observações
+          </label>
+          <textarea
+            id="attendance-notes"
+            className="input w-full min-h-[80px] resize-y"
+            placeholder="Observações sobre o atendimento (opcional)..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
 
         {/* Error Message */}
         {error && (
