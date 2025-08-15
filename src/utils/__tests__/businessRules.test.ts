@@ -72,9 +72,9 @@ describe('businessRules', () => {
 
   describe('PRIORITY_LABELS', () => {
     it('should have correct priority labels in Portuguese', () => {
-      expect(PRIORITY_LABELS['1']).toBe('Urgente');
-      expect(PRIORITY_LABELS['2']).toBe('Padrão');
-      expect(PRIORITY_LABELS['3']).toBe('Rotina');
+      expect(PRIORITY_LABELS['1']).toBe('Exceção');
+      expect(PRIORITY_LABELS['2']).toBe('Idoso/crianças');
+      expect(PRIORITY_LABELS['3']).toBe('Padrão');
     });
   });
 });

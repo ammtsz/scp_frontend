@@ -68,16 +68,14 @@ export function usePatientList() {
 
   // Legend maps
   const statusLegend: Record<string, string> = {
-    N: "Novo",
-    I: "Inativo",
-    A: "Ativo",
-    T: "Tratamento",
-    F: "Finalizado",
+    T: "Em Tratamento",
+    A: "Alta Médica",
+    F: "Faltas Consecutivas",
   };
   const priorityLegend: Record<string, string> = {
-    N: "Normal",
-    I: "Idoso",
-    E: "Emergência",
+    "1": "Exceção",
+    "2": "Idoso/crianças",
+    "3": "Padrão",
   };
 
   return {

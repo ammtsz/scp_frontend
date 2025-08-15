@@ -345,13 +345,13 @@ export const formatTimeForApi = (time: string): string => {
 export const getPriorityLabel = (priority: IPriority): string => {
   switch (priority) {
     case "1":
-      return "Urgente";
+      return "Exceção";
     case "2":
-      return "Intermediário";
+      return "Idoso/crianças";
     case "3":
-      return "Normal";
+      return "Padrão";
     default:
-      return "Normal";
+      return "Padrão";
   }
 };
 

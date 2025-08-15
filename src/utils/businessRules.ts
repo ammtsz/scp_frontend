@@ -30,9 +30,9 @@ export const PRIORITY_LEVELS = {
 } as const;
 
 export const PRIORITY_LABELS = {
-  "1": "Urgente",
-  "2": "Padrão", 
-  "3": "Rotina",
+  "1": "Exceção",
+  "2": "Idoso/crianças", 
+  "3": "Padrão",
 } as const;
 
 /**

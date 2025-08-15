@@ -158,9 +158,9 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
                 onChange={(e) => setPriority(e.target.value as IPriority)}
                 disabled={isSubmitting}
               >
-                <option value="1">1 - Alta</option>
-                <option value="2">2 - Média</option>
-                <option value="3">3 - Baixa</option>
+                <option value="1">1 - Exceção</option>
+                <option value="2">2 - Idoso/crianças</option>
+                <option value="3">3 - Padrão</option>
               </select>
             </>
           ) : null}

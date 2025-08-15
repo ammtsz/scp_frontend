@@ -12,9 +12,9 @@ import {
 describe("cardStyles utilities", () => {
   describe("getPriorityLabel", () => {
     it("should return correct labels for priority values", () => {
-      expect(getPriorityLabel("1")).toBe("Emergência");
-      expect(getPriorityLabel("2")).toBe("Intermediário");
-      expect(getPriorityLabel("3")).toBe("Normal");
+      expect(getPriorityLabel("1")).toBe("Exceção");
+      expect(getPriorityLabel("2")).toBe("Idoso/crianças");
+      expect(getPriorityLabel("3")).toBe("Padrão");
     });
 
     it("should return the original value for unknown priorities", () => {
@@ -26,20 +26,20 @@ describe("cardStyles utilities", () => {
   describe("getTooltipContent", () => {
     it("should format tooltip content correctly", () => {
       expect(getTooltipContent("João Silva", "1")).toBe(
-        "João Silva - Prioridade: Emergência"
+        "João Silva - Prioridade: Exceção"
       );
       expect(getTooltipContent("Maria Santos", "2")).toBe(
-        "Maria Santos - Prioridade: Intermediário"
+        "Maria Santos - Prioridade: Idoso/crianças"
       );
       expect(getTooltipContent("Pedro Costa", "3")).toBe(
-        "Pedro Costa - Prioridade: Normal"
+        "Pedro Costa - Prioridade: Padrão"
       );
     });
 
     it("should handle long names correctly", () => {
       const longName = "José da Silva Santos Oliveira Pereira";
       expect(getTooltipContent(longName, "1")).toBe(
-        `${longName} - Prioridade: Emergência`
+        `${longName} - Prioridade: Exceção`
       );
     });
 

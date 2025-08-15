@@ -77,9 +77,9 @@ export const getStatusLabel = (status: IAttendanceProgression) => {
 
 export const getPriorityLabel = (priority: string) => {
   const priorityLabels = {
-    "1": "Emergência",
-    "2": "Intermediário", 
-    "3": "Normal",
+    "1": "Exceção",
+    "2": "Idoso/crianças", 
+    "3": "Padrão",
   };
   return priorityLabels[priority as keyof typeof priorityLabels] || priority;
 };
