@@ -1,15 +1,20 @@
 "use client";
 
 import PatientForm from "@/components/PatientForm";
-import Link from "next/link";
+import Breadcrumb from "@/components/Breadcrumb";
 
 export default function NewPatientPage() {
+  const breadcrumbItems = [
+    { label: "Pacientes", href: "/patients" },
+    { label: "Cadastro de Paciente", isActive: true },
+  ];
+
   return (
-    <div>
-      <Link href="/patients" className="button button-link">
-        Voltar
-      </Link>
-      <PatientForm />
+    <div className="flex flex-col gap-8 my-16">
+      <div className="max-w-4xl mx-auto w-full px-4">
+        <Breadcrumb items={breadcrumbItems} />
+        <PatientForm />
+      </div>
     </div>
   );
 }
