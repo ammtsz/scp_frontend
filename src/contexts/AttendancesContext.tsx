@@ -48,43 +48,44 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
   );
 
   // Enhanced function using automatic case conversion
-  const loadAttendancesByDate = async (
-    date: string
-  ): Promise<IAttendanceByDate | null> => {
-    try {
-      setDataLoading(true);
-      setError(null);
+  const loadAttendancesByDate = useCallback(
+    async (date: string): Promise<IAttendanceByDate | null> => {
+      try {
+        setDataLoading(true);
+        setError(null);
 
-      // Using existing API but with automatic case conversion
-      const result = await getAttendancesByDate(date);
+        // Using existing API but with automatic case conversion
+        const result = await getAttendancesByDate(date);
 
-      if (result.success && result.value) {
-        // Transform the structure for component format
-        // Note: We still use the existing transformer for now, but it now gets camelCase data
-        const attendancesByDateMapped = transformAttendanceWithPatientByDate(
-          result.value, // Keep using original for compatibility
-          date
-        );
+        if (result.success && result.value) {
+          // Transform the structure for component format
+          // Note: We still use the existing transformer for now, but it now gets camelCase data
+          const attendancesByDateMapped = transformAttendanceWithPatientByDate(
+            result.value, // Keep using original for compatibility
+            date
+          );
 
-        setAttendancesByDate(attendancesByDateMapped);
-        return attendancesByDateMapped;
-      } else {
-        console.error("Failed to load attendances for date:", result.error);
-        setError(result.error || "Erro ao carregar atendimentos");
+          setAttendancesByDate(attendancesByDateMapped);
+          return attendancesByDateMapped;
+        } else {
+          console.error("Failed to load attendances for date:", result.error);
+          setError(result.error || "Erro ao carregar atendimentos");
+          return null;
+        }
+      } catch (error) {
+        console.error("Error loading attendances for date:", error);
+        setError("Erro ao carregar atendimentos");
         return null;
+      } finally {
+        setDataLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading attendances for date:", error);
-      setError("Erro ao carregar atendimentos");
-      return null;
-    } finally {
-      setDataLoading(false);
-    }
-  };
+    },
+    []
+  );
 
-  const refreshCurrentDate = async () => {
+  const refreshCurrentDate = useCallback(async () => {
     await loadAttendancesByDate(selectedDate);
-  };
+  }, [loadAttendancesByDate, selectedDate]);
 
   const initializeSelectedDate = useCallback(async () => {
     try {
@@ -140,7 +141,7 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
     if (selectedDate) {
       loadAttendancesByDate(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, loadAttendancesByDate]);
 
   return (
     <AttendancesContext.Provider

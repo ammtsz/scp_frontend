@@ -177,6 +177,18 @@ export const transformPatientToApi = (patient: IPatient, isCreate: boolean = fal
   return apiPatient;
 };
 
+// Transform IPatient specifically for creation with all required fields
+export const transformPatientToApiCreate = (patient: Omit<IPatient, 'id'>) => {
+  return {
+    name: patient.name.trim(),
+    phone: patient.phone?.trim() || undefined,
+    priority: transformPriorityToApi(patient.priority),
+    treatment_status: transformStatusToApi(patient.status),
+    birth_date: patient.birthDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+    main_complaint: patient.mainComplaint?.trim() || undefined,
+  };
+};
+
 // Transform local priority to API priority
 export const transformPriorityToApi = (localPriority: IPriority): PatientPriority => {
   switch (localPriority) {

@@ -39,6 +39,7 @@ const defaultMockReturn = {
   handleChange: jest.fn(),
   handleSpiritualConsultationChange: jest.fn(),
   handleSubmit: jest.fn(),
+  isLoading: false,
 };
 
 describe("PatientForm", () => {
@@ -239,6 +240,19 @@ describe("PatientForm", () => {
       const submitButton = screen.getByText("Salvar Paciente");
       expect(submitButton).toBeInTheDocument();
       expect(submitButton).toHaveAttribute("type", "submit");
+    });
+
+    it("should show loading state when saving", () => {
+      (usePatientForm as jest.Mock).mockReturnValue({
+        ...defaultMockReturn,
+        isLoading: true,
+      });
+
+      render(<PatientForm />);
+
+      const submitButton = screen.getByText("Salvando...");
+      expect(submitButton).toBeInTheDocument();
+      expect(submitButton).toBeDisabled();
     });
   });
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAttendances } from "@/contexts/AttendancesContext";
+import { usePatients } from "@/contexts/PatientsContext";
 import {
   IAttendanceProgression,
   IAttendanceType,
@@ -26,6 +27,7 @@ export const useAttendanceList = ({
   externalCheckIn,
   onCheckInProcessed,
 }: UseAttendanceListProps = {}) => {
+  const { patients } = usePatients();
   const {
     selectedDate,
     setSelectedDate,
@@ -50,6 +52,10 @@ export const useAttendanceList = ({
     toStatus: IAttendanceProgression;
     draggedType: IAttendanceType;
   } | null>(null);
+  
+  // Patient edit modal state
+  const [editPatientModalOpen, setEditPatientModalOpen] = useState(false);
+  const [patientToEdit, setPatientToEdit] = useState<{ id: string; name: string } | null>(null);
   const [checkInProcessed, setCheckInProcessed] = useState(false);
   const [collapsed, setCollapsed] = useState<{
     [key in IAttendanceType]: boolean;
@@ -100,7 +106,16 @@ export const useAttendanceList = ({
     const updates: Partial<IAttendanceStatusDetail> = {};
     if (status === "checkedIn") updates.checkedInTime = new Date();
     if (status === "onGoing") updates.onGoingTime = new Date();
-    if (status === "completed") updates.completedTime = new Date();
+    if (status === "completed") {
+      updates.completedTime = new Date();
+      // Trigger patient edit modal when attendance is completed
+      // Find the patient in the patients list to get their ID
+      const fullPatient = patients.find(p => p.name === patient.name);
+      if (fullPatient) {
+        setPatientToEdit({ id: fullPatient.id.toString(), name: patient.name });
+        setEditPatientModalOpen(true);
+      }
+    }
     return { ...patient, ...updates };
   };
 
@@ -342,6 +357,19 @@ export const useAttendanceList = ({
     setCollapsed((prev) => ({ ...prev, [type]: !prev[type] }));
   };
 
+  // Patient edit modal handlers
+  const handleEditPatientCancel = () => {
+    setEditPatientModalOpen(false);
+    setPatientToEdit(null);
+  };
+
+  const handleEditPatientSuccess = () => {
+    setEditPatientModalOpen(false);
+    setPatientToEdit(null);
+    // Refresh current date to show updated data
+    refreshCurrentDate();
+  };
+
   // Call the callback only once when processing is complete
   useEffect(() => {
     if (checkInProcessed && onCheckInProcessed) {
@@ -365,6 +393,8 @@ export const useAttendanceList = ({
     multiSectionModalOpen,
     multiSectionPending,
     collapsed,
+    editPatientModalOpen,
+    patientToEdit,
     
     // Functions
     getPatients,
@@ -377,5 +407,7 @@ export const useAttendanceList = ({
     handleMultiSectionCancel,
     toggleCollapsed,
     refreshCurrentDate,
+    handleEditPatientCancel,
+    handleEditPatientSuccess,
   };
 };

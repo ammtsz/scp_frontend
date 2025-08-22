@@ -1,11 +1,13 @@
 "use client";
 
+import React from "react";
 import {
   IAttendanceProgression,
   IAttendanceType,
   IPriority,
 } from "@/types/globals";
 import ConfirmModal from "@/components/ConfirmModal/index";
+import PatientEditModal from "@/components/PatientForm/PatientEditModal";
 import AttendanceColumn from "./AttendanceColumn";
 import { useAttendanceList } from "./useAttendanceList";
 import { useUnscheduledPatients } from "@/components/UnscheduledPatients/useUnscheduledPatients";
@@ -31,6 +33,8 @@ const AttendanceList: React.FC<{
     confirmOpen,
     multiSectionModalOpen,
     collapsed,
+    editPatientModalOpen,
+    patientToEdit,
 
     // Functions
     getPatients,
@@ -43,6 +47,8 @@ const AttendanceList: React.FC<{
     handleMultiSectionCancel,
     toggleCollapsed,
     refreshCurrentDate,
+    handleEditPatientCancel,
+    handleEditPatientSuccess,
   } = useAttendanceList({ externalCheckIn, onCheckInProcessed });
 
   // Add delete functionality
@@ -231,6 +237,15 @@ const AttendanceList: React.FC<{
         onConfirm={handleMultiSectionConfirm}
         onCancel={handleMultiSectionCancel}
       />
+      {patientToEdit && (
+        <PatientEditModal
+          isOpen={editPatientModalOpen}
+          onClose={handleEditPatientCancel}
+          patientId={patientToEdit.id}
+          patientName={patientToEdit.name}
+          onSuccess={handleEditPatientSuccess}
+        />
+      )}
     </div>
   );
 };
