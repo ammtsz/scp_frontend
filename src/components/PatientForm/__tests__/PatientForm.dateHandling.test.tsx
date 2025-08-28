@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import PatientForm from "../index";
+import { PatientsProvider } from "@/contexts/PatientsContext";
+import { AttendancesProvider } from "@/contexts/AttendancesContext";
 
 // Mock the useRouter hook
 jest.mock("next/navigation", () => ({
@@ -11,11 +13,30 @@ jest.mock("next/navigation", () => ({
 // Mock the API
 jest.mock("@/api/patients", () => ({
   createPatient: jest.fn(),
+  getPatients: jest.fn().mockResolvedValue({
+    success: true,
+    value: [],
+  }),
 }));
+
+jest.mock("@/api/attendances", () => ({
+  getAttendancesByDate: jest.fn().mockResolvedValue({
+    success: true,
+    value: [],
+  }),
+}));
+
+const renderWithProvider = (component: React.ReactElement) => {
+  return render(
+    <PatientsProvider>
+      <AttendancesProvider>{component}</AttendancesProvider>
+    </PatientsProvider>
+  );
+};
 
 describe("PatientForm Date Handling", () => {
   test("should handle invalid date input without crashing", () => {
-    render(<PatientForm />);
+    renderWithProvider(<PatientForm />);
 
     const birthDateInput = screen.getByLabelText(/Data de Nascimento/i);
 
@@ -37,7 +58,7 @@ describe("PatientForm Date Handling", () => {
   });
 
   test("should handle valid date input correctly", () => {
-    render(<PatientForm />);
+    renderWithProvider(<PatientForm />);
 
     const birthDateInput = screen.getByLabelText(/Data de Nascimento/i);
 
@@ -48,7 +69,7 @@ describe("PatientForm Date Handling", () => {
   });
 
   test("should not crash when toISOString is called on invalid dates", () => {
-    render(<PatientForm />);
+    renderWithProvider(<PatientForm />);
 
     const birthDateInput = screen.getByLabelText(/Data de Nascimento/i);
 
@@ -66,7 +87,7 @@ describe("PatientForm Date Handling", () => {
   });
 
   test("should clear invalid dates to empty string in input fields", () => {
-    render(<PatientForm />);
+    renderWithProvider(<PatientForm />);
 
     const birthDateInput = screen.getByLabelText(/Data de Nascimento/i);
 

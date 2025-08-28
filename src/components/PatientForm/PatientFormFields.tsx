@@ -135,6 +135,7 @@ const PatientFormFields: React.FC<PatientFormFieldsProps> = ({
             onChange={handleChange}
             className="input w-full"
           >
+            <option value="N">Novo Paciente</option>
             <option value="T">Em Tratamento</option>
             <option value="A">Alta Médica</option>
             <option value="F">Faltas Consecutivas</option>

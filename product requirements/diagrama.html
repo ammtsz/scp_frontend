@@ -1,0 +1,787 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Centro Espírita Caminho para a Luz - Diagrama de Páginas e Funcionalidades</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 3px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-block;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1.25em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(50, 48, 44, 1);
+}
+.highlight-gray {
+	color: rgba(115, 114, 110, 1);
+	fill: rgba(115, 114, 110, 1);
+}
+.highlight-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.highlight-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.highlight-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.highlight-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.highlight-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(205, 60, 58, 1);
+	fill: rgba(205, 60, 58, 1);
+}
+.highlight-default_background {
+	color: rgba(50, 48, 44, 1);
+}
+.highlight-gray_background {
+	background: rgba(248, 248, 247, 1);
+}
+.highlight-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.highlight-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.highlight-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.highlight-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.highlight-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.highlight-purple_background {
+	background: rgba(248, 243, 252, 1);
+}
+.highlight-pink_background {
+	background: rgba(252, 241, 246, 1);
+}
+.highlight-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(115, 114, 110, 1);
+	fill: rgba(115, 114, 110, 1);
+}
+.block-color-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.block-color-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.block-color-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.block-color-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.block-color-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(205, 60, 58, 1);
+	fill: rgba(205, 60, 58, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(248, 248, 247, 1);
+}
+.block-color-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.block-color-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.block-color-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.block-color-purple_background {
+	background: rgba(248, 243, 252, 1);
+}
+.block-color-pink_background {
+	background: rgba(252, 241, 246, 1);
+}
+.block-color-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.select-value-color-default { background-color: rgba(84, 72, 49, 0.08); }
+.select-value-color-gray { background-color: rgba(84, 72, 49, 0.15); }
+.select-value-color-brown { background-color: rgba(210, 162, 141, 0.35); }
+.select-value-color-orange { background-color: rgba(224, 124, 57, 0.27); }
+.select-value-color-yellow { background-color: rgba(236, 191, 66, 0.39); }
+.select-value-color-green { background-color: rgba(123, 183, 129, 0.27); }
+.select-value-color-blue { background-color: rgba(93, 165, 206, 0.27); }
+.select-value-color-purple { background-color: rgba(168, 129, 197, 0.27); }
+.select-value-color-pink { background-color: rgba(225, 136, 179, 0.27); }
+.select-value-color-red { background-color: rgba(244, 171, 159, 0.4); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="2564ee0a-378d-8009-a57a-c9d472bea55a" class="page sans"><header><h1 class="page-title">Centro Espírita Caminho para a Luz - Diagrama de Páginas e Funcionalidades</h1><p class="page-description"></p></header><div class="page-body"><h2 id="2564ee0a-378d-80b4-8552-ff145e1f5bd5" class="block-color-blue">Visão Geral do Sistema</h2><p id="2564ee0a-378d-8052-9cbf-d724292ed558" class="">Este diagrama apresenta todas as páginas e funcionalidades necessárias para a aplicação web do Centro Espírita Caminho para a Luz, com base nos requisitos do documento. O sistema visa automatizar o processo de atendimento às terças-feiras.</p><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2564ee0a-378d-80a9-a99b-f5b93859d28d" class="code code-wrap"><code class="language-Mermaid" style="white-space:pre-wrap;word-break:break-all">graph TD
+    A[&quot;Página Inicial&quot;] --&gt; B[&quot;Módulo Pacientes&quot;]
+    A --&gt; C[&quot;Módulo Agenda&quot;]
+    A --&gt; D[&quot;Módulo Lista de Atendimentos&quot;]
+    A --&gt; E[&quot;Módulo Calendário&quot;]
+    
+    B --&gt; B1[&quot;Manutenção de Cadastro&quot;]
+    B --&gt; B2[&quot;Histórico de Atendimentos&quot;]
+    
+    B1 --&gt; B1A[&quot;Inclusão de Paciente&quot;]
+    B1 --&gt; B1B[&quot;Alteração de Cadastro&quot;]
+    B1 --&gt; B1C[&quot;Consulta de Paciente&quot;]
+    
+    C --&gt; C1[&quot;Primeiro Atendimento&quot;]
+    C --&gt; C2[&quot;Agendamento Automático&quot;]
+    C --&gt; C3[&quot;Check-in do Paciente&quot;]
+    C --&gt; C4[&quot;Cancelamento/Reagendamento&quot;]
+    C --&gt; C5[&quot;Encerramento da Agenda&quot;]
+    
+    D --&gt; D1[&quot;Consulta Lista de Pacientes&quot;]
+    D --&gt; D2[&quot;Atualização de Status&quot;]
+    
+    E --&gt; E1[&quot;Bloqueio de Datas&quot;]
+</code></pre><h2 id="2564ee0a-378d-80c2-a11c-cb0c723e6689" class="block-color-purple">Estrutura de Páginas e Funcionalidades</h2><h3 id="2564ee0a-378d-80ab-a806-ede4d0005a7f" class="">1. Página Inicial</h3><table id="2564ee0a-378d-8032-ac76-d71d49bd8fb9" class="simple-table"><tbody><tr id="2564ee0a-378d-8005-8e74-ef7b89d9c621"><td id="Q_zi" class=""><strong>Componente</strong></td><td id="@;qb" class=""><strong>Descrição</strong></td><td id=":vIJ" class=""><strong>Prioridade</strong></td></tr><tr id="2564ee0a-378d-805d-9abb-d50f96aa67ac"><td id="Q_zi" class="">Menu de Navegação</td><td id="@;qb" class="">Acesso aos módulos principais do sistema</td><td id=":vIJ" class="">Alta</td></tr><tr id="2564ee0a-378d-807d-b1cc-e431e64508bb"><td id="Q_zi" class="">Dashboard</td><td id="@;qb" class="">Resumo dos atendimentos do dia e pendências</td><td id=":vIJ" class="">Média</td></tr><tr id="2564ee0a-378d-8057-8d47-ddc3f2e7c9d2"><td id="Q_zi" class="">Autenticação</td><td id="@;qb" class="">Login/logout para controle de acesso</td><td id=":vIJ" class="">Alta</td></tr></tbody></table><h3 id="2564ee0a-378d-8071-b0ed-d30e69c66470" class="">2. Módulo Pacientes</h3><table id="2564ee0a-378d-80e1-82e0-c6bc00bf2419" class="simple-table"><tbody><tr id="2564ee0a-378d-80f2-a4f9-f5f149550ba1"><td id="^L]D" class=""><strong>Funcionalidade</strong></td><td id="rLFo" class=""><strong>Descrição</strong></td><td id="mx]K" class=""><strong>Prioridade</strong></td></tr><tr id="2564ee0a-378d-802b-a2cd-fadb4e3460d5"><td id="^L]D" class="">Manutenção de Cadastro</td><td id="rLFo" class="">CRUD completo de pacientes</td><td id="mx]K" class="">Alta</td></tr><tr id="2564ee0a-378d-80e4-b843-e4f9314baded"><td id="^L]D" class="">Histórico de Atendimentos</td><td id="rLFo" class="">Visualização do histórico por paciente</td><td id="mx]K" class="">Alta</td></tr><tr id="2564ee0a-378d-80c6-bd4d-c9f1f32cc1e0"><td id="^L]D" class="">Gestão de Recomendações</td><td id="rLFo" class="">Registro das recomendações médicas</td><td id="mx]K" class="">Alta</td></tr><tr id="2564ee0a-378d-8021-a39d-c43e5cfbcd00"><td id="^L]D" class="">Gestão de Tratamentos</td><td id="rLFo" class="">Registro de banho de luz/bastão</td><td id="mx]K" class="">Alta</td></tr></tbody></table><h3 id="2564ee0a-378d-8089-8c13-fd09426d5fb0" class="">3. Módulo Agenda</h3><table id="2564ee0a-378d-808b-9038-d981e46fd432" class="simple-table"><tbody><tr id="2564ee0a-378d-807a-a8bd-ea65d5a8f757"><td id="~bb&gt;" class=""><strong>Funcionalidade</strong></td><td id="b_Y&lt;" class=""><strong>Descrição</strong></td><td id="TL`X" class=""><strong>Prioridade</strong></td></tr><tr id="2564ee0a-378d-8058-a36f-c58da5a68231"><td id="~bb&gt;" class="">Primeiro Atendimento</td><td id="b_Y&lt;" class="">Agendamento inicial de pacientes</td><td id="TL`X" class="">Alta</td></tr><tr id="2564ee0a-378d-80a1-adb3-c9007a2fd17e"><td id="~bb&gt;" class="">Agendamento Automático</td><td id="b_Y&lt;" class="">Geração de agendas conforme recomendações</td><td id="TL`X" class="">Alta</td></tr><tr id="2564ee0a-378d-8095-99ed-f56f024d3614"><td id="~bb&gt;" class="">Check-in</td><td id="b_Y&lt;" class="">Registro de presença dos pacientes</td><td id="TL`X" class="">Alta</td></tr><tr id="2564ee0a-378d-80c0-be50-c25421447677"><td id="~bb&gt;" class="">Cancelamento/Reagendamento</td><td id="b_Y&lt;" class="">Gestão de faltas e reagendamentos</td><td id="TL`X" class="">Média</td></tr><tr id="2564ee0a-378d-8065-8b9c-ed2044750f0b"><td id="~bb&gt;" class="">Encerramento da Agenda</td><td id="b_Y&lt;" class="">Finalização dos atendimentos do dia</td><td id="TL`X" class="">Média</td></tr></tbody></table><h3 id="2564ee0a-378d-8053-a842-db2f0785cb2a" class="">4. Módulo Lista de Atendimentos</h3><table id="2564ee0a-378d-803b-abe4-cbc085a8d129" class="simple-table"><tbody><tr id="2564ee0a-378d-8038-b44d-c517dd95c8ce"><td id="hV\y" class=""><strong>Funcionalidade</strong></td><td id="B}Yy" class=""><strong>Descrição</strong></td><td id="pmJB" class=""><strong>Prioridade</strong></td></tr><tr id="2564ee0a-378d-80b6-8787-c8c8d228e822"><td id="hV\y" class="">Visualização da Lista</td><td id="B}Yy" class="">Lista ordenada por prioridade</td><td id="pmJB" class="">Alta</td></tr><tr id="2564ee0a-378d-8007-bb17-fb12133bcf1f"><td id="hV\y" class="">Atualização de Status</td><td id="B}Yy" class="">Controle do fluxo de atendimento</td><td id="pmJB" class="">Alta</td></tr><tr id="2564ee0a-378d-8034-bd6e-ff3950e60961"><td id="hV\y" class="">Filtros</td><td id="B}Yy" class="">Filtrar por tipo de atendimento</td><td id="pmJB" class="">Média</td></tr></tbody></table><h3 id="2564ee0a-378d-80ac-af7c-cf9da5f3ecaf" class="">5. Módulo Calendário</h3><table id="2564ee0a-378d-8077-98fe-d3fbcc447893" class="simple-table"><tbody><tr id="2564ee0a-378d-807a-b0f0-c3f8b78fa51a"><td id="[o?A" class=""><strong>Funcionalidade</strong></td><td id="KnM[" class=""><strong>Descrição</strong></td><td id="yC^p" class=""><strong>Prioridade</strong></td></tr><tr id="2564ee0a-378d-8081-a504-c31036398dca"><td id="[o?A" class="">Visualização do Calendário</td><td id="KnM[" class="">Calendário mensal/anual</td><td id="yC^p" class="">Média</td></tr><tr id="2564ee0a-378d-806d-9843-c8c1a43c4ecc"><td id="[o?A" class="">Bloqueio de Datas</td><td id="KnM[" class="">Configuração de dias sem atendimento</td><td id="yC^p" class="">Média</td></tr><tr id="2564ee0a-378d-8021-8481-e4be672d9099"><td id="[o?A" class="">Desbloqueio de Datas</td><td id="KnM[" class="">Reativação de datas bloqueadas</td><td id="yC^p" class="">Baixa</td></tr></tbody></table><h2 id="2564ee0a-378d-80a9-a97b-ec0098b78cfb" class="block-color-teal">Arquitetura de Componentes</h2><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2564ee0a-378d-8060-ba30-f75ae697d28d" class="code code-wrap"><code class="language-Mermaid" style="white-space:pre-wrap;word-break:break-all">flowchart TD
+    subgraph &quot;Estrutura de Componentes&quot;
+        A[App] --&gt; B[Layout]
+        B --&gt; C[Header]
+        B --&gt; D[Sidebar]
+        B --&gt; E[Content]
+        B --&gt; F[Footer]
+        
+        E --&gt; G[Router]
+        
+        G --&gt; M1[PacientesPage]
+        G --&gt; M2[AgendaPage]
+        G --&gt; M3[ListaAtendimentoPage]
+        G --&gt; M4[CalendarioPage]
+        
+        M1 --&gt; PC1[CadastroPaciente]
+        M1 --&gt; PC2[HistoricoPaciente]
+        
+        M2 --&gt; AG1[AgendamentoForm]
+        M2 --&gt; AG2[CheckinComponent]
+        M2 --&gt; AG3[CancelamentoComponent]
+        
+        M3 --&gt; LA1[ListaAtendimentoTable]
+        M3 --&gt; LA2[StatusUpdateComponent]
+        
+        M4 --&gt; CA1[CalendarioView]
+        M4 --&gt; CA2[BloqueioDataForm]
+    end
+</code></pre><h2 id="2564ee0a-378d-8096-9184-f72c31f2e2dd" class="block-color-orange">Estratégia de Implementação</h2><p id="2564ee0a-378d-807d-b11f-dca4ce619341" class="">Para implementar este projeto de forma organizada e escalável, recomenda-se a seguinte estratégia:</p><h3 id="2564ee0a-378d-804f-8dc3-f754c3b43c71" class="">1. Estrutura de Arquivos</h3><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2564ee0a-378d-80a1-b6d2-dcd68f92f1ec" class="code code-wrap"><code class="language-undefined" style="white-space:pre-wrap;word-break:break-all">src/
+├── assets/
+│   ├── images/
+│   └── styles/
+├── components/
+│   ├── common/
+│   │   ├── Button/
+│   │   ├── Input/
+│   │   ├── Modal/
+│   │   └── Table/
+│   ├── layout/
+│   │   ├── Header/
+│   │   ├── Sidebar/
+│   │   └── Footer/
+│   └── modules/
+│       ├── pacientes/
+│       ├── agenda/
+│       ├── listaAtendimento/
+│       └── calendario/
+├── contexts/
+├── hooks/
+├── pages/
+│   ├── Pacientes/
+│   ├── Agenda/
+│   ├── ListaAtendimento/
+│   └── Calendario/
+├── services/
+│   ├── api/
+│   ├── pacientes/
+│   ├── agenda/
+│   └── calendario/
+├── store/
+│   ├── slices/
+│   └── index.js
+├── utils/
+└── App.js
+</code></pre><h3 id="2564ee0a-378d-8050-8375-c823df273559" class="">2. Planejamento de Sprints</h3><table id="2564ee0a-378d-80be-8408-ddf3c5effc66" class="simple-table"><tbody><tr id="2564ee0a-378d-80b8-8a4e-cfdc4c3c2131"><td id="JOHe" class=""><strong>Sprint</strong></td><td id=":~^i" class=""><strong>Objetivos</strong></td><td id="ENB]" class=""><strong>Entregáveis</strong></td></tr><tr id="2564ee0a-378d-80ed-a0b3-f669e8f1425f"><td id="JOHe" class="">Sprint 1</td><td id=":~^i" class="">Configuração inicial do projeto e estrutura básica</td><td id="ENB]" class="">Setup do projeto, estrutura de arquivos, componentes base</td></tr><tr id="2564ee0a-378d-8081-ae73-de5fa4cee816"><td id="JOHe" class="">Sprint 2</td><td id=":~^i" class="">Módulo de Pacientes (cadastro básico)</td><td id="ENB]" class="">CRUD de pacientes, formulários de inclusão</td></tr><tr id="2564ee0a-378d-806a-8afd-e1255e8f9ca6"><td id="JOHe" class="">Sprint 3</td><td id=":~^i" class="">Módulo de Agenda (funcionalidades básicas)</td><td id="ENB]" class="">Calendário, agendamento manual</td></tr><tr id="2564ee0a-378d-8019-ae5c-fa62ca1464e0"><td id="JOHe" class="">Sprint 4</td><td id=":~^i" class="">Regras de negócio para agendamento automático</td><td id="ENB]" class="">Lógica de geração automática de agendas</td></tr><tr id="2564ee0a-378d-8077-b58a-e23c345b47d4"><td id="JOHe" class="">Sprint 5</td><td id=":~^i" class="">Módulo de Lista de Atendimentos</td><td id="ENB]" class="">Visualização e atualização de status</td></tr><tr id="2564ee0a-378d-80ef-bd15-d23dcb0adc6d"><td id="JOHe" class="">Sprint 6</td><td id=":~^i" class="">Integração entre módulos e refinamento</td><td id="ENB]" class="">Fluxo completo de atendimento funcionando</td></tr><tr id="2564ee0a-378d-805d-aa94-da4993ff06bc"><td id="JOHe" class="">Sprint 7</td><td id=":~^i" class="">Testes e correções</td><td id="ENB]" class="">Aplicação estável e testada</td></tr></tbody></table><h3 id="2564ee0a-378d-80c5-b692-fe7cb28eada6" class="">3. Tecnologias Recomendadas</h3><ul id="2564ee0a-378d-8086-899d-ca9356e0efb4" class="bulleted-list"><li style="list-style-type:disc">React.js para desenvolvimento da interface</li></ul><ul id="2564ee0a-378d-800d-be89-c44cc646fa36" class="bulleted-list"><li style="list-style-type:disc">TypeScript para tipagem estática</li></ul><ul id="2564ee0a-378d-8057-828c-e305c543f665" class="bulleted-list"><li style="list-style-type:disc">Redux ou Context API para gerenciamento de estado</li></ul><ul id="2564ee0a-378d-8097-82f5-cae6f957a196" class="bulleted-list"><li style="list-style-type:disc">Styled Components ou TailwindCSS para estilização</li></ul><ul id="2564ee0a-378d-80cf-a3e8-ce6c28006f92" class="bulleted-list"><li style="list-style-type:disc">React Router para navegação</li></ul><ul id="2564ee0a-378d-8006-ba5b-c88bd2e356c8" class="bulleted-list"><li style="list-style-type:disc">Formik + Yup para formulários e validações</li></ul><ul id="2564ee0a-378d-800f-a11f-f4abbd26d48b" class="bulleted-list"><li style="list-style-type:disc">Jest e React Testing Library para testes</li></ul><ul id="2564ee0a-378d-80a9-a9dd-e012d7f2602c" class="bulleted-list"><li style="list-style-type:disc">Axios para requisições HTTP</li></ul><h2 id="2564ee0a-378d-80bd-8b6c-dce95750dbf9" class="block-color-red">Principais Desafios Técnicos</h2><ul id="2564ee0a-378d-808f-a5a2-d8beb0302be2" class="bulleted-list"><li style="list-style-type:disc">Implementação das regras complexas de agendamento automático</li></ul><ul id="2564ee0a-378d-80ec-ae05-e35bb11d0b14" class="bulleted-list"><li style="list-style-type:disc">Gestão de estado compartilhado entre os diferentes módulos</li></ul><ul id="2564ee0a-378d-80d4-927c-f81e14faaf93" class="bulleted-list"><li style="list-style-type:disc">Lógica de priorização na lista de atendimentos</li></ul><ul id="2564ee0a-378d-80c1-8ae7-ed84d064ba10" class="bulleted-list"><li style="list-style-type:disc">Gerenciamento de faltas e suas consequências no agendamento</li></ul><ul id="2564ee0a-378d-80d7-a65e-fdd961945d5b" class="bulleted-list"><li style="list-style-type:disc">Tratamento das recomendações médicas com múltiplos locais de tratamento</li></ul><h2 id="2564ee0a-378d-8089-a18d-c9a44905047f" class="block-color-blue">Fluxo de Atendimento</h2><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2564ee0a-378d-80bf-9482-d8215b9eee74" class="code code-wrap"><code class="language-Mermaid" style="white-space:pre-wrap;word-break:break-all">sequenceDiagram
+    participant Recepcionista
+    participant Sistema
+    participant Médico
+
+    Recepcionista-&gt;&gt;Sistema: Cadastra novo paciente
+    Sistema-&gt;&gt;Sistema: Gera número de registro
+    Recepcionista-&gt;&gt;Sistema: Realiza check-in do paciente
+    Sistema-&gt;&gt;Sistema: Adiciona à lista de atendimento
+    Sistema-&gt;&gt;Sistema: Aplica regras de prioridade
+    Recepcionista-&gt;&gt;Médico: Encaminha paciente para atendimento
+    Médico-&gt;&gt;Recepcionista: Informa recomendações
+    Recepcionista-&gt;&gt;Sistema: Registra recomendações médicas
+    Sistema-&gt;&gt;Sistema: Gera agendamentos automáticos
+    alt Banho de Luz/Bastão no mesmo dia
+        Sistema-&gt;&gt;Sistema: Adiciona à lista de banho de luz/bastão
+        Recepcionista-&gt;&gt;Sistema: Atualiza status para &quot;em atendimento&quot;
+        Recepcionista-&gt;&gt;Sistema: Atualiza status para &quot;concluído&quot;
+    end
+    Sistema-&gt;&gt;Sistema: Registra comparecimento
+</code></pre><h2 id="2564ee0a-378d-80ec-9fd6-ccf8b2e57fa3" class="block-color-purple">Considerações para Desenvolvimento</h2><ul id="2564ee0a-378d-8059-a538-fa0aa29ecf58" class="bulleted-list"><li style="list-style-type:disc">Adotar uma abordagem de desenvolvimento componentizada para facilitar a manutenção</li></ul><ul id="2564ee0a-378d-8068-8a5c-eb6f391161a7" class="bulleted-list"><li style="list-style-type:disc">Implementar um sistema robusto de validação de formulários para garantir a integridade dos dados</li></ul><ul id="2564ee0a-378d-8087-9d03-ef9ed8ea21ac" class="bulleted-list"><li style="list-style-type:disc">Utilizar uma arquitetura de estado que permita o compartilhamento eficiente de dados entre os módulos</li></ul><ul id="2564ee0a-378d-80ea-acb6-dcddac984cfb" class="bulleted-list"><li style="list-style-type:disc">Desenvolver com responsividade em mente para possibilitar o uso em diferentes dispositivos</li></ul><ul id="2564ee0a-378d-80d7-a243-d01553e6dea7" class="bulleted-list"><li style="list-style-type:disc">Estabelecer padrões de código e documentação para facilitar o trabalho em equipe</li></ul><ul id="2564ee0a-378d-80de-9fbe-e83c03cd0ddf" class="bulleted-list"><li style="list-style-type:disc">Implementar testes automatizados para as funcionalidades críticas</li></ul></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>

@@ -58,10 +58,11 @@ describe("AttendanceCard Component", () => {
     patient: mockPatient,
     status: "checkedIn" as IAttendanceProgression,
     type: "spiritual" as IAttendanceType,
-    idx: 0,
+    index: 0,
     dragged: null as IDraggedItem | null,
     handleDragStart: jest.fn(),
     handleDragEnd: jest.fn(),
+    onDelete: jest.fn(),
     isNextToBeAttended: false,
   };
 
@@ -83,9 +84,9 @@ describe("AttendanceCard Component", () => {
     });
 
     it("should show patient index for checkedIn status", () => {
-      render(<AttendanceCard {...defaultProps} status="checkedIn" idx={2} />);
+      render(<AttendanceCard {...defaultProps} status="checkedIn" index={2} />);
 
-      expect(screen.getByText(/3\. João Silva \(1\)/)).toBeInTheDocument(); // idx + 1
+      expect(screen.getByText(/3\. João Silva \(1\)/)).toBeInTheDocument(); // index + 1
     });
 
     it("should not show patient index for non-checkedIn status", () => {
@@ -98,15 +99,13 @@ describe("AttendanceCard Component", () => {
     it("should show 'next to be attended' indicator when isNextToBeAttended is true", () => {
       render(<AttendanceCard {...defaultProps} isNextToBeAttended={true} />);
 
-      expect(screen.getByText("Próximo a ser atendido")).toBeInTheDocument();
+      expect(screen.getByText("Próximo")).toBeInTheDocument();
     });
 
     it("should not show 'next to be attended' indicator when isNextToBeAttended is false", () => {
       render(<AttendanceCard {...defaultProps} isNextToBeAttended={false} />);
 
-      expect(
-        screen.queryByText("Próximo a ser atendido")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Próximo")).not.toBeInTheDocument();
     });
   });
 
@@ -115,28 +114,28 @@ describe("AttendanceCard Component", () => {
       render(<AttendanceCard {...defaultProps} status="scheduled" />);
 
       const card = screen.getByRole("listitem");
-      expect(card).toHaveClass("border-l-4", "border-l-blue-400");
+      expect(card).toHaveClass("border-l-4", "border-l-gray-400");
     });
 
     it("should apply correct styling for checkedIn status", () => {
       render(<AttendanceCard {...defaultProps} status="checkedIn" />);
 
       const card = screen.getByRole("listitem");
-      expect(card).toHaveClass("border-l-4", "border-l-red-400");
+      expect(card).toHaveClass("border-l-4", "border-l-gray-400");
     });
 
     it("should apply correct styling for onGoing status", () => {
       render(<AttendanceCard {...defaultProps} status="onGoing" />);
 
       const card = screen.getByRole("listitem");
-      expect(card).toHaveClass("border-l-4", "border-l-yellow-400");
+      expect(card).toHaveClass("border-l-4", "border-l-gray-400");
     });
 
     it("should apply correct styling for completed status", () => {
       render(<AttendanceCard {...defaultProps} status="completed" />);
 
       const card = screen.getByRole("listitem");
-      expect(card).toHaveClass("border-l-4", "border-l-green-400");
+      expect(card).toHaveClass("border-l-4", "border-l-gray-400");
     });
 
     it("should apply dragged opacity when item is being dragged", () => {
@@ -173,7 +172,7 @@ describe("AttendanceCard Component", () => {
       const card = screen.getByRole("listitem");
       expect(card).toHaveClass(
         "relative",
-        "h-20",
+        "h-24",
         "w-full",
         "flex",
         "items-center",
@@ -369,18 +368,18 @@ describe("AttendanceCard Component", () => {
     it("should position the indicator correctly", () => {
       render(<AttendanceCard {...defaultProps} isNextToBeAttended={true} />);
 
-      const indicator = screen.getByText("Próximo a ser atendido");
+      const indicator = screen.getByText("Próximo");
       expect(indicator).toHaveClass(
         "absolute",
         "top-1",
-        "left-1",
+        "right-1",
         "text-red-700",
         "text-xs",
-        "font-bold",
         "px-1",
-        "py-0",
+        "py-0.5",
         "rounded",
-        "z-10"
+        "z-10",
+        "bg-red-100"
       );
     });
   });
@@ -426,15 +425,15 @@ describe("AttendanceCard Component", () => {
 
       render(<AttendanceCard {...propsWithoutNextToBeAttended} />);
 
-      expect(
-        screen.queryByText("Próximo a ser atendido")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Próximo")).not.toBeInTheDocument();
     });
 
     it("should handle high index numbers correctly", () => {
-      render(<AttendanceCard {...defaultProps} status="checkedIn" idx={99} />);
+      render(
+        <AttendanceCard {...defaultProps} status="checkedIn" index={99} />
+      );
 
-      expect(screen.getByText(/100\. João Silva \(1\)/)).toBeInTheDocument(); // idx + 1
+      expect(screen.getByText(/100\. João Silva \(1\)/)).toBeInTheDocument(); // index + 1
     });
   });
 
@@ -450,14 +449,21 @@ describe("AttendanceCard Component", () => {
         />
       );
 
-      expect(screen.getByTestId("x-icon")).toBeInTheDocument();
-      expect(screen.getByTitle("Apagar")).toBeInTheDocument();
+      expect(screen.getByText("✕")).toBeInTheDocument();
+      expect(screen.getByTitle("Remover")).toBeInTheDocument();
     });
 
-    it("does not show delete button when onDelete is not provided", () => {
-      render(<AttendanceCard {...defaultProps} status="scheduled" />);
+    it("does not show delete button when attendanceId is not provided", () => {
+      const patientWithoutId = { ...mockPatient, attendanceId: undefined };
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          patient={patientWithoutId}
+          status="scheduled"
+        />
+      );
 
-      expect(screen.queryByTestId("x-icon")).not.toBeInTheDocument();
+      expect(screen.queryByText("✕")).not.toBeInTheDocument();
     });
 
     it("does not show delete button for non-scheduled status", () => {
@@ -485,7 +491,7 @@ describe("AttendanceCard Component", () => {
         />
       );
 
-      const deleteButton = screen.getByTitle("Apagar");
+      const deleteButton = screen.getByTitle("Remover");
       fireEvent.click(deleteButton);
 
       expect(mockOnDelete).toHaveBeenCalledTimes(1);
@@ -504,7 +510,7 @@ describe("AttendanceCard Component", () => {
         />
       );
 
-      const deleteButton = screen.getByTitle("Apagar");
+      const deleteButton = screen.getByTitle("Remover");
       fireEvent.click(deleteButton, mockEvent);
 
       expect(mockOnDelete).toHaveBeenCalled();

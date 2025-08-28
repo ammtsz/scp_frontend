@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useEditPatientForm } from "./useEditPatientForm";
 import PatientFormFields from "./PatientFormFields";
+import PatientTreatmentRecords from "./PatientTreatmentRecords";
 import { PatientResponseDto } from "@/api/types";
 import { getPatientById } from "@/api/patients";
 
@@ -299,15 +300,21 @@ const PatientEditModal: React.FC<PatientEditModalProps> = ({
           )}
 
           {!dataLoading && patientData && (
-            <PatientFormFields
-              patient={patient}
-              handleChange={handleChange}
-              handleSpiritualConsultationChange={
-                handleSpiritualConsultationChange
-              }
-              formatDateForInput={formatDateForInput}
-              showSpiritualConsultation={true} // Show spiritual consultation in edit modal
-            />
+            <>
+              <PatientFormFields
+                patient={patient}
+                handleChange={handleChange}
+                handleSpiritualConsultationChange={
+                  handleSpiritualConsultationChange
+                }
+                formatDateForInput={formatDateForInput}
+                showSpiritualConsultation={true} // Show spiritual consultation in edit modal
+              />
+
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <PatientTreatmentRecords patientId={patientId} />
+              </div>
+            </>
           )}
 
           <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">

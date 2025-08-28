@@ -1,11 +1,25 @@
+import React, { createElement } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { useAttendanceList } from '../useAttendanceList';
 import { useAttendances } from '@/contexts/AttendancesContext';
+import { PatientsProvider } from '@/contexts/PatientsContext';
 import { IPriority } from '@/types/globals';
 
 // Mock the AttendancesContext
 jest.mock('@/contexts/AttendancesContext');
 const mockUseAttendances = useAttendances as jest.MockedFunction<typeof useAttendances>;
+
+// Mock the patients API
+jest.mock('@/api/patients', () => ({
+  getPatients: jest.fn().mockResolvedValue({
+    success: true,
+    value: [],
+  }),
+}));
+
+// Wrapper function for providers
+const wrapper = ({ children }: { children: React.ReactNode }) =>
+  createElement(PatientsProvider, null, children);
 
 // Factory function to create fresh mock data for each test
 const createMockAttendancesByDate = () => ({
@@ -69,7 +83,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       expect(result.current.selectedDate).toBe('2025-01-15');
       expect(result.current.attendancesByDate).toEqual(mockContext.attendancesByDate);
@@ -88,7 +102,7 @@ describe('useAttendanceList', () => {
         loading: true
       });
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
       expect(result.current.loading).toBe(true);
     });
 
@@ -100,7 +114,7 @@ describe('useAttendanceList', () => {
         error: errorMessage
       });
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
       expect(result.current.error).toBe(errorMessage);
     });
   });
@@ -110,7 +124,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       const scheduledSpiritual = result.current.getPatients('spiritual', 'scheduled');
       expect(scheduledSpiritual).toHaveLength(2);
@@ -128,7 +142,7 @@ describe('useAttendanceList', () => {
         attendancesByDate: null
       });
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
       const patients = result.current.getPatients('spiritual', 'scheduled');
       expect(patients).toEqual([]);
     });
@@ -137,7 +151,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
       const patients = result.current.getPatients('lightBath', 'checkedIn');
       expect(patients).toEqual([]);
     });
@@ -148,7 +162,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleDragStart('spiritual', 0, 'scheduled');
@@ -166,7 +180,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleDragStart('spiritual', 0, 'scheduled');
@@ -185,7 +199,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleDragStart('spiritual', 0, 'scheduled');
@@ -214,7 +228,7 @@ describe('useAttendanceList', () => {
       };
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleDragStart('spiritual', 0, 'scheduled');
@@ -237,7 +251,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       // Mock console.error to suppress error output in tests
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -265,7 +279,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       // Setup drag and drop for same type move
       act(() => {
@@ -295,7 +309,7 @@ describe('useAttendanceList', () => {
       };
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleDragStart('spiritual', 0, 'scheduled');
@@ -330,7 +344,7 @@ describe('useAttendanceList', () => {
       };
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleDragStart('spiritual', 0, 'scheduled');
@@ -365,7 +379,7 @@ describe('useAttendanceList', () => {
       };
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleDragStart('spiritual', 0, 'scheduled');
@@ -393,7 +407,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       expect(result.current.collapsed.spiritual).toBe(false);
 
@@ -414,7 +428,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       expect(result.current.collapsed.lightBath).toBe(false);
 
@@ -457,7 +471,7 @@ describe('useAttendanceList', () => {
         useAttendanceList({ 
           externalCheckIn, 
           onCheckInProcessed: mockOnCheckInProcessed 
-        })
+        }), { wrapper }
       );
 
       // The effect should have run and added the patient
@@ -492,7 +506,7 @@ describe('useAttendanceList', () => {
       };
 
       const { result } = renderHook(() => 
-        useAttendanceList({ externalCheckIn })
+        useAttendanceList({ externalCheckIn }), { wrapper }
       );
 
       // Should be added to both spiritual and lightBath checkedIn
@@ -529,7 +543,7 @@ describe('useAttendanceList', () => {
       };
 
       const { result } = renderHook(() => 
-        useAttendanceList({ externalCheckIn })
+        useAttendanceList({ externalCheckIn }), { wrapper }
       );
 
       const checkedInPatients = result.current.getPatients('spiritual', 'checkedIn');
@@ -563,7 +577,7 @@ describe('useAttendanceList', () => {
       };
 
       const { result } = renderHook(() => 
-        useAttendanceList({ externalCheckIn })
+        useAttendanceList({ externalCheckIn }), { wrapper }
       );
 
       // Should not crash and should not add patient anywhere
@@ -583,7 +597,7 @@ describe('useAttendanceList', () => {
         attendancesByDate: null
       });
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       // Mock console.error to suppress error output in tests
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -604,7 +618,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleDropWithConfirm('lightBath', 'checkedIn');
@@ -618,7 +632,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleConfirm();
@@ -632,7 +646,7 @@ describe('useAttendanceList', () => {
       const mockContext = createFreshMockContext();
       mockUseAttendances.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       act(() => {
         result.current.handleMultiSectionConfirm();
@@ -671,7 +685,7 @@ describe('useAttendanceList', () => {
       };
       mockUseAttendances.mockReturnValue(freshMockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       // Verify initial state
       expect(result.current.getPatients('lightBath', 'checkedIn')).toHaveLength(0);
@@ -717,7 +731,7 @@ describe('useAttendanceList', () => {
       };
       mockUseAttendances.mockReturnValue(freshMockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       // Verify initial state
       expect(result.current.getPatients('spiritual', 'onGoing')).toHaveLength(1);
@@ -763,7 +777,7 @@ describe('useAttendanceList', () => {
       };
       mockUseAttendances.mockReturnValue(freshMockContext);
 
-      const { result } = renderHook(() => useAttendanceList());
+      const { result } = renderHook(() => useAttendanceList(), { wrapper });
 
       // Verify initial state
       expect(result.current.getPatients('spiritual', 'completed')).toHaveLength(1);

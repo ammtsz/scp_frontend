@@ -5,6 +5,7 @@ import TabNav from "@/components/TabNav";
 import { PatientsProvider } from "@/contexts/PatientsContext";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { AgendaProvider } from "@/contexts/AgendaContext";
+import { TreatmentRecordsProvider } from "@/contexts/TreatmentRecordsContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,10 +31,12 @@ export default function RootLayout({
         <PatientsProvider>
           <AttendancesProvider>
             <AgendaProvider>
-              <TabNav />
-              <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
-                {children}
-              </main>
+              <TreatmentRecordsProvider>
+                <TabNav />
+                <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
+                  {children}
+                </main>
+              </TreatmentRecordsProvider>
             </AgendaProvider>
           </AttendancesProvider>
         </PatientsProvider>

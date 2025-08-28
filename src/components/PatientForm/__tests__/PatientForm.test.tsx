@@ -2,6 +2,24 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import PatientForm from "../index";
+import { PatientsProvider } from "@/contexts/PatientsContext";
+import { AttendancesProvider } from "@/contexts/AttendancesContext";
+
+// Mock the API
+jest.mock("@/api/patients", () => ({
+  createPatient: jest.fn(),
+  getPatients: jest.fn().mockResolvedValue({
+    success: true,
+    value: [],
+  }),
+}));
+
+jest.mock("@/api/attendances", () => ({
+  getAttendancesByDate: jest.fn().mockResolvedValue({
+    success: true,
+    value: [],
+  }),
+}));
 
 // Mock the usePatientForm hook
 jest.mock("../usePatientForm", () => ({
@@ -9,6 +27,14 @@ jest.mock("../usePatientForm", () => ({
 }));
 
 import { usePatientForm } from "../usePatientForm";
+
+const renderWithProviders = (component: React.ReactElement) => {
+  return render(
+    <PatientsProvider>
+      <AttendancesProvider>{component}</AttendancesProvider>
+    </PatientsProvider>
+  );
+};
 
 const mockPatient = {
   name: "",
@@ -50,14 +76,14 @@ describe("PatientForm", () => {
 
   describe("Layout and Structure", () => {
     it("should use consistent card layout", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const cardContainer = document.querySelector(".card-shadow");
       expect(cardContainer).toBeInTheDocument();
     });
 
     it("should display form header with title and description", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       expect(screen.getByText("Cadastro de Paciente")).toBeInTheDocument();
       expect(
@@ -66,7 +92,7 @@ describe("PatientForm", () => {
     });
 
     it("should display treatment section header", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       expect(screen.getByText("Consulta Espiritual")).toBeInTheDocument();
       expect(
@@ -77,10 +103,10 @@ describe("PatientForm", () => {
 
   describe("Form Fields", () => {
     it("should render all required personal information fields", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       expect(screen.getByLabelText("Nome *")).toBeInTheDocument();
-      expect(screen.getByLabelText("Telefone *")).toBeInTheDocument();
+      expect(screen.getByLabelText("Telefone")).toBeInTheDocument();
       expect(screen.getByLabelText("Data de Nascimento *")).toBeInTheDocument();
       expect(screen.getByLabelText("Prioridade")).toBeInTheDocument();
       expect(screen.getByLabelText("Status")).toBeInTheDocument();
@@ -88,7 +114,7 @@ describe("PatientForm", () => {
     });
 
     it("should render all treatment information fields", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       expect(screen.getByLabelText("Data de Início")).toBeInTheDocument();
       expect(
@@ -102,7 +128,7 @@ describe("PatientForm", () => {
     });
 
     it("should render treatment type checkboxes", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       expect(screen.getByLabelText("Banho de luz")).toBeInTheDocument();
       expect(screen.getByLabelText("Bastão")).toBeInTheDocument();
@@ -114,7 +140,7 @@ describe("PatientForm", () => {
 
   describe("Priority Options", () => {
     it("should display correct priority options with new labels", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const prioritySelect = screen.getByLabelText("Prioridade");
 
@@ -135,7 +161,7 @@ describe("PatientForm", () => {
 
   describe("Status Options", () => {
     it("should display correct status options with new labels", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const statusSelect = screen.getByLabelText("Status");
 
@@ -162,7 +188,7 @@ describe("PatientForm", () => {
         handleChange: mockHandleChange,
       });
 
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const nameInput = screen.getByLabelText("Nome *");
       fireEvent.change(nameInput, { target: { value: "João Silva" } });
@@ -177,7 +203,7 @@ describe("PatientForm", () => {
         handleSpiritualConsultationChange: mockHandleSpiritualChange,
       });
 
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const startDateInput = screen.getByLabelText("Data de Início");
       fireEvent.change(startDateInput, { target: { value: "2024-01-15" } });
@@ -192,7 +218,7 @@ describe("PatientForm", () => {
         handleChange: mockHandleChange,
       });
 
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const foodInput = screen.getByLabelText("Alimentação");
       fireEvent.change(foodInput, { target: { value: "Dieta leve" } });
@@ -207,7 +233,7 @@ describe("PatientForm", () => {
         handleChange: mockHandleChange,
       });
 
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const lightBathCheckbox = screen.getByLabelText("Banho de luz");
       fireEvent.click(lightBathCheckbox);
@@ -224,7 +250,7 @@ describe("PatientForm", () => {
         handleSubmit: mockHandleSubmit,
       });
 
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const form = document.querySelector("form");
       expect(form).toBeInTheDocument();
@@ -235,7 +261,7 @@ describe("PatientForm", () => {
     });
 
     it("should render submit button with correct text", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const submitButton = screen.getByText("Salvar Paciente");
       expect(submitButton).toBeInTheDocument();
@@ -248,7 +274,7 @@ describe("PatientForm", () => {
         isLoading: true,
       });
 
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const submitButton = screen.getByText("Salvando...");
       expect(submitButton).toBeInTheDocument();
@@ -276,7 +302,7 @@ describe("PatientForm", () => {
         patient: patientWithData,
       });
 
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       expect(screen.getByDisplayValue("João Silva")).toBeInTheDocument();
       expect(screen.getByDisplayValue("(11) 99999-9999")).toBeInTheDocument();
@@ -293,7 +319,7 @@ describe("PatientForm", () => {
 
   describe("Responsive Design", () => {
     it("should have responsive grid classes", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const gridContainers = document.querySelectorAll(
         ".grid.grid-cols-1.md\\:grid-cols-2, .grid.grid-cols-1.md\\:grid-cols-3"
@@ -302,7 +328,7 @@ describe("PatientForm", () => {
     });
 
     it("should have full width inputs", () => {
-      render(<PatientForm />);
+      renderWithProviders(<PatientForm />);
 
       const inputs = document.querySelectorAll(".input.w-full");
       expect(inputs.length).toBeGreaterThan(0);

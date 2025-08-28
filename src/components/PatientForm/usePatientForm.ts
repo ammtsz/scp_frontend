@@ -27,7 +27,7 @@ const initialPatient: Omit<IPatient, "id"> = {
   name: "",
   phone: "",
   priority: "3" as IPriority,
-  status: "T" as IStatus,
+  status: "N" as IStatus,
   birthDate: new Date(),
   mainComplaint: "",
   startDate: new Date(),

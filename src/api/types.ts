@@ -8,6 +8,7 @@ export enum PatientPriority {
 }
 
 export enum TreatmentStatus {
+  NEW_PATIENT = 'N',
   IN_TREATMENT = 'T',
   DISCHARGED = 'A',
   ABSENT = 'F'
@@ -38,6 +39,7 @@ export interface PatientResponseDto {
   main_complaint?: string;
   discharge_date?: string; // ISO date string
   start_date: string; // ISO date string
+  missing_appointments_streak: number;
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
 }
@@ -53,6 +55,8 @@ export interface AttendanceResponseDto {
   started_at?: string; // ISO datetime string
   completed_at?: string; // ISO datetime string
   cancelled_at?: string; // ISO datetime string
+  is_absence: boolean;
+  absence_justified?: boolean;
   notes?: string;
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
@@ -82,6 +86,7 @@ export interface TreatmentRecordResponseDto {
   water?: string;
   ointments?: string;
   light_bath?: boolean;
+  light_bath_color?: string;
   rod?: boolean;
   spiritual_treatment?: boolean;
   return_in_weeks?: number;
@@ -139,6 +144,8 @@ export interface UpdateAttendanceRequest {
   started_at?: string; // ISO datetime string
   completed_at?: string; // ISO datetime string
   cancelled_at?: string; // ISO datetime string
+  is_absence?: boolean;
+  absence_justified?: boolean;
   notes?: string;
 }
 
@@ -148,6 +155,7 @@ export interface CreateTreatmentRecordRequest {
   water?: string;
   ointments?: string;
   light_bath?: boolean;
+  light_bath_color?: string;
   rod?: boolean;
   spiritual_treatment?: boolean;
   return_in_weeks?: number; // 1-52 weeks
@@ -160,6 +168,7 @@ export interface UpdateTreatmentRecordRequest {
   water?: string;
   ointments?: string;
   light_bath?: boolean;
+  light_bath_color?: string;
   rod?: boolean;
   spiritual_treatment?: boolean;
   return_in_weeks?: number; // 1-52 weeks

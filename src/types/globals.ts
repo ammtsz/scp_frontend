@@ -1,5 +1,5 @@
 export type IPriority = "1" | "2" | "3";
-export type IStatus = "T" | "A" | "F";
+export type IStatus = "N" | "T" | "A" | "F";
 export type IAttendanceType = "spiritual" | "lightBath" | "rod";
 export type IAttendanceProgression = "scheduled" | "checkedIn" | "onGoing" | "completed";
 
