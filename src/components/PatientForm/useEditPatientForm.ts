@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { updatePatient } from "@/api/patients";
 import { usePatients } from "@/contexts/PatientsContext";
 import { transformPriorityToApi, transformStatusToApi } from "@/utils/apiTransformers";
+import { formatPhoneNumber } from "@/utils/formHelpers";
 import type { UpdatePatientRequest, PatientResponseDto } from "@/api/types";
 
 interface EditPatientFormData {
@@ -112,23 +113,6 @@ export const useEditPatientForm = ({
         ...prev,
         [name]: createSafeDate(value),
       }));
-    }
-  };
-
-  const formatPhoneNumber = (value: string): string => {
-    // Remove all non-numeric characters
-    const numbers = value.replace(/\D/g, "");
-    
-    // Format as (XX) XXXXX-XXXX for Brazilian phones
-    if (numbers.length <= 2) {
-      return numbers;
-    } else if (numbers.length <= 7) {
-      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-    } else if (numbers.length <= 11) {
-      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
-    } else {
-      // Limit to 11 digits
-      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
     }
   };
 

@@ -8,6 +8,7 @@ import {
 } from "@/types/globals";
 import { createPatient } from "@/api/patients";
 import { createAttendance } from "@/api/attendances";
+import { formatPhoneNumber } from "@/utils/formHelpers";
 import { transformPriorityToApi, transformStatusToApi } from "@/utils/apiTransformers";
 import type { CreatePatientRequest, CreateAttendanceRequest, AttendanceType } from "@/api/types";
 import { usePatients } from "@/contexts/PatientsContext";
@@ -52,37 +53,6 @@ export function usePatientForm() {
     if (!dateString) return new Date();
     const date = new Date(dateString);
     return isNaN(date.getTime()) ? new Date() : date;
-  };
-
-  // Helper function to format phone number to backend expected format
-  const formatPhoneNumber = (phone: string): string => {
-    if (!phone) return "";
-    
-    // Remove all non-digits
-    const digits = phone.replace(/\D/g, "");
-    
-    // Handle different digit lengths
-    if (digits.length === 10) {
-      // Format: (XX) XXXX-XXXX
-      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-    } else if (digits.length === 11) {
-      // Format: (XX) XXXXX-XXXX  
-      return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-    } else if (digits.length === 12) {
-      // Assume it's 55 + area code + number, remove country code
-      const withoutCountry = digits.slice(2);
-      return `(${withoutCountry.slice(0, 2)}) ${withoutCountry.slice(2, 7)}-${withoutCountry.slice(7)}`;
-    }
-    
-    // For other lengths, try to extract meaningful parts if possible
-    if (digits.length >= 10) {
-      // Take the last 10 digits and format as (XX) XXXX-XXXX
-      const last10 = digits.slice(-10);
-      return `(${last10.slice(0, 2)}) ${last10.slice(2, 6)}-${last10.slice(6)}`;
-    }
-    
-    // If less than 10 digits, return empty (will be excluded from API call)
-    return "";
   };
 
   const handleChange = (

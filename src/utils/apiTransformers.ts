@@ -32,6 +32,8 @@ export const transformPriority = (apiPriority: PatientPriority): IPriority => {
 
 export const transformStatus = (apiStatus: TreatmentStatus): IStatus => {
   switch (apiStatus) {
+    case TreatmentStatus.NEW_PATIENT:
+      return "N";
     case TreatmentStatus.IN_TREATMENT:
       return "T";
     case TreatmentStatus.DISCHARGED:
@@ -117,8 +119,12 @@ export const transformAttendanceWithPatientByDate = (
   apiAttendances: AttendanceResponseDto[], 
   date: string
 ): IAttendanceByDate => {
+  // Parse YYYY-MM-DD format to avoid timezone issues
+  // Add 'T00:00:00' to ensure it's interpreted as local time
+  const dateObj = new Date(date + 'T00:00:00');
+  
   const result: IAttendanceByDate = {
-    date: new Date(date),
+    date: dateObj,
     spiritual: {
       scheduled: [],
       checkedIn: [],

@@ -64,11 +64,23 @@ const TestConsumer = () => {
       </button>
       <button
         data-testid="set-attendances-btn"
-        onClick={() => context.setAttendancesByDate({
-          date: new Date("2025-01-15"),
-          spiritual: { scheduled: [], checkedIn: [], onGoing: [], completed: [] },
-          lightBath: { scheduled: [], checkedIn: [], onGoing: [], completed: [] }
-        })}
+        onClick={() =>
+          context.setAttendancesByDate({
+            date: new Date("2025-01-15"),
+            spiritual: {
+              scheduled: [],
+              checkedIn: [],
+              onGoing: [],
+              completed: [],
+            },
+            lightBath: {
+              scheduled: [],
+              checkedIn: [],
+              onGoing: [],
+              completed: [],
+            },
+          })
+        }
       >
         Set Attendances
       </button>
@@ -410,17 +422,19 @@ describe("AttendancesContext", () => {
 
   describe("Bulk Operations", () => {
     beforeEach(() => {
-      mockedAttendancesAPI.getAttendancesByDate.mockResolvedValue(mockApiResponse);
+      mockedAttendancesAPI.getAttendancesByDate.mockResolvedValue(
+        mockApiResponse
+      );
       mockedAttendancesAPI.getNextAttendanceDate.mockResolvedValue({
         success: true,
-        value: { next_date: "2025-01-15" }
+        value: { next_date: "2025-01-15" },
       });
     });
 
     it("should handle bulk status updates successfully", async () => {
       mockedAttendancesAPI.bulkUpdateAttendanceStatus.mockResolvedValue({
         success: true,
-        value: { updated: 2, success: true }
+        value: { updated: 2, success: true },
       });
 
       render(
@@ -433,17 +447,19 @@ describe("AttendancesContext", () => {
         expect(screen.getByTestId("loading")).toHaveTextContent("false");
       });
 
-      fireEvent.click(screen.getByTestId('bulk-update-btn'));
+      fireEvent.click(screen.getByTestId("bulk-update-btn"));
 
       await waitFor(() => {
-        expect(mockedAttendancesAPI.bulkUpdateAttendanceStatus).toHaveBeenCalledWith([1, 2], "completed");
+        expect(
+          mockedAttendancesAPI.bulkUpdateAttendanceStatus
+        ).toHaveBeenCalledWith([1, 2], "completed");
       });
     });
 
     it("should handle bulk update errors gracefully", async () => {
       mockedAttendancesAPI.bulkUpdateAttendanceStatus.mockResolvedValue({
         success: false,
-        error: "Bulk update failed"
+        error: "Bulk update failed",
       });
 
       render(
@@ -456,22 +472,26 @@ describe("AttendancesContext", () => {
         expect(screen.getByTestId("loading")).toHaveTextContent("false");
       });
 
-      fireEvent.click(screen.getByTestId('bulk-update-btn'));
+      fireEvent.click(screen.getByTestId("bulk-update-btn"));
 
       await waitFor(() => {
         // The context doesn't set error state for bulk update failures,
         // it just returns false, so we check that the API was called
-        expect(mockedAttendancesAPI.bulkUpdateAttendanceStatus).toHaveBeenCalledWith([1, 2], "completed");
+        expect(
+          mockedAttendancesAPI.bulkUpdateAttendanceStatus
+        ).toHaveBeenCalledWith([1, 2], "completed");
       });
     });
   });
 
   describe("Advanced Context Operations", () => {
     beforeEach(() => {
-      mockedAttendancesAPI.getAttendancesByDate.mockResolvedValue(mockApiResponse);
+      mockedAttendancesAPI.getAttendancesByDate.mockResolvedValue(
+        mockApiResponse
+      );
       mockedAttendancesAPI.getNextAttendanceDate.mockResolvedValue({
         success: true,
-        value: { next_date: "2025-01-15" }
+        value: { next_date: "2025-01-15" },
       });
     });
 
@@ -486,17 +506,19 @@ describe("AttendancesContext", () => {
         expect(screen.getByTestId("loading")).toHaveTextContent("false");
       });
 
-      fireEvent.click(screen.getByTestId('set-attendances-btn'));
+      fireEvent.click(screen.getByTestId("set-attendances-btn"));
 
       await waitFor(() => {
-        expect(screen.getByTestId("selected-date")).toHaveTextContent("2025-01-15");
+        expect(screen.getByTestId("selected-date")).toHaveTextContent(
+          "2025-01-15"
+        );
       });
     });
 
     it("should trigger initialization and date loading cycles", async () => {
       mockedAttendancesAPI.getAttendancesByDate.mockResolvedValue({
         success: true,
-        value: []
+        value: [],
       });
 
       render(
@@ -509,12 +531,216 @@ describe("AttendancesContext", () => {
         expect(screen.getByTestId("loading")).toHaveTextContent("false");
       });
 
-      fireEvent.click(screen.getByTestId('init-date-btn'));
-      fireEvent.click(screen.getByTestId('load-specific-date-btn'));
+      fireEvent.click(screen.getByTestId("init-date-btn"));
+      fireEvent.click(screen.getByTestId("load-specific-date-btn"));
 
       await waitFor(() => {
-        expect(mockedAttendancesAPI.getAttendancesByDate).toHaveBeenCalledWith("2025-02-01");
+        expect(mockedAttendancesAPI.getAttendancesByDate).toHaveBeenCalledWith(
+          "2025-02-01"
+        );
         expect(mockedAttendancesAPI.getNextAttendanceDate).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("Phase 5: End-of-Day Workflow Integration", () => {
+    it("should finalize end of day with backend integration", async () => {
+      // Mock API responses
+      mockedAttendancesAPI.getNextAttendanceDate.mockResolvedValue({
+        success: true,
+        value: "2025-01-15",
+      });
+
+      mockedAttendancesAPI.getAttendancesByDate.mockResolvedValue({
+        success: true,
+        value: [
+          {
+            id: 1,
+            patient_id: 1,
+            type: AttendanceType.SPIRITUAL,
+            status: AttendanceStatus.SCHEDULED,
+            scheduled_time: "08:00",
+            checked_in_time: null,
+            started_time: null,
+            completed_time: null,
+            priority: 1,
+            patient: {
+              id: 1,
+              name: "João Silva",
+              birth_date: "1990-01-01",
+              mother_name: "Maria Silva",
+              created_at: "2025-01-01T00:00:00Z",
+              updated_at: "2025-01-01T00:00:00Z",
+            },
+          },
+          {
+            id: 2,
+            patient_id: 2,
+            type: AttendanceType.SPIRITUAL,
+            status: AttendanceStatus.CHECKED_IN,
+            scheduled_time: "09:00",
+            checked_in_time: "08:55",
+            started_time: null,
+            completed_time: null,
+            priority: 2,
+            patient: {
+              id: 2,
+              name: "Maria Santos",
+              birth_date: "1985-05-15",
+              mother_name: "Ana Santos",
+              created_at: "2025-01-01T00:00:00Z",
+              updated_at: "2025-01-01T00:00:00Z",
+            },
+          },
+        ],
+      });
+
+      mockedAttendancesAPI.updateAttendance.mockResolvedValue({
+        success: true,
+        value: {
+          id: 1,
+          patient_id: 1,
+          type: AttendanceType.SPIRITUAL,
+          status: AttendanceStatus.CANCELLED,
+          scheduled_time: "08:00",
+          checked_in_time: null,
+          started_time: null,
+          completed_time: null,
+          priority: 1,
+        },
+      });
+
+      // Enhanced test consumer with finalizeEndOfDay button
+      const TestConsumerWithFinalize = () => {
+        const context = useAttendances();
+
+        if (!context) return <div>No context</div>;
+
+        return (
+          <div>
+            <div data-testid="attendances-data">
+              {context.attendancesByDate ? "has-data" : "no-data"}
+            </div>
+            <button
+              data-testid="finalize-end-of-day-btn"
+              onClick={() => context.finalizeEndOfDay()}
+            >
+              Finalize End of Day
+            </button>
+          </div>
+        );
+      };
+
+      render(
+        <AttendancesProvider>
+          <TestConsumerWithFinalize />
+        </AttendancesProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("attendances-data")).toHaveTextContent(
+          "has-data"
+        );
+      });
+
+      // Execute finalize end of day
+      fireEvent.click(screen.getByTestId("finalize-end-of-day-btn"));
+
+      await waitFor(() => {
+        // Verify backend calls for marking absences
+        expect(mockedAttendancesAPI.updateAttendance).toHaveBeenCalledWith(
+          "1",
+          {
+            status: AttendanceStatus.CANCELLED,
+          }
+        );
+
+        // Verify backend calls for incomplete attendances (checked in but not completed)
+        expect(mockedAttendancesAPI.updateAttendance).toHaveBeenCalledWith(
+          "2",
+          {
+            status: AttendanceStatus.CANCELLED,
+          }
+        );
+
+        // Should call updateAttendance twice - once for each incomplete attendance
+        expect(mockedAttendancesAPI.updateAttendance).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    it("should handle finalize end of day errors gracefully", async () => {
+      // Mock API responses
+      mockedAttendancesAPI.getNextAttendanceDate.mockResolvedValue({
+        success: true,
+        value: "2025-01-15",
+      });
+
+      mockedAttendancesAPI.getAttendancesByDate.mockResolvedValue({
+        success: true,
+        value: [
+          {
+            id: 1,
+            patient_id: 1,
+            type: AttendanceType.SPIRITUAL,
+            status: AttendanceStatus.SCHEDULED,
+            scheduled_time: "08:00",
+            checked_in_time: null,
+            started_time: null,
+            completed_time: null,
+            priority: 1,
+            patient: {
+              id: 1,
+              name: "João Silva",
+              birth_date: "1990-01-01",
+              mother_name: "Maria Silva",
+              created_at: "2025-01-01T00:00:00Z",
+              updated_at: "2025-01-01T00:00:00Z",
+            },
+          },
+        ],
+      });
+
+      // Mock API error
+      mockedAttendancesAPI.updateAttendance.mockRejectedValue(
+        new Error("API Error")
+      );
+
+      const TestConsumerWithFinalize = () => {
+        const context = useAttendances();
+
+        if (!context) return <div>No context</div>;
+
+        return (
+          <div>
+            <div data-testid="error">{context.error || "no-error"}</div>
+            <button
+              data-testid="finalize-end-of-day-btn"
+              onClick={() => context.finalizeEndOfDay()}
+            >
+              Finalize End of Day
+            </button>
+          </div>
+        );
+      };
+
+      render(
+        <AttendancesProvider>
+          <TestConsumerWithFinalize />
+        </AttendancesProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("error")).toHaveTextContent("no-error");
+      });
+
+      // Execute finalize end of day with error
+      fireEvent.click(screen.getByTestId("finalize-end-of-day-btn"));
+
+      await waitFor(() => {
+        // Should handle the error gracefully
+        expect(screen.getByTestId("error")).toHaveTextContent(
+          "Erro ao finalizar dia: alguns atendimentos podem não ter sido atualizados"
+        );
       });
     });
   });

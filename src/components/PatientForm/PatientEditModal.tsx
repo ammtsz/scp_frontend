@@ -4,6 +4,9 @@ import PatientFormFields from "./PatientFormFields";
 import PatientTreatmentRecords from "./PatientTreatmentRecords";
 import { PatientResponseDto } from "@/api/types";
 import { getPatientById } from "@/api/patients";
+import BaseModal from "@/components/common/BaseModal";
+import ErrorDisplay from "@/components/common/ErrorDisplay";
+import LoadingButton from "@/components/common/LoadingButton";
 
 interface PatientEditModalProps {
   isOpen: boolean;
@@ -170,173 +173,96 @@ const PatientEditModal: React.FC<PatientEditModalProps> = ({
     onSuccess,
   });
 
-  // Helper function to safely format date for input value
-  const formatDateForInput = (date: Date | null): string => {
-    if (!date || isNaN(date.getTime())) {
-      return "";
-    }
-    try {
-      return date.toISOString().split("T")[0];
-    } catch {
-      return "";
-    }
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">
-                Atualizar Dados do Paciente
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Atualize as informações do paciente após a consulta
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              disabled={isLoading}
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <form className="p-6" onSubmit={handleSubmit}>
-          {dataLoading && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="animate-spin h-5 w-5 text-blue-500"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-blue-800">
-                    Carregando dados do paciente...
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    viewBox="0 0 20 20"
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Atualizar Dados do Paciente"
+      subtitle="Atualize as informações do paciente após a consulta"
+      maxWidth="2xl"
+    >
+      <form className="p-6" onSubmit={handleSubmit}>
+        {dataLoading && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg
+                  className="animate-spin h-5 w-5 text-blue-500"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
                     fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-800">{error}</p>
-                </div>
-                <div className="ml-auto pl-3">
-                  <div className="-mx-1.5 -my-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setError(null)}
-                      className="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
-                    >
-                      <span className="sr-only">Dismiss</span>
-                      <svg
-                        className="h-3 w-3"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-800">
+                  Carregando dados do paciente...
+                </p>
               </div>
             </div>
-          )}
-
-          {!dataLoading && patientData && (
-            <>
-              <PatientFormFields
-                patient={patient}
-                handleChange={handleChange}
-                handleSpiritualConsultationChange={
-                  handleSpiritualConsultationChange
-                }
-                formatDateForInput={formatDateForInput}
-                showSpiritualConsultation={true} // Show spiritual consultation in edit modal
-              />
-
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <PatientTreatmentRecords patientId={patientId} />
-              </div>
-            </>
-          )}
-
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              disabled={isLoading || dataLoading}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading || dataLoading}
-            >
-              {isLoading ? "Salvando..." : "Salvar Alterações"}
-            </button>
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+
+        <ErrorDisplay
+          error={error}
+          className="mb-4"
+          dismissible={true}
+          onDismiss={() => setError(null)}
+        />
+
+        {!dataLoading && patientData && (
+          <>
+            <PatientFormFields
+              patient={patient}
+              handleChange={handleChange}
+              handleSpiritualConsultationChange={
+                handleSpiritualConsultationChange
+              }
+              showSpiritualConsultation={true} // Show spiritual consultation in edit modal
+            />
+
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <PatientTreatmentRecords patientId={patientId} />
+            </div>
+          </>
+        )}
+
+        <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            disabled={isLoading || dataLoading}
+          >
+            Cancelar
+          </button>
+          <LoadingButton
+            type="submit"
+            variant="primary"
+            isLoading={isLoading}
+            loadingText="Salvando..."
+            disabled={dataLoading}
+          >
+            Salvar Alterações
+          </LoadingButton>
+        </div>
+      </form>
+    </BaseModal>
   );
 };
 

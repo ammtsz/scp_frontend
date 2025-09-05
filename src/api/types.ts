@@ -25,7 +25,8 @@ export enum AttendanceStatus {
   CHECKED_IN = 'checked_in',
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
-  CANCELLED = 'cancelled'
+  CANCELLED = 'cancelled',
+  MISSED = 'missed'
 }
 
 // API Response DTOs matching backend
@@ -55,7 +56,6 @@ export interface AttendanceResponseDto {
   started_at?: string; // ISO datetime string
   completed_at?: string; // ISO datetime string
   cancelled_at?: string; // ISO datetime string
-  is_absence: boolean;
   absence_justified?: boolean;
   notes?: string;
   created_at: string; // ISO datetime string
@@ -144,7 +144,6 @@ export interface UpdateAttendanceRequest {
   started_at?: string; // ISO datetime string
   completed_at?: string; // ISO datetime string
   cancelled_at?: string; // ISO datetime string
-  is_absence?: boolean;
   absence_justified?: boolean;
   notes?: string;
 }

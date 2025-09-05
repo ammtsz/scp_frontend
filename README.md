@@ -28,10 +28,20 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 
 ### Attendance Management
 
+- **End of Day Workflow**: Complete day finalization with accurate attendance counting
+  - Handles incomplete attendances with user choice (complete/reschedule)
+  - One-by-one absence justification for scheduled patients
+  - **Day Finalization Controls**:
+    - "Finalizar Dia" button to complete and disable card editing
+    - "Desfinalizar" button to undo finalization and re-enable editing
+    - Visual indicators for finalized days with disabled drag functionality
+    - LocalStorage persistence for finalization state across sessions
+  - **Fixed**: Correctly displays total completed attendances in summary
 - **Unscheduled Patients Integration**: Complete backend integration for walk-in patients
   - Create new patients with check-in
   - Schedule existing patients for multiple attendance types
   - Real-time attendance tracking with status updates
+- **Spiritual Consultation Workflow**: Treatment planning and recommendations appear only after consultation completion (when dragged to completed column)
 - Drag-and-drop workflow management
 - Multiple attendance types: Spiritual consultations and Light Bath/Rod treatments
 - Status progression: Scheduled → Checked In → In Progress → Completed
@@ -72,7 +82,7 @@ npm test
 - **Error Handling**: Network failures and validation errors
 - **User Interactions**: Form submissions and state management
 
-Current: **279/279 tests passing** (100% pass rate)
+Current: **560+ tests passing** with comprehensive coverage
 
 ## Project Structure
 

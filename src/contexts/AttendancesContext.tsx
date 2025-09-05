@@ -12,10 +12,48 @@ import {
   getAttendancesByDate,
   getNextAttendanceDate,
   bulkUpdateAttendanceStatus,
+  updateAttendance,
+  markAttendanceAsMissed,
+  completeAttendance,
 } from "@/api/attendances";
-import { IAttendanceByDate } from "@/types/globals";
+import { createTreatmentRecord } from "@/api/treatment-records";
+import { IAttendanceByDate, IAttendanceStatusDetail } from "@/types/globals";
 import { transformAttendanceWithPatientByDate } from "@/utils/apiTransformers";
 import { AttendanceStatus } from "@/api/types";
+import type { SpiritualConsultationData } from "@/components/AttendanceManagement/components/TreatmentForms/SpiritualConsultationForm";
+import type { CreateTreatmentRecordRequest } from "@/api/types";
+
+// Interfaces for the new end-of-day workflow
+interface AbsenceJustification {
+  attendanceId: number;
+  patientName: string;
+  justified: boolean;
+  notes: string;
+}
+
+interface EndOfDayResult {
+  type: "incomplete" | "scheduled_absences" | "completed";
+  incompleteAttendances?: IAttendanceStatusDetail[];
+  scheduledAbsences?: IAttendanceStatusDetail[];
+  completionData?: {
+    totalPatients: number;
+    completedPatients: number;
+    missedPatients: number;
+    completionTime: Date;
+  };
+}
+
+// Legacy interface for backward compatibility
+interface EndOfDayData {
+  incompleteAttendances: IAttendanceStatusDetail[];
+  scheduledAbsences: IAttendanceStatusDetail[];
+  absenceJustifications: Array<{
+    patientId: number;
+    patientName: string;
+    justified: boolean;
+    notes: string;
+  }>;
+}
 
 interface AttendancesContextProps {
   attendancesByDate: IAttendanceByDate | null;
@@ -31,6 +69,22 @@ interface AttendancesContextProps {
   bulkUpdateStatus: (ids: number[], status: string) => Promise<boolean>;
   initializeSelectedDate: () => Promise<void>;
   refreshCurrentDate: () => Promise<void>;
+  // Treatment workflow functions
+  createSpiritualConsultationRecord: (
+    attendanceId: number,
+    data: SpiritualConsultationData
+  ) => Promise<boolean>;
+  // New end-of-day workflow functions
+  checkEndOfDayStatus: () => EndOfDayResult;
+  finalizeEndOfDay: (data?: EndOfDayData) => Promise<boolean>; // Legacy support
+  handleIncompleteAttendances: (
+    attendances: IAttendanceStatusDetail[],
+    action: "complete" | "reschedule"
+  ) => Promise<boolean>;
+  handleAbsenceJustifications: (
+    justifications: AbsenceJustification[]
+  ) => Promise<boolean>;
+  completeDayFinalization: () => Promise<EndOfDayResult>;
 }
 
 const AttendancesContext = createContext<AttendancesContextProps | undefined>(
@@ -133,6 +187,326 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Treatment workflow functions
+  const createSpiritualConsultationRecord = useCallback(
+    async (
+      attendanceId: number,
+      data: SpiritualConsultationData
+    ): Promise<boolean> => {
+      try {
+        const treatmentData: CreateTreatmentRecordRequest = {
+          attendance_id: attendanceId,
+          food: data.food,
+          water: data.water,
+          ointments: data.ointments,
+          spiritual_treatment: data.spiritualTreatment,
+          light_bath: data.recommendations.lightBath ? true : false,
+          light_bath_color: data.recommendations.lightBath?.color,
+          rod: data.recommendations.rod ? true : false,
+          return_in_weeks: data.recommendations.returnWeeks,
+          notes: data.notes,
+        };
+
+        const result = await createTreatmentRecord(treatmentData);
+        if (result.success) {
+          await refreshCurrentDate();
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error creating spiritual consultation record:", error);
+        return false;
+      }
+    },
+    [refreshCurrentDate]
+  );
+
+  // New end-of-day workflow implementation
+  const checkEndOfDayStatus = useCallback((): EndOfDayResult => {
+    if (!attendancesByDate) {
+      return {
+        type: "completed",
+        completionData: {
+          totalPatients: 0,
+          completedPatients: 0,
+          missedPatients: 0,
+          completionTime: new Date(),
+        },
+      };
+    }
+
+    // Check for incomplete attendances (checked-in or ongoing)
+    const incompleteAttendances: IAttendanceStatusDetail[] = [];
+    ["spiritual", "lightBath", "rod"].forEach((type) => {
+      ["checkedIn", "onGoing"].forEach((status) => {
+        const typeData =
+          attendancesByDate[type as keyof typeof attendancesByDate];
+        if (typeData && typeof typeData === "object") {
+          const statusData = typeData[status as keyof typeof typeData];
+          if (Array.isArray(statusData)) {
+            incompleteAttendances.push(
+              ...(statusData as IAttendanceStatusDetail[])
+            );
+          }
+        }
+      });
+    });
+
+    if (incompleteAttendances.length > 0) {
+      return { type: "incomplete", incompleteAttendances };
+    }
+
+    // Check for scheduled absences
+    const scheduledAbsences: IAttendanceStatusDetail[] = [];
+    ["spiritual", "lightBath", "rod"].forEach((type) => {
+      const typeData =
+        attendancesByDate[type as keyof typeof attendancesByDate];
+      if (typeData && typeof typeData === "object" && "scheduled" in typeData) {
+        const scheduledData = typeData.scheduled;
+        if (Array.isArray(scheduledData)) {
+          scheduledAbsences.push(
+            ...(scheduledData as IAttendanceStatusDetail[])
+          );
+        }
+      }
+    });
+
+    if (scheduledAbsences.length > 0) {
+      return { type: "scheduled_absences", scheduledAbsences };
+    }
+
+    // All patients completed - calculate stats
+    const completedAttendances: IAttendanceStatusDetail[] = [];
+    ["spiritual", "lightBath", "rod"].forEach((type) => {
+      const typeData =
+        attendancesByDate[type as keyof typeof attendancesByDate];
+      if (typeData && typeof typeData === "object" && "completed" in typeData) {
+        const completedData = typeData.completed;
+        if (Array.isArray(completedData)) {
+          completedAttendances.push(
+            ...(completedData as IAttendanceStatusDetail[])
+          );
+        }
+      }
+    });
+
+    return {
+      type: "completed",
+      completionData: {
+        totalPatients: completedAttendances.length,
+        completedPatients: completedAttendances.length,
+        missedPatients: 0,
+        completionTime: new Date(),
+      },
+    };
+  }, [attendancesByDate]);
+
+  const handleIncompleteAttendances = useCallback(
+    async (
+      attendances: IAttendanceStatusDetail[],
+      action: "complete" | "reschedule"
+    ): Promise<boolean> => {
+      try {
+        for (const attendance of attendances) {
+          if (attendance.attendanceId) {
+            if (action === "complete") {
+              await completeAttendance(attendance.attendanceId.toString());
+            } else {
+              // Reschedule: move back to scheduled status
+              await updateAttendance(attendance.attendanceId.toString(), {
+                status: AttendanceStatus.SCHEDULED,
+              });
+            }
+          }
+        }
+        await refreshCurrentDate();
+        return true;
+      } catch (error) {
+        console.error("Error handling incomplete attendances:", error);
+        setError("Erro ao processar atendimentos incompletos");
+        return false;
+      }
+    },
+    [refreshCurrentDate]
+  );
+
+  const handleAbsenceJustifications = useCallback(
+    async (justifications: AbsenceJustification[]): Promise<boolean> => {
+      try {
+        for (const justification of justifications) {
+          await markAttendanceAsMissed(
+            justification.attendanceId.toString(),
+            justification.justified
+          );
+
+          // If unjustified, increment missing appointments streak
+          if (!justification.justified && attendancesByDate) {
+            // Find patient and update missing appointments streak
+            // This would require additional API call to update patient data
+            // For now, we'll track it in the attendance notes
+            await updateAttendance(justification.attendanceId.toString(), {
+              notes: justification.notes || "Falta não justificada",
+            });
+          }
+        }
+        await refreshCurrentDate();
+        return true;
+      } catch (error) {
+        console.error("Error handling absence justifications:", error);
+        setError("Erro ao processar justificativas de faltas");
+        return false;
+      }
+    },
+    [attendancesByDate, refreshCurrentDate]
+  );
+
+  const completeDayFinalization =
+    useCallback(async (): Promise<EndOfDayResult> => {
+      try {
+        if (!attendancesByDate) {
+          return {
+            type: "completed",
+            completionData: {
+              totalPatients: 0,
+              completedPatients: 0,
+              missedPatients: 0,
+              completionTime: new Date(),
+            },
+          };
+        }
+
+        // Calculate final statistics
+        let totalPatients = 0;
+        let completedPatients = 0;
+        const missedPatients = 0; // Would be calculated from missed status attendances
+
+        ["spiritual", "lightBath", "rod"].forEach((type) => {
+          const typeData =
+            attendancesByDate[type as keyof typeof attendancesByDate];
+          if (typeData && typeof typeData === "object") {
+            Object.keys(typeData).forEach((status) => {
+              const statusData = typeData[status as keyof typeof typeData];
+              if (Array.isArray(statusData)) {
+                totalPatients += (statusData as IAttendanceStatusDetail[])
+                  .length;
+                if (status === "completed") {
+                  completedPatients += (statusData as IAttendanceStatusDetail[])
+                    .length;
+                }
+                // Missed patients would be tracked separately
+              }
+            });
+          }
+        });
+
+        // Save missing appointment counts to backend (would need additional API)
+        // For now, we'll just return the completion data
+
+        const completionTime = new Date();
+        return {
+          type: "completed",
+          completionData: {
+            totalPatients,
+            completedPatients,
+            missedPatients,
+            completionTime,
+          },
+        };
+      } catch (error) {
+        console.error("Error completing day finalization:", error);
+        setError("Erro ao finalizar o dia");
+        return {
+          type: "completed",
+          completionData: {
+            totalPatients: 0,
+            completedPatients: 0,
+            missedPatients: 0,
+            completionTime: new Date(),
+          },
+        };
+      }
+    }, [attendancesByDate]);
+
+  // Legacy finalizeEndOfDay function for backward compatibility
+  const finalizeEndOfDay = useCallback(
+    async (data?: EndOfDayData): Promise<boolean> => {
+      try {
+        if (!attendancesByDate) {
+          setError("Nenhum atendimento carregado para finalizar o dia");
+          return false;
+        }
+
+        // If data is provided, use legacy implementation
+        if (data) {
+          // Step 1: Mark scheduled absences as missed with justifications
+          for (const absence of data.scheduledAbsences) {
+            const justification = data.absenceJustifications.find(
+              (j) => j.patientId === absence.patientId
+            );
+
+            if (justification && absence.attendanceId) {
+              await markAttendanceAsMissed(
+                absence.attendanceId.toString(),
+                justification.justified
+              );
+            }
+          }
+
+          // Step 2: Handle incomplete attendances (checked in but not completed)
+          for (const incomplete of data.incompleteAttendances) {
+            // Mark incomplete attendances as cancelled for rescheduling
+            if (incomplete.attendanceId) {
+              await updateAttendance(incomplete.attendanceId.toString(), {
+                status: AttendanceStatus.CANCELLED,
+              });
+            }
+          }
+        } else {
+          // Use new workflow
+          const status = checkEndOfDayStatus();
+
+          if (status.type === "incomplete" && status.incompleteAttendances) {
+            // Auto-reschedule incomplete attendances
+            await handleIncompleteAttendances(
+              status.incompleteAttendances,
+              "reschedule"
+            );
+          } else if (
+            status.type === "scheduled_absences" &&
+            status.scheduledAbsences
+          ) {
+            // Auto-mark all as unjustified
+            const justifications: AbsenceJustification[] =
+              status.scheduledAbsences.map((attendance) => ({
+                attendanceId: attendance.attendanceId!,
+                patientName: attendance.name,
+                justified: false,
+                notes: "",
+              }));
+            await handleAbsenceJustifications(justifications);
+          }
+        }
+
+        // Refresh the data to show updated status
+        await refreshCurrentDate();
+        return true;
+      } catch (error) {
+        console.error("Error finalizing end of day:", error);
+        setError(
+          "Erro ao finalizar dia: alguns atendimentos podem não ter sido atualizados"
+        );
+        return false;
+      }
+    },
+    [
+      attendancesByDate,
+      refreshCurrentDate,
+      checkEndOfDayStatus,
+      handleIncompleteAttendances,
+      handleAbsenceJustifications,
+    ]
+  );
+
   useEffect(() => {
     initializeSelectedDate();
   }, [initializeSelectedDate]);
@@ -157,6 +531,12 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
         initializeSelectedDate,
         refreshCurrentDate,
         bulkUpdateStatus,
+        createSpiritualConsultationRecord,
+        checkEndOfDayStatus,
+        finalizeEndOfDay,
+        handleIncompleteAttendances,
+        handleAbsenceJustifications,
+        completeDayFinalization,
       }}
     >
       {children}

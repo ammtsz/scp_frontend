@@ -17,6 +17,10 @@ describe('API Transformers', () => {
   });
 
   describe('transformStatus', () => {
+    it('should transform NEW_PATIENT to "N"', () => {
+      expect(transformStatus(TreatmentStatus.NEW_PATIENT)).toBe('N');
+    });
+
     it('should transform IN_TREATMENT to "T"', () => {
       expect(transformStatus(TreatmentStatus.IN_TREATMENT)).toBe('T');
     });

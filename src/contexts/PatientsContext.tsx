@@ -38,7 +38,7 @@ export const PatientsProvider = ({ children }: { children: ReactNode }) => {
         const transformedPatients = transformPatientsFromApi(result.value);
         setPatients(transformedPatients);
       } else {
-        setError(result.error || "Erro desconhecido");
+        setError(result.error || "Erro desconhecido ao carregar pacientes");
       }
     } catch {
       setError("Erro ao carregar pacientes");

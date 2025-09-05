@@ -1,5 +1,7 @@
 // Business logic for scheduling, priorities, and status
 
+import { IAttendanceStatus, IAttendanceStatusDetail, IAttendanceByDate } from "@/types/globals";
+
 /**
  * Priority Queue Rules for Checked-In Patients
  * 
@@ -71,4 +73,40 @@ export const sortPatientsByPriority = <T extends {
   });
 };
 
-// TODO: Implement additional rules for agenda, absences, and scheduling conflicts
+/**
+ * Checks if a patient is already scheduled for any of the given attendance types
+ * @param patientName Name of the patient to check
+ * @param selectedAttendanceTypes Array of attendance types to check
+ * @param attendancesByDate Current attendances by date data
+ * @returns boolean indicating if patient is already scheduled
+ */
+export const isPatientAlreadyScheduled = (
+  patientName: string, 
+  selectedAttendanceTypes: string[],
+  attendancesByDate: IAttendanceByDate | null
+): boolean => {
+  // Check against the current attendancesByDate
+  // This works for both today's validation and when the context has loaded data for the target date
+  if (!attendancesByDate) return false;
+
+  // Check only the selected attendance types
+  const allStatuses = ['scheduled', 'checkedIn', 'onGoing', 'completed'] as const;
+
+  for (const type of selectedAttendanceTypes) {
+    const typeAttendances = attendancesByDate[type as keyof typeof attendancesByDate];
+    if (typeAttendances && typeof typeAttendances === 'object' && 'scheduled' in typeAttendances) {
+      for (const status of allStatuses) {
+        const statusAttendances = (typeAttendances as IAttendanceStatus)[status];
+        if (statusAttendances && statusAttendances.some((attendance: IAttendanceStatusDetail) => 
+          attendance.name.toLowerCase() === patientName.toLowerCase()
+        )) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+};
+
+// Future: Implement additional rules for agenda, absences, and scheduling conflicts as needed

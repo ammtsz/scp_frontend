@@ -1,12 +1,12 @@
 "use client";
 
-import AttendanceList from "@/components/AttendanceList";
-import UnscheduledPatients from "@/components/UnscheduledPatients";
+import AttendanceManagement from "@/components/AttendanceManagement";
+import { PatientWalkInForm } from "@/components/AttendanceManagement/components/WalkInForm";
 import { IPriority } from "@/types/globals";
 import React, { useState } from "react";
 
 export default function AttendancePage() {
-  const [externalCheckIn, setExternalCheckIn] = useState<{
+  const [unscheduledCheckIn, setUnscheduledCheckIn] = useState<{
     name: string;
     types: string[];
     isNew: boolean;
@@ -16,9 +16,9 @@ export default function AttendancePage() {
   return (
     <div className="flex flex-col gap-8 my-16">
       {/* Walk-in Patients Check-in */}
-      <UnscheduledPatients
+      <PatientWalkInForm
         onRegisterNewAttendance={(name, types, isNew, priority) =>
-          setExternalCheckIn({ name, types, isNew, priority })
+          setUnscheduledCheckIn({ name, types, isNew, priority })
         }
       />
 
@@ -36,9 +36,9 @@ export default function AttendancePage() {
           </p>
         </div>
         <div className="p-4">
-          <AttendanceList
-            externalCheckIn={externalCheckIn}
-            onCheckInProcessed={() => setExternalCheckIn(null)}
+          <AttendanceManagement
+            unscheduledCheckIn={unscheduledCheckIn}
+            onCheckInProcessed={() => setUnscheduledCheckIn(null)}
           />
         </div>
       </div>

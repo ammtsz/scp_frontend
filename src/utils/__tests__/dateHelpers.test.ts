@@ -38,18 +38,18 @@ describe('dateHelpers', () => {
   describe('formatDateWithDayOfWeekBR', () => {
     it('should format date strings with day of week in Brazilian format', () => {
       // August 12, 2025 is a Tuesday
-      expect(formatDateWithDayOfWeekBR('2025-08-12')).toBe('Terça-feira, 12/08/2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-12')).toBe('Terça-feira, 12 de Agosto de 2025');
       
       // January 1, 2025 is a Wednesday
-      expect(formatDateWithDayOfWeekBR('2025-01-01')).toBe('Quarta-feira, 01/01/2025');
+      expect(formatDateWithDayOfWeekBR('2025-01-01')).toBe('Quarta-feira, 01 de Janeiro de 2025');
       
       // December 31, 2025 is a Wednesday
-      expect(formatDateWithDayOfWeekBR('2025-12-31')).toBe('Quarta-feira, 31/12/2025');
+      expect(formatDateWithDayOfWeekBR('2025-12-31')).toBe('Quarta-feira, 31 de Dezembro de 2025');
     });
 
     it('should handle ISO datetime strings correctly', () => {
-      expect(formatDateWithDayOfWeekBR('2025-08-12T00:00:00')).toBe('Terça-feira, 12/08/2025');
-      expect(formatDateWithDayOfWeekBR('2025-08-12T10:30:00Z')).toBe('Terça-feira, 12/08/2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-12T00:00:00')).toBe('Terça-feira, 12 de Agosto de 2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-12T10:30:00Z')).toBe('Terça-feira, 12 de Agosto de 2025');
     });
 
     it('should handle empty strings', () => {
@@ -62,19 +62,19 @@ describe('dateHelpers', () => {
 
     it('should correctly identify all days of the week', () => {
       // Test a week starting Monday, August 11, 2025
-      expect(formatDateWithDayOfWeekBR('2025-08-11')).toBe('Segunda-feira, 11/08/2025');
-      expect(formatDateWithDayOfWeekBR('2025-08-12')).toBe('Terça-feira, 12/08/2025');
-      expect(formatDateWithDayOfWeekBR('2025-08-13')).toBe('Quarta-feira, 13/08/2025');
-      expect(formatDateWithDayOfWeekBR('2025-08-14')).toBe('Quinta-feira, 14/08/2025');
-      expect(formatDateWithDayOfWeekBR('2025-08-15')).toBe('Sexta-feira, 15/08/2025');
-      expect(formatDateWithDayOfWeekBR('2025-08-16')).toBe('Sábado, 16/08/2025');
-      expect(formatDateWithDayOfWeekBR('2025-08-17')).toBe('Domingo, 17/08/2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-11')).toBe('Segunda-feira, 11 de Agosto de 2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-12')).toBe('Terça-feira, 12 de Agosto de 2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-13')).toBe('Quarta-feira, 13 de Agosto de 2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-14')).toBe('Quinta-feira, 14 de Agosto de 2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-15')).toBe('Sexta-feira, 15 de Agosto de 2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-16')).toBe('Sábado, 16 de Agosto de 2025');
+      expect(formatDateWithDayOfWeekBR('2025-08-17')).toBe('Domingo, 17 de Agosto de 2025');
     });
 
     it('should be timezone-safe for date-only strings', () => {
       const dateStr = '2025-08-12';
       const result = formatDateWithDayOfWeekBR(dateStr);
-      expect(result).toBe('Terça-feira, 12/08/2025');
+      expect(result).toBe('Terça-feira, 12 de Agosto de 2025');
       
       // The date should be consistent regardless of timezone
       const testDate = new Date(dateStr + 'T00:00:00');

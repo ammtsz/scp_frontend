@@ -1,5 +1,7 @@
 // Date helper functions
 
+import { getNextAttendanceDate } from "@/api/attendances";
+
 export function formatDateBR(dateStr: string): string {
   if (!dateStr) return "";
   
@@ -73,4 +75,31 @@ export function formatDateWithDayOfWeekBR(dateStr: string): string {
   return `${dayOfWeek}, ${day} de ${month} de ${year}`;
 }
 
-// TODO: Implement date calculations for scheduling and history
+// Get the next available date based on schedule settings
+export const getNextAvailableDate = async (): Promise<string> => {
+  try {
+    const result = await getNextAttendanceDate();
+    if (result.success && result.value?.next_date) {
+      return result.value.next_date;
+    }
+  } catch (error) {
+    console.warn('Error fetching next available date, falling back to next Tuesday:', error);
+  }
+  
+  // Fallback to next Tuesday if API call fails
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const daysUntilTuesday = (2 - dayOfWeek + 7) % 7; // 2 = Tuesday
+  const nextTuesday = new Date(today);
+  
+  // If today is Tuesday, schedule for today, otherwise next Tuesday
+  if (dayOfWeek === 2) {
+    nextTuesday.setDate(today.getDate());
+  } else {
+    nextTuesday.setDate(today.getDate() + (daysUntilTuesday || 7));
+  }
+  
+  return nextTuesday.toISOString().split('T')[0];
+};
+
+// Future: Implement date calculations for scheduling and history as needed

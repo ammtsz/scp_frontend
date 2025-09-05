@@ -2,7 +2,7 @@
 
 import React from "react";
 import ConfirmModal from "@/components/ConfirmModal/index";
-import NewAttendanceModal from "@/components/NewAttendanceModal";
+import NewAttendanceFormModal from "@/components/AttendanceManagement/components/forms/NewAttendanceFormModal";
 import Switch from "@/components/Switch";
 import AgendaColumn from "./AgendaColumn";
 import { useAgendaCalendar } from "./useAgendaCalendar";
@@ -116,7 +116,13 @@ const AgendaCalendar: React.FC = () => {
             {/* Spiritual Attendances Column */}
             <AgendaColumn
               title="Consultas Espirituais"
-              agendaItems={filteredAgenda.spiritual}
+              agendaItems={filteredAgenda.spiritual.map((item) => ({
+                ...item,
+                patients: item.patients.map((patient) => ({
+                  ...patient,
+                  attendanceType: patient.attendanceType ?? "spiritual",
+                })),
+              }))}
               openAgendaIdx={openSpiritualIdx}
               setOpenAgendaIdx={setOpenSpiritualIdx}
               onRemovePatient={handleRemovePatient}
@@ -127,7 +133,13 @@ const AgendaCalendar: React.FC = () => {
             {/* Light Bath / Rod Attendances Column */}
             <AgendaColumn
               title="Banhos de Luz / Bastão"
-              agendaItems={filteredAgenda.lightBath}
+              agendaItems={filteredAgenda.lightBath.map((item) => ({
+                ...item,
+                patients: item.patients.map((patient) => ({
+                  ...patient,
+                  attendanceType: patient.attendanceType ?? "lightBath",
+                })),
+              }))}
               openAgendaIdx={openLightBathIdx}
               setOpenAgendaIdx={setOpenLightBathIdx}
               onRemovePatient={handleRemovePatient}
@@ -155,14 +167,18 @@ const AgendaCalendar: React.FC = () => {
         onCancel={() => setConfirmRemove(null)}
         onConfirm={handleConfirmRemove}
       />
-      <NewAttendanceModal
-        open={showNewAttendance}
-        onClose={() => {
-          setShowNewAttendance(false);
-        }}
-        onSubmit={handleNewAttendance}
-        validationDate={selectedDate || new Date().toISOString().split("T")[0]}
-      />
+      {showNewAttendance && (
+        <NewAttendanceFormModal
+          onRegisterNewAttendance={handleNewAttendance}
+          onClose={() => setShowNewAttendance(false)}
+          title="Novo Agendamento"
+          subtitle="Agendar atendimento para paciente"
+          showDateField={true}
+          validationDate={
+            selectedDate || new Date().toISOString().split("T")[0]
+          }
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React from "react";
 import { usePatientForm } from "./usePatientForm";
 import PatientFormFields from "./PatientFormFields";
+import LoadingButton from "@/components/common/LoadingButton";
 
 const PatientForm: React.FC = () => {
   const {
@@ -10,18 +11,6 @@ const PatientForm: React.FC = () => {
     handleSubmit,
     isLoading,
   } = usePatientForm();
-
-  // Helper function to safely format date for input value
-  const formatDateForInput = (date: Date | null): string => {
-    if (!date || isNaN(date.getTime())) {
-      return "";
-    }
-    try {
-      return date.toISOString().split("T")[0];
-    } catch {
-      return "";
-    }
-  };
 
   return (
     <div className="card-shadow">
@@ -43,18 +32,18 @@ const PatientForm: React.FC = () => {
           patient={patient}
           handleChange={handleChange}
           handleSpiritualConsultationChange={handleSpiritualConsultationChange}
-          formatDateForInput={formatDateForInput}
           showSpiritualConsultation={true}
         />
 
         <div className="flex justify-end">
-          <button
+          <LoadingButton
             type="submit"
-            className="button button-primary"
-            disabled={isLoading}
+            variant="primary"
+            isLoading={isLoading}
+            loadingText="Salvando..."
           >
-            {isLoading ? "Salvando..." : "Salvar Paciente"}
-          </button>
+            Salvar Paciente
+          </LoadingButton>
         </div>
       </form>
     </div>
