@@ -1,7 +1,7 @@
 "use client";
 
 import AttendanceManagement from "@/components/AttendanceManagement";
-import { PatientWalkInForm } from "@/components/AttendanceManagement/components/WalkInForm";
+import { PatientWalkInPanel } from "@/components/AttendanceManagement/components/WalkInForm";
 import { IPriority } from "@/types/globals";
 import React, { useState } from "react";
 
@@ -15,8 +15,8 @@ export default function AttendancePage() {
 
   return (
     <div className="flex flex-col gap-8 my-16">
-      {/* Walk-in Patients Check-in */}
-      <PatientWalkInForm
+      {/* Walk-in Patients Panel */}
+      <PatientWalkInPanel
         onRegisterNewAttendance={(name, types, isNew, priority) =>
           setUnscheduledCheckIn({ name, types, isNew, priority })
         }

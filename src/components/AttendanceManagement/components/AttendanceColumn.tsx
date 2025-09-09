@@ -5,7 +5,7 @@ import {
   IAttendanceStatusDetail,
 } from "@/types/globals";
 import { IDraggedItem } from "../types";
-import AttendanceCard from "./cards/AttendanceCard";
+import AttendanceCard from "./Cards/AttendanceCard";
 import { getStatusColor, getStatusLabel } from "../styles/cardStyles";
 
 interface PatientWithType extends IAttendanceStatusDetail {
@@ -19,7 +19,8 @@ interface AttendanceColumnProps {
   handleDragStart: (
     type: IAttendanceType,
     index: number,
-    status: IAttendanceProgression
+    status: IAttendanceProgression,
+    patientId?: number
   ) => void;
   handleDragEnd: () => void;
   handleDrop: () => void;
@@ -106,7 +107,9 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = React.memo(
                 type={patient.originalType}
                 status={status}
                 dragged={dragged}
-                handleDragStart={handleDragStart}
+                handleDragStart={(type, idx, status) =>
+                  handleDragStart(type, idx, status, patient.patientId)
+                }
                 handleDragEnd={handleDragEnd}
                 onDelete={onDelete}
                 index={index}

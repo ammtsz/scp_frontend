@@ -42,9 +42,9 @@ export const useTreatmentWorkflow = (
       notes: string;
     }>;
   }) => {
-    const success = await finalizeEndOfDay(data);
+    const result = await finalizeEndOfDay(data);
 
-    if (success) {
+    if (result.type === "completed") {
       setEndOfDayModalOpen(false);
       finalizeDay?.(); // Mark the day as finalized
       refreshCurrentDate();

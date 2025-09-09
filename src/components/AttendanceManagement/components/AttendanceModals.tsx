@@ -2,7 +2,7 @@ import React from "react";
 import ConfirmModal from "@/components/ConfirmModal/index";
 import PatientEditModal from "@/components/PatientForm/PatientEditModal";
 import SpiritualConsultationForm from "./TreatmentForms/SpiritualConsultationForm";
-import EndOfDayModal from "./endOfDay/EndOfDayModal";
+import EndOfDayModal from "./EndOfDay/EndOfDayModal";
 import type { SpiritualConsultationData } from "./TreatmentForms/SpiritualConsultationForm";
 import type { IAttendanceStatusDetail, IPatient } from "@/types/globals";
 import { IAttendanceStatusDetailWithType } from "../utils/attendanceDataUtils";
@@ -147,12 +147,22 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
           await onEndOfDayFinalize({
             incompleteAttendances,
             scheduledAbsences,
-            absenceJustifications: absenceJustifications.map((item) => ({
-              patientId: item.patientId,
-              patientName: item.patientName,
-              justified: item.justified ?? false,
-              notes: item.justification ?? "",
-            })),
+            absenceJustifications: absenceJustifications.map((item) => {
+              // Find the corresponding scheduled absence to get the attendance ID
+              const scheduledAbsence = scheduledAbsences.find(
+                (absence) =>
+                  absence.patientId === item.patientId &&
+                  absence.attendanceType === item.attendanceType
+              );
+
+              return {
+                attendanceId: scheduledAbsence?.attendanceId || 0,
+                patientId: item.patientId,
+                patientName: item.patientName,
+                justified: item.justified ?? false,
+                notes: item.justification ?? "",
+              };
+            }),
           });
         }}
         incompleteAttendances={incompleteAttendances}

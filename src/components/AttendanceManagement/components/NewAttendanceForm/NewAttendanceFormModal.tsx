@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { PatientWalkInForm } from "../WalkInForm";
+import NewAttendanceForm from "./NewAttendanceForm";
 import { IPriority } from "@/types/globals";
 import BaseModal from "@/components/common/BaseModal";
 import ErrorDisplay from "@/components/common/ErrorDisplay";
@@ -30,10 +30,8 @@ const NewAttendanceFormModal: React.FC<NewAttendanceFormModalProps> = ({
   onClose,
   title = "Novo Agendamento",
   subtitle = "Agendar atendimento para paciente",
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  showDateField = true, // kept for API compatibility
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  validationDate, // kept for API compatibility
+  showDateField = true,
+  validationDate,
 }) => {
   const [error, setError] = React.useState<string | null>(null);
 
@@ -63,7 +61,11 @@ const NewAttendanceFormModal: React.FC<NewAttendanceFormModalProps> = ({
   const renderContent = () => (
     <>
       <ErrorDisplay error={error} />
-      <PatientWalkInForm onRegisterNewAttendance={handleSubmit} />
+      <NewAttendanceForm
+        onRegisterNewAttendance={handleSubmit}
+        showDateField={showDateField}
+        validationDate={validationDate}
+      />
     </>
   );
 

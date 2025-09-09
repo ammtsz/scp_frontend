@@ -1,8 +1,45 @@
-# AttendanceManagement - Reorganized Structure
+# AttendanceManagement Module Organization
 
-## 📁 New Directory Structure
+## 📁 Proposed Folder Structure
 
 ```
+src/components/AttendanceManagement/
+├── index.tsx                     # Main component
+├── types.ts                      # Type definitions
+├── hooks/                        # Custom hooks (CONSOLIDATED)
+│   ├── index.ts                  # Barrel exports
+│   ├── useAttendanceData.ts      # Consolidated data management
+│   ├── useTreatmentWorkflow.ts   # Treatment workflow logic
+│   └── usePatientActions.ts      # Patient-related actions
+├── services/                     # Business logic & API calls (NEW)
+│   ├── index.ts                  # Barrel exports
+│   ├── attendanceService.ts      # Attendance CRUD operations
+│   ├── patientService.ts         # Patient CRUD operations
+│   └── treatmentService.ts       # Treatment-related operations
+├── utils/                        # Utility functions
+│   ├── index.ts                  # Barrel exports
+│   ├── dataTransformers.ts       # Data transformation helpers
+│   ├── businessRules.ts          # Business logic
+│   └── dateHelpers.ts            # Date manipulation
+├── components/                   # UI Components (REORGANIZED)
+│   ├── index.ts                  # Barrel exports
+│   ├── layout/                   # Layout components
+│   │   ├── AttendanceHeader.tsx
+│   │   ├── AttendanceSections.tsx
+│   │   └── TreatmentWorkflowButtons.tsx
+│   ├── cards/                    # Card components
+│   │   ├── AttendanceCard.tsx
+│   │   └── AttendanceColumn.tsx
+│   ├── forms/                    # Form components
+│   │   ├── WalkInForm/
+│   │   └── TreatmentForms/
+│   ├── modals/                   # Modal components
+│   │   ├── AttendanceModals.tsx
+│   │   └── endOfDay/
+│   └── ui/                       # Reusable UI components
+│       ├── StateComponents.tsx
+│       └── AttendanceDropdown.tsx
+└── __tests__/                    # Tests organized by feature
 AttendanceManagement/
 ├── index.tsx                    # Main component (190 lines)
 ├── main.ts                      # Comprehensive exports

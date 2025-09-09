@@ -4,5 +4,5 @@ export interface IDraggedItem {
   type: IAttendanceType;
   status: IAttendanceProgression;
   idx: number;
-  name: string; // Add patient name for better tracking with sorted lists
+  patientId: number; // Use patient ID for better tracking with sorted lists
 }

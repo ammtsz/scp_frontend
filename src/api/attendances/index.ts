@@ -100,10 +100,11 @@ export const cancelAttendance = async (id: string): Promise<ApiResponse<Attendan
   });
 };
 
-export const markAttendanceAsMissed = async (id: string, justified: boolean = false): Promise<ApiResponse<AttendanceResponseDto>> => {
+export const markAttendanceAsMissed = async (id: string, justified: boolean = false, notes: string = ""): Promise<ApiResponse<AttendanceResponseDto>> => {
   return updateAttendance(id, {
     status: AttendanceStatus.MISSED,
-    absence_justified: justified
+    absence_justified: justified,
+    absence_notes: notes
   });
 };
 

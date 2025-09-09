@@ -4,7 +4,11 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { AttendancesProvider, useAttendances } from "../AttendancesContext";
 import * as attendancesAPI from "@/api/attendances";
-import { AttendanceType, AttendanceStatus } from "@/api/types";
+import {
+  AttendanceType,
+  AttendanceStatus,
+  AttendanceResponseDto,
+} from "@/api/types";
 
 // Mock the attendances API
 jest.mock("@/api/attendances");
@@ -551,6 +555,17 @@ describe("AttendancesContext", () => {
         value: "2025-01-15",
       });
 
+      mockedAttendancesAPI.markAttendanceAsMissed.mockResolvedValue({
+        success: true,
+        value: {
+          id: 1,
+          patient_id: 1,
+          type: AttendanceType.SPIRITUAL,
+          status: AttendanceStatus.MISSED,
+          scheduled_time: "08:00",
+        } as AttendanceResponseDto,
+      });
+
       mockedAttendancesAPI.getAttendancesByDate.mockResolvedValue({
         success: true,
         value: [
@@ -647,23 +662,28 @@ describe("AttendancesContext", () => {
       fireEvent.click(screen.getByTestId("finalize-end-of-day-btn"));
 
       await waitFor(() => {
-        // Verify backend calls for marking absences
-        expect(mockedAttendancesAPI.updateAttendance).toHaveBeenCalledWith(
-          "1",
-          {
-            status: AttendanceStatus.CANCELLED,
-          }
-        );
+        // Verify backend calls for scheduled absences (should be marked as missed)
+        expect(
+          mockedAttendancesAPI.markAttendanceAsMissed
+        ).toHaveBeenCalledWith("1", false, "");
 
-        // Verify backend calls for incomplete attendances (checked in but not completed)
+        // Verify backend calls for incomplete attendances (should be rescheduled to SCHEDULED)
         expect(mockedAttendancesAPI.updateAttendance).toHaveBeenCalledWith(
           "2",
           {
-            status: AttendanceStatus.CANCELLED,
+            status: AttendanceStatus.SCHEDULED,
           }
         );
 
-        // Should call updateAttendance twice - once for each incomplete attendance
+        // Verify backend calls for adding notes to unjustified absences
+        expect(mockedAttendancesAPI.updateAttendance).toHaveBeenCalledWith(
+          "1",
+          {
+            notes: "Falta não justificada",
+          }
+        );
+
+        // Should call updateAttendance twice - once for reschedule, once for notes
         expect(mockedAttendancesAPI.updateAttendance).toHaveBeenCalledTimes(2);
       });
     });
@@ -682,9 +702,9 @@ describe("AttendancesContext", () => {
             id: 1,
             patient_id: 1,
             type: AttendanceType.SPIRITUAL,
-            status: AttendanceStatus.SCHEDULED,
+            status: AttendanceStatus.CHECKED_IN, // This will trigger the error path
             scheduled_time: "08:00",
-            checked_in_time: null,
+            checked_in_time: "08:05",
             started_time: null,
             completed_time: null,
             priority: 1,

@@ -26,22 +26,22 @@ const createMockAttendancesByDate = () => ({
   date: new Date('2025-01-15'),
   spiritual: {
     scheduled: [
-      { name: 'John Doe', priority: '1' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null },
-      { name: 'Jane Smith', priority: '2' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null },
+      { name: 'John Doe', priority: '1' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null, patientId: 1 },
+      { name: 'Jane Smith', priority: '2' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null, patientId: 2 },
     ],
     checkedIn: [
-      { name: 'Bob Johnson', priority: '3' as IPriority, checkedInTime: new Date('2025-01-15T10:30:00Z'), onGoingTime: null, completedTime: null },
+      { name: 'Bob Johnson', priority: '3' as IPriority, checkedInTime: new Date('2025-01-15T10:30:00Z'), onGoingTime: null, completedTime: null, patientId: 3 },
     ],
     onGoing: [
-      { name: 'Alice Brown', priority: '1' as IPriority, checkedInTime: new Date('2025-01-15T09:00:00Z'), onGoingTime: new Date('2025-01-15T09:30:00Z'), completedTime: null },
+      { name: 'Alice Brown', priority: '1' as IPriority, checkedInTime: new Date('2025-01-15T09:00:00Z'), onGoingTime: new Date('2025-01-15T09:30:00Z'), completedTime: null, patientId: 4 },
     ],
     completed: [
-      { name: 'Charlie Wilson', priority: '2' as IPriority, checkedInTime: new Date('2025-01-15T08:00:00Z'), onGoingTime: new Date('2025-01-15T08:30:00Z'), completedTime: new Date('2025-01-15T09:00:00Z') },
+      { name: 'Charlie Wilson', priority: '2' as IPriority, checkedInTime: new Date('2025-01-15T08:00:00Z'), onGoingTime: new Date('2025-01-15T08:30:00Z'), completedTime: new Date('2025-01-15T09:00:00Z'), patientId: 5 },
     ],
   },
   lightBath: {
     scheduled: [
-      { name: 'David Miller', priority: '1' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null },
+      { name: 'David Miller', priority: '1' as IPriority, checkedInTime: null, onGoingTime: null, completedTime: null, patientId: 6 },
     ],
     checkedIn: [],
     onGoing: [],

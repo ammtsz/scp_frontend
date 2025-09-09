@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useEndOfDay } from '../useEndOfDay';
-import type { IAttendanceStatusDetail } from '../../../types/globals';
+import type { IAttendanceStatusDetail } from '../../../types';
 import type { ScheduledAbsence } from '../types';
 
 // Mock data factories

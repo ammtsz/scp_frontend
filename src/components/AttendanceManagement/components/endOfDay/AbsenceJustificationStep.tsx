@@ -1,5 +1,5 @@
 import React from "react";
-import type { AbsenceJustification, ScheduledAbsence } from "./types";
+import type { AbsenceJustification, ScheduledAbsence } from "../EndOfDay/types";
 import { getAttendanceTypeLabel } from "@/utils/apiTransformers";
 
 interface AbsenceJustificationStepProps {

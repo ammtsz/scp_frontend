@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AttendanceManagement from "../index";
 import * as AttendancesContext from "@/contexts/AttendancesContext";
-import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
+import { useAttendanceManagement } from "../hooks/useAttendanceManagement";
 import { useNewPatientCheckIn } from "../components/WalkInForm/useNewPatientCheckIn";
 
 // Mock the hooks
@@ -184,7 +184,15 @@ describe("AttendanceManagement Treatment Workflow Integration", () => {
 
     it("should call finalizeEndOfDay and close modal when finalize is submitted", async () => {
       const user = userEvent.setup();
-      mockFinalizeEndOfDay.mockResolvedValue(true);
+      mockFinalizeEndOfDay.mockResolvedValue({
+        type: "completed",
+        completionData: {
+          totalPatients: 5,
+          completedPatients: 4,
+          missedPatients: 1,
+          completionTime: new Date(),
+        },
+      });
 
       render(<AttendanceManagement />);
 
@@ -219,7 +227,20 @@ describe("AttendanceManagement Treatment Workflow Integration", () => {
 
     it("should handle finalize failure gracefully", async () => {
       const user = userEvent.setup();
-      mockFinalizeEndOfDay.mockResolvedValue(false);
+      mockFinalizeEndOfDay.mockResolvedValue({
+        type: "incomplete",
+        incompleteAttendances: [
+          {
+            attendanceId: 1,
+            patientId: 1,
+            name: "Test Patient",
+            priority: 1,
+            scheduledTime: "10:00",
+            age: 30,
+            attendanceType: "spiritual" as const,
+          },
+        ],
+      });
 
       render(<AttendanceManagement />);
 
@@ -334,7 +355,15 @@ describe("AttendanceManagement Treatment Workflow Integration", () => {
 
     it("should refresh attendances after successful treatment workflow operations", async () => {
       const user = userEvent.setup();
-      mockFinalizeEndOfDay.mockResolvedValue(true);
+      mockFinalizeEndOfDay.mockResolvedValue({
+        type: "completed",
+        completionData: {
+          totalPatients: 3,
+          completedPatients: 3,
+          missedPatients: 0,
+          completionTime: new Date(),
+        },
+      });
 
       render(<AttendanceManagement />);
 

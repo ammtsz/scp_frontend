@@ -2,7 +2,7 @@
 
 import React from "react";
 import ConfirmModal from "@/components/ConfirmModal/index";
-import NewAttendanceFormModal from "@/components/AttendanceManagement/components/forms/NewAttendanceFormModal";
+import NewAttendanceFormModal from "@/components/AttendanceManagement/components/NewAttendanceForm/NewAttendanceFormModal";
 import Switch from "@/components/Switch";
 import AgendaColumn from "./AgendaColumn";
 import { useAgendaCalendar } from "./useAgendaCalendar";

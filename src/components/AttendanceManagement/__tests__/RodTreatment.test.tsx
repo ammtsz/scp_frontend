@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import AttendanceManagement from "../index";
-import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
+import { useAttendanceManagement } from "../hooks/useAttendanceManagement";
 import { IPriority, IAttendanceByDate } from "@/types/globals";
 import { PatientsProvider } from "@/contexts/PatientsContext";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";

@@ -8,13 +8,13 @@ export { default as AttendanceColumn } from './AttendanceColumn';
 export { default as AttendancesDropdown } from './AttendancesDropdown';
 
 // Card components
-export * from './cards';
+export * from './Cards';
 
 // Modal components
-export * from './modals';
+export * from './Modals';
 
 // End of Day components
-export * from './endOfDay';
+export * from './EndOfDay';
 
 // Treatment Form components
 export * from './TreatmentForms';

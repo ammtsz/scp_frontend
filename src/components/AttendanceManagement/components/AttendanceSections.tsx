@@ -17,7 +17,8 @@ interface AttendanceSectionsProps {
   handleDragStart: (
     type: IAttendanceType,
     index: number,
-    status: IAttendanceProgression
+    status: IAttendanceProgression,
+    patientId?: number
   ) => void;
   handleDragEnd: () => void;
   handleDropWithConfirm: (

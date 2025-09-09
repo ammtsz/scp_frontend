@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { IPriority, IPatients } from "@/types/globals";
+import { IPriority, IPatients } from "../../types/globals";
 import { useAttendanceManagement } from "./hooks/useAttendanceManagement";
-import { useAttendanceManagement as useAttendanceHook } from "@/hooks/useAttendanceManagement";
+import { useAttendanceData } from "./hooks/useAttendanceData";
 import { useNewPatientCheckIn } from "./components/WalkInForm/useNewPatientCheckIn";
 import { useTreatmentWorkflow } from "./hooks/useTreatmentWorkflow";
-import { useAttendances } from "@/contexts/AttendancesContext";
+import { useAttendances } from "../../contexts/AttendancesContext";
 import {
   getIncompleteAttendances,
   getCompletedAttendances,
@@ -105,17 +105,12 @@ const AttendanceManagement: React.FC<{
     onNewPatientDetected: handleNewPatientDetected,
   });
 
-  // Add delete functionality
-  const useAttendanceHookResult = useAttendanceHook();
-  const handleDeleteAttendance =
-    useAttendanceHookResult?.handleDeleteAttendance;
+  // Add delete functionality from data hook
+  const { deleteAttendance } = useAttendanceData();
 
-  const handleDelete = async (attendanceId: number, patientName: string) => {
-    if (!handleDeleteAttendance) {
-      console.warn("Delete functionality not available");
-      return;
-    }
-    const success = await handleDeleteAttendance(attendanceId, patientName);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleDelete = async (attendanceId: number, _patientName: string) => {
+    const success = await deleteAttendance(attendanceId);
     if (success) {
       // Refresh the attendance list to reflect the deletion
       refreshCurrentDate();

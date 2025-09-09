@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import AttendanceTimes from "../components/cards/AttendanceTimes";
+import AttendanceTimes from "../components/Cards/AttendanceTimes";
 import { IAttendanceProgression } from "@/types/globals";
 
 describe("AttendanceTimes Component", () => {

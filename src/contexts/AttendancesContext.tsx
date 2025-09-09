@@ -76,7 +76,7 @@ interface AttendancesContextProps {
   ) => Promise<boolean>;
   // New end-of-day workflow functions
   checkEndOfDayStatus: () => EndOfDayResult;
-  finalizeEndOfDay: (data?: EndOfDayData) => Promise<boolean>; // Legacy support
+  finalizeEndOfDay: (data?: EndOfDayData) => Promise<EndOfDayResult>;
   handleIncompleteAttendances: (
     attendances: IAttendanceStatusDetail[],
     action: "complete" | "reschedule"
@@ -84,7 +84,6 @@ interface AttendancesContextProps {
   handleAbsenceJustifications: (
     justifications: AbsenceJustification[]
   ) => Promise<boolean>;
-  completeDayFinalization: () => Promise<EndOfDayResult>;
 }
 
 const AttendancesContext = createContext<AttendancesContextProps | undefined>(
@@ -336,7 +335,8 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
         for (const justification of justifications) {
           await markAttendanceAsMissed(
             justification.attendanceId.toString(),
-            justification.justified
+            justification.justified,
+            justification.notes || ""
           );
 
           // If unjustified, increment missing appointments streak
@@ -360,10 +360,12 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
     [attendancesByDate, refreshCurrentDate]
   );
 
-  const completeDayFinalization =
-    useCallback(async (): Promise<EndOfDayResult> => {
+  // Enhanced finalizeEndOfDay function that combines legacy support with new workflow
+  const finalizeEndOfDay = useCallback(
+    async (data?: EndOfDayData): Promise<EndOfDayResult> => {
       try {
         if (!attendancesByDate) {
+          setError("Nenhum atendimento carregado para finalizar o dia");
           return {
             type: "completed",
             completionData: {
@@ -373,67 +375,6 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
               completionTime: new Date(),
             },
           };
-        }
-
-        // Calculate final statistics
-        let totalPatients = 0;
-        let completedPatients = 0;
-        const missedPatients = 0; // Would be calculated from missed status attendances
-
-        ["spiritual", "lightBath", "rod"].forEach((type) => {
-          const typeData =
-            attendancesByDate[type as keyof typeof attendancesByDate];
-          if (typeData && typeof typeData === "object") {
-            Object.keys(typeData).forEach((status) => {
-              const statusData = typeData[status as keyof typeof typeData];
-              if (Array.isArray(statusData)) {
-                totalPatients += (statusData as IAttendanceStatusDetail[])
-                  .length;
-                if (status === "completed") {
-                  completedPatients += (statusData as IAttendanceStatusDetail[])
-                    .length;
-                }
-                // Missed patients would be tracked separately
-              }
-            });
-          }
-        });
-
-        // Save missing appointment counts to backend (would need additional API)
-        // For now, we'll just return the completion data
-
-        const completionTime = new Date();
-        return {
-          type: "completed",
-          completionData: {
-            totalPatients,
-            completedPatients,
-            missedPatients,
-            completionTime,
-          },
-        };
-      } catch (error) {
-        console.error("Error completing day finalization:", error);
-        setError("Erro ao finalizar o dia");
-        return {
-          type: "completed",
-          completionData: {
-            totalPatients: 0,
-            completedPatients: 0,
-            missedPatients: 0,
-            completionTime: new Date(),
-          },
-        };
-      }
-    }, [attendancesByDate]);
-
-  // Legacy finalizeEndOfDay function for backward compatibility
-  const finalizeEndOfDay = useCallback(
-    async (data?: EndOfDayData): Promise<boolean> => {
-      try {
-        if (!attendancesByDate) {
-          setError("Nenhum atendimento carregado para finalizar o dia");
-          return false;
         }
 
         // If data is provided, use legacy implementation
@@ -447,7 +388,8 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
             if (justification && absence.attendanceId) {
               await markAttendanceAsMissed(
                 absence.attendanceId.toString(),
-                justification.justified
+                justification.justified,
+                justification.notes
               );
             }
           }
@@ -462,46 +404,126 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         } else {
-          // Use new workflow
-          const status = checkEndOfDayStatus();
+          // Use new workflow - handle both incomplete and scheduled separately
 
-          if (status.type === "incomplete" && status.incompleteAttendances) {
+          // Check for incomplete attendances (checked-in or ongoing)
+          const incompleteAttendances: IAttendanceStatusDetail[] = [];
+          ["spiritual", "lightBath", "rod"].forEach((type) => {
+            ["checkedIn", "onGoing"].forEach((status) => {
+              const typeData =
+                attendancesByDate[type as keyof typeof attendancesByDate];
+              if (typeData && typeof typeData === "object") {
+                const statusData = typeData[status as keyof typeof typeData];
+                if (Array.isArray(statusData)) {
+                  incompleteAttendances.push(
+                    ...(statusData as IAttendanceStatusDetail[])
+                  );
+                }
+              }
+            });
+          });
+
+          if (incompleteAttendances.length > 0) {
             // Auto-reschedule incomplete attendances
-            await handleIncompleteAttendances(
-              status.incompleteAttendances,
+            const success = await handleIncompleteAttendances(
+              incompleteAttendances,
               "reschedule"
             );
-          } else if (
-            status.type === "scheduled_absences" &&
-            status.scheduledAbsences
-          ) {
+            if (!success) {
+              throw new Error("Failed to handle incomplete attendances");
+            }
+          }
+
+          // Check for scheduled absences separately
+          const scheduledAbsences: IAttendanceStatusDetail[] = [];
+          ["spiritual", "lightBath", "rod"].forEach((type) => {
+            const typeData =
+              attendancesByDate[type as keyof typeof attendancesByDate];
+            if (
+              typeData &&
+              typeof typeData === "object" &&
+              "scheduled" in typeData
+            ) {
+              const scheduledData = typeData.scheduled;
+              if (Array.isArray(scheduledData)) {
+                scheduledAbsences.push(
+                  ...(scheduledData as IAttendanceStatusDetail[])
+                );
+              }
+            }
+          });
+
+          if (scheduledAbsences.length > 0) {
             // Auto-mark all as unjustified
             const justifications: AbsenceJustification[] =
-              status.scheduledAbsences.map((attendance) => ({
+              scheduledAbsences.map((attendance) => ({
                 attendanceId: attendance.attendanceId!,
                 patientName: attendance.name,
                 justified: false,
                 notes: "",
               }));
-            await handleAbsenceJustifications(justifications);
+            const success = await handleAbsenceJustifications(justifications);
+            if (!success) {
+              throw new Error("Failed to handle absence justifications");
+            }
           }
         }
 
         // Refresh the data to show updated status
         await refreshCurrentDate();
-        return true;
+
+        // Calculate and return final statistics
+        let totalPatients = 0;
+        let completedPatients = 0;
+        let missedPatients = 0;
+
+        ["spiritual", "lightBath", "rod"].forEach((type) => {
+          const typeData =
+            attendancesByDate[type as keyof typeof attendancesByDate];
+          if (typeData && typeof typeData === "object") {
+            Object.keys(typeData).forEach((status) => {
+              const statusData = typeData[status as keyof typeof typeData];
+              if (Array.isArray(statusData)) {
+                const attendances = statusData as IAttendanceStatusDetail[];
+                totalPatients += attendances.length;
+                if (status === "completed") {
+                  completedPatients += attendances.length;
+                } else if (status === "missed") {
+                  missedPatients += attendances.length;
+                }
+              }
+            });
+          }
+        });
+
+        return {
+          type: "completed",
+          completionData: {
+            totalPatients,
+            completedPatients,
+            missedPatients,
+            completionTime: new Date(),
+          },
+        };
       } catch (error) {
         console.error("Error finalizing end of day:", error);
         setError(
           "Erro ao finalizar dia: alguns atendimentos podem não ter sido atualizados"
         );
-        return false;
+        return {
+          type: "completed",
+          completionData: {
+            totalPatients: 0,
+            completedPatients: 0,
+            missedPatients: 0,
+            completionTime: new Date(),
+          },
+        };
       }
     },
     [
       attendancesByDate,
       refreshCurrentDate,
-      checkEndOfDayStatus,
       handleIncompleteAttendances,
       handleAbsenceJustifications,
     ]
@@ -536,7 +558,6 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
         finalizeEndOfDay,
         handleIncompleteAttendances,
         handleAbsenceJustifications,
-        completeDayFinalization,
       }}
     >
       {children}

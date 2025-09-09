@@ -57,6 +57,7 @@ export interface AttendanceResponseDto {
   completed_at?: string; // ISO datetime string
   cancelled_at?: string; // ISO datetime string
   absence_justified?: boolean;
+  absence_notes?: string; // Notes explaining reason for absence
   notes?: string;
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
@@ -145,6 +146,7 @@ export interface UpdateAttendanceRequest {
   completed_at?: string; // ISO datetime string
   cancelled_at?: string; // ISO datetime string
   absence_justified?: boolean;
+  absence_notes?: string; // Notes explaining reason for absence
   notes?: string;
 }
 

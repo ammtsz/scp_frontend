@@ -4,7 +4,11 @@ import React, { useState } from "react";
 import { Search } from "react-feather";
 import { IPriority, IAttendanceType } from "@/types/globals";
 import { createPatient } from "@/api/patients";
-import { createAttendance, checkInAttendance } from "@/api/attendances";
+import {
+  createAttendance,
+  checkInAttendance,
+  getAttendancesByDate,
+} from "@/api/attendances";
 import { usePatients } from "@/contexts/PatientsContext";
 import { useAttendances } from "@/contexts/AttendancesContext";
 import {
@@ -26,6 +30,7 @@ interface PatientWalkInFormProps {
     isNew: boolean,
     priority: IPriority
   ) => void;
+  isDropdown?: boolean; // Controls whether to render with card styling
 }
 
 interface WalkInFormData {
@@ -47,6 +52,7 @@ const attendanceTypes = [
 
 const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
   onRegisterNewAttendance,
+  isDropdown = false,
 }) => {
   const { patients, refreshPatients } = usePatients();
   const { refreshCurrentDate } = useAttendances();
@@ -198,6 +204,45 @@ const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
     setSuccess(null);
   };
 
+  const checkForDuplicateAttendances = async (
+    patientId: string,
+    selectedTypes: string[]
+  ): Promise<string[]> => {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const result = await getAttendancesByDate(today);
+
+      if (!result.success || !result.value) {
+        // If we can't check, proceed cautiously
+        return [];
+      }
+
+      const existingAttendances = result.value.filter(
+        (attendance) => attendance.patient_id === Number(patientId)
+      );
+
+      const duplicateTypes: string[] = [];
+
+      selectedTypes.forEach((type) => {
+        const apiType = transformAttendanceTypeToApi(type as IAttendanceType);
+        const hasDuplicate = existingAttendances.some(
+          (attendance) => attendance.type === apiType
+        );
+
+        if (hasDuplicate) {
+          const typeLabel =
+            attendanceTypes.find((t) => t.value === type)?.label || type;
+          duplicateTypes.push(typeLabel);
+        }
+      });
+
+      return duplicateTypes;
+    } catch (error) {
+      console.error("Error checking for duplicate attendances:", error);
+      return [];
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -258,6 +303,25 @@ const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
         }
 
         patientId = String(selectedPatientData.id);
+      }
+
+      // Check for duplicate attendances before creating new ones
+      // (This check is more important for existing patients, but included for completeness)
+      const duplicateTypes = await checkForDuplicateAttendances(
+        patientId,
+        formData.selectedTypes
+      );
+
+      if (duplicateTypes.length > 0) {
+        const patientName = formData.isNewPatient
+          ? formData.name
+          : formData.selectedPatient;
+        setError(
+          `Agendamento duplicado! O paciente ${patientName} já possui atendimento(s) agendado(s) para hoje nos seguintes tipos: ${duplicateTypes.join(
+            ", "
+          )}.`
+        );
+        return;
       }
 
       // Get current date and time
@@ -352,20 +416,26 @@ const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
   };
 
   return (
-    <div className="card-shadow">
-      <div className="p-4 border-b border-gray-100">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Pacientes não Agendados
-        </h2>
-        <p className="text-sm text-gray-600 mt-1">
-          Registro de pacientes não agendados para atendimento imediato
-        </p>
-      </div>
+    <div className={isDropdown ? "" : "card-shadow"}>
+      {!isDropdown && (
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Pacientes não Agendados
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Registro de pacientes não agendados para atendimento imediato
+          </p>
+        </div>
+      )}
 
       <ErrorDisplay error={error} />
 
       {success && (
-        <div className="mx-4 mt-4 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
+        <div
+          className={`${
+            isDropdown ? "mx-0 mt-0" : "mx-4 mt-4"
+          } p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm`}
+        >
           {success}
         </div>
       )}

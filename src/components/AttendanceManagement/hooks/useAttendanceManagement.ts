@@ -51,7 +51,7 @@ export const useAttendanceManagement = ({
   } | null>(null);
   const [multiSectionModalOpen, setMultiSectionModalOpen] = useState(false);
   const [multiSectionPending, setMultiSectionPending] = useState<{
-    name: string;
+    patientId: number;
     fromStatus: IAttendanceProgression;
     toStatus: IAttendanceProgression;
     draggedType: IAttendanceType;
@@ -130,9 +130,9 @@ export const useAttendanceManagement = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unscheduledCheckIn, checkInProcessed]); // attendancesByDate intentionally excluded to prevent infinite loop
 
-  // Helper function to find patient by name
-  const findPatient = (type: IAttendanceType, status: IAttendanceProgression, name: string): IAttendanceStatusDetail | undefined => {
-    return attendancesByDate?.[type]?.[status]?.find(p => p.name === name);
+  // Helper function to find patient by ID
+  const findPatient = (type: IAttendanceType, status: IAttendanceProgression, patientId: number): IAttendanceStatusDetail | undefined => {
+    return attendancesByDate?.[type]?.[status]?.find(p => p.patientId === patientId);
   };
 
   // Helper function to update patient timestamps
@@ -174,15 +174,24 @@ export const useAttendanceManagement = ({
   const handleDragStart = (
     type: IAttendanceType,
     idx: number,
-    status: IAttendanceProgression
+    status: IAttendanceProgression,
+    patientId?: number
   ) => {
-    const patients = getPatients(type, status);
-    const patient = patients[idx];
-    if (!patient) {
-      console.error('Patient not found at index', idx);
+    let patient;
+    
+    if (patientId) {
+      patient = findPatient(type, status, patientId);
+    } else {
+      // Fallback to index-based lookup
+      const patients = getPatients(type, status);
+      patient = patients[idx];
+    }
+    
+    if (!patient?.patientId) {
+      console.error('Patient not found at index', idx, 'or patientId', patientId, 'or patient missing patientId');
       return;
     }
-    setDragged({ type, status, idx, name: patient.name });
+    setDragged({ type, status, idx, patientId: patient.patientId });
   };
 
   const handleDragEnd = () => {
@@ -195,8 +204,8 @@ export const useAttendanceManagement = ({
   ) => {
     if (!dragged || !attendancesByDate) return;
 
-    // Find patient by name using helper function
-    const patient = findPatient(dragged.type, dragged.status, dragged.name);
+    // Find patient by ID using helper function
+    const patient = findPatient(dragged.type, dragged.status, dragged.patientId);
     if (!patient) return; // Patient not found
 
     // Prevent moves between different consultation types
@@ -207,7 +216,7 @@ export const useAttendanceManagement = ({
 
     // Check if this is a new patient (status 'N') being moved to 'checkedIn'
     if (toStatus === "checkedIn") {
-      const patientData = patients.find(p => p.name === patient.name);
+      const patientData = patients.find(p => p.id === patient.patientId?.toString());
       if (patientData?.status === "N") {
         // This is a new patient - trigger new patient check-in modal
         onNewPatientDetected?.(patientData);
@@ -217,13 +226,13 @@ export const useAttendanceManagement = ({
     }
 
     // Check if patient is scheduled in both consultation types
-    const isInBothTypes = findPatient("spiritual", "scheduled", patient.name) && 
-                         findPatient("lightBath", "scheduled", patient.name);
+    const isInBothTypes = findPatient("spiritual", "scheduled", dragged.patientId) && 
+                         findPatient("lightBath", "scheduled", dragged.patientId);
 
     // If patient is in both types and we're moving from scheduled to checkedIn, show multi-section modal
     if (isInBothTypes && dragged.status === "scheduled" && toStatus === "checkedIn") {
       setMultiSectionPending({
-        name: patient.name,
+        patientId: dragged.patientId,
         fromStatus: dragged.status,
         toStatus: toStatus,
         draggedType: dragged.type,
@@ -249,7 +258,7 @@ export const useAttendanceManagement = ({
     if (!dragged || !attendancesByDate || !setAttendancesByDate) return;
 
     // Find patient using helper function
-    const patient = findPatient(dragged.type, dragged.status, dragged.name);
+    const patient = findPatient(dragged.type, dragged.status, dragged.patientId);
     if (!patient) return; // Patient not found
 
     // Sync with backend if attendanceId is available
@@ -268,7 +277,7 @@ export const useAttendanceManagement = ({
       ...newAttendancesByDate,
       [dragged.type]: {
         ...newAttendancesByDate[dragged.type],
-        [dragged.status]: newAttendancesByDate[dragged.type][dragged.status].filter(p => p.name !== dragged.name)
+        [dragged.status]: newAttendancesByDate[dragged.type][dragged.status].filter(p => p.patientId !== dragged.patientId)
       }
     };
     
@@ -313,12 +322,12 @@ export const useAttendanceManagement = ({
     if (!multiSectionPending || !attendancesByDate || !setAttendancesByDate) return;
 
     // Find patient using helper function
-    const patient = findPatient(multiSectionPending.draggedType, multiSectionPending.fromStatus, multiSectionPending.name);
+    const patient = findPatient(multiSectionPending.draggedType, multiSectionPending.fromStatus, multiSectionPending.patientId);
     if (!patient) return; // Patient not found
 
     // Sync with backend for all types if attendanceIds are available
     const syncPromises = (["spiritual", "lightBath", "rod"] as IAttendanceType[])
-      .map(type => findPatient(type, "scheduled", patient.name))
+      .map(type => findPatient(type, "scheduled", multiSectionPending.patientId))
       .filter(p => p?.attendanceId)
       .map(p => updateAttendanceStatus(p!.attendanceId!, "checkedIn"));
 
@@ -335,14 +344,14 @@ export const useAttendanceManagement = ({
     let newAttendancesByDate = { ...attendancesByDate };
     
     (["spiritual", "lightBath", "rod"] as IAttendanceType[]).forEach((type) => {
-      const patientToMove = findPatient(type, "scheduled", patient.name);
+      const patientToMove = findPatient(type, "scheduled", multiSectionPending.patientId);
       
       if (patientToMove) {
         newAttendancesByDate = {
           ...newAttendancesByDate,
           [type]: {
             ...newAttendancesByDate[type],
-            scheduled: newAttendancesByDate[type].scheduled.filter(p => p.name !== patient.name),
+            scheduled: newAttendancesByDate[type].scheduled.filter(p => p.patientId !== multiSectionPending.patientId),
             checkedIn: [
               ...newAttendancesByDate[type].checkedIn,
               updatePatientTimestamps(patientToMove, "checkedIn")
@@ -365,7 +374,7 @@ export const useAttendanceManagement = ({
     if (!multiSectionPending || !attendancesByDate || !setAttendancesByDate) return;
 
     // Find patient using helper function
-    const patient = findPatient(multiSectionPending.draggedType, multiSectionPending.fromStatus, multiSectionPending.name);
+    const patient = findPatient(multiSectionPending.draggedType, multiSectionPending.fromStatus, multiSectionPending.patientId);
     if (!patient) return;
 
     // Sync with backend if attendanceId is available
@@ -381,7 +390,7 @@ export const useAttendanceManagement = ({
       ...attendancesByDate,
       [multiSectionPending.draggedType]: {
         ...attendancesByDate[multiSectionPending.draggedType],
-        [multiSectionPending.fromStatus]: attendancesByDate[multiSectionPending.draggedType][multiSectionPending.fromStatus].filter(p => p.name !== multiSectionPending.name),
+        [multiSectionPending.fromStatus]: attendancesByDate[multiSectionPending.draggedType][multiSectionPending.fromStatus].filter(p => p.patientId !== multiSectionPending.patientId),
         [multiSectionPending.toStatus]: [
           ...attendancesByDate[multiSectionPending.draggedType][multiSectionPending.toStatus],
           updatePatientTimestamps(patient, multiSectionPending.toStatus)

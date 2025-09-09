@@ -47,7 +47,7 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
 
     const isBeingDragged =
       dragged?.type === type &&
-      dragged?.idx === index &&
+      dragged?.patientId === patient.patientId &&
       dragged?.status === status;
 
     return (

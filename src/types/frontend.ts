@@ -36,6 +36,8 @@ export interface Attendance {
   startedAt?: Date;
   completedAt?: Date;
   cancelledAt?: Date;
+  absenceJustified?: boolean;
+  absenceNotes?: string; // Notes explaining reason for absence
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -108,6 +110,8 @@ export interface UpdateAttendanceRequest {
   startedAt?: Date;
   completedAt?: Date;
   cancelledAt?: Date;
+  absenceJustified?: boolean;
+  absenceNotes?: string; // Notes explaining reason for absence
   notes?: string;
 }
 

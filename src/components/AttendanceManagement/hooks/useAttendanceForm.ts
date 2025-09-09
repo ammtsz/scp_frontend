@@ -1,39 +1,70 @@
-import { useState } from "react";
-import { IPriority, IAttendanceType } from "@/types/globals";
-import { usePatients } from "@/contexts/PatientsContext";
+/**
+ * useAttendanceForm - Form management hook for attendance creation
+ * 
+ * This hook handles form state and validation for creating new attendances.
+ * Uses the service layer for business logic and API calls.
+ */
+
+import { useState, useCallback } from "react";
+import { IPriority, IAttendanceType, IPatients } from "@/types/globals";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { 
-  createAttendance, 
-  checkInAttendance,
-  deleteAttendance
-} from "@/api/attendances";
-import { createPatient } from "@/api/patients";
-import { 
-  transformPriorityToApi,
-  transformAttendanceTypeToApi 
-} from "@/utils/apiTransformers";
+import { usePatients } from "@/contexts/PatientsContext";
+import { AttendanceService, PatientService } from "../services";
+import { isPatientAlreadyScheduled } from "@/utils/businessRules";
 import { getNextAvailableDate } from "@/utils/dateHelpers";
 import { SCHEDULED_TIME } from "@/utils/constants";
-import { isPatientAlreadyScheduled } from "@/utils/businessRules";
 
-// Map frontend priority to backend enum
-const mapPriorityToBackend = transformPriorityToApi;
-
-// Map frontend attendance type to backend enum
-const mapAttendanceTypeToBackend = transformAttendanceTypeToApi;
-
-export function useAttendanceManagement(
+export interface UseAttendanceFormProps {
   onRegisterNewAttendance?: (
     patientName: string,
     types: string[],
     isNew: boolean,
     priority: IPriority,
     date?: string
-  ) => void,
-  autoCheckIn: boolean = true,
-  defaultNotes: string = "",
-  validationDate?: string // Optional date for validation (defaults to today)
-) {
+  ) => void;
+  autoCheckIn?: boolean;
+  defaultNotes?: string;
+  validationDate?: string;
+}
+
+export interface UseAttendanceFormReturn {
+  // Form state
+  search: string;
+  setSearch: (value: string) => void;
+  selectedPatient: string;
+  setSelectedPatient: (value: string) => void;
+  isNewPatient: boolean;
+  setIsNewPatient: (value: boolean) => void;
+  selectedTypes: string[];
+  setSelectedTypes: (value: string[]) => void;
+  priority: IPriority;
+  setPriority: (value: IPriority) => void;
+  notes: string;
+  setNotes: (value: string) => void;
+  
+  // State management
+  isSubmitting: boolean;
+  error: string | null;
+  success: string | null;
+  
+  // Data
+  filteredPatients: IPatients[];
+  
+  // Actions
+  resetForm: () => void;
+  handleRegisterNewAttendance: (
+    e: React.FormEvent, 
+    selectedDate?: string
+  ) => Promise<boolean>;
+}
+
+export const useAttendanceForm = ({
+  onRegisterNewAttendance,
+  autoCheckIn = true,
+  defaultNotes = "",
+  validationDate
+}: UseAttendanceFormProps = {}): UseAttendanceFormReturn => {
+  
   const { patients, refreshPatients } = usePatients();
   const { refreshCurrentDate, attendancesByDate } = useAttendances();
   
@@ -50,12 +81,15 @@ export function useAttendanceManagement(
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Filtered patients for search
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Check if a patient is already scheduled for the specific attendance types being selected
-  const resetForm = () => {
+  /**
+   * Reset all form fields to default state
+   */
+  const resetForm = useCallback(() => {
     setSearch("");
     setSelectedPatient("");
     setSelectedTypes([]);
@@ -63,9 +97,15 @@ export function useAttendanceManagement(
     setNotes(defaultNotes);
     setError(null);
     setSuccess(null);
-  };
+  }, [defaultNotes]);
 
-  const handleRegisterNewAttendance = async (e: React.FormEvent, selectedDate?: string): Promise<boolean> => {
+  /**
+   * Handle form submission for new attendance registration
+   */
+  const handleRegisterNewAttendance = useCallback(async (
+    e: React.FormEvent, 
+    selectedDate?: string
+  ): Promise<boolean> => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
@@ -101,67 +141,52 @@ export function useAttendanceManagement(
           return false;
         }
 
-        // Create new patient
-        const createPatientResult = await createPatient({
-          name: name,
-          priority: mapPriorityToBackend(priority),
-          main_complaint: "Check-in sem agendamento prévio",
+        // Create new patient using service
+        const patientResult = await PatientService.createPatient({
+          name,
+          priority,
+          birthDate: new Date(), // This should come from a form field in real implementation
+          mainComplaint: notes
         });
 
-        if (!createPatientResult.success || !createPatientResult.value) {
-          setError(createPatientResult.error || "Erro ao criar paciente");
+        if (!patientResult.success) {
+          setError(`Erro ao cadastrar paciente: ${patientResult.error}`);
           return false;
         }
 
-        patientId = String(createPatientResult.value.id);
+        patientId = patientResult.data!.id.toString();
         
         // Refresh patients list to include the new patient
         await refreshPatients();
       } else {
-        // Find existing patient
-        const selectedPatientData = patients.find((p) => p.name === name);
-        if (!selectedPatientData) {
+        const patient = patients.find((p) => p.name === selectedPatient);
+        if (!patient) {
           setError("Paciente selecionado não encontrado.");
           return false;
         }
-        patientId = String(selectedPatientData.id);
+        patientId = patient.id;
       }
 
-      // Get the next available date once for all attendances, or use the selected date
+      // Get the next available date
       const nextAvailableDate = selectedDate || await getNextAvailableDate();
 
       // Create attendances for each selected type
       const attendancePromises = selectedTypes.map(async (type) => {
-        // Determine the notes to use
-        const attendanceNotes = notes.trim() || 
-          (autoCheckIn ? `Check-in sem agendamento - ${isNewPatient ? 'Novo paciente' : 'Paciente existente'}` : '');
-        
-        // First create the attendance
-        const createResult = await createAttendance({
-          patient_id: Number(patientId),
-          type: mapAttendanceTypeToBackend(type as IAttendanceType),
-          scheduled_date: nextAvailableDate,
-          scheduled_time: SCHEDULED_TIME,
-          notes: attendanceNotes,
+        const createResult = await AttendanceService.createAttendance({
+          patientId: parseInt(patientId),
+          attendanceType: type as IAttendanceType,
+          scheduledDate: nextAvailableDate
         });
 
-        if (!createResult.success || !createResult.value) {
-          return createResult;
-        }
-
-        // For unscheduled patients (walk-ins), immediately check them in
-        // This will move them from "scheduled" to "checked-in" column
-        if (autoCheckIn) {
+        // If creation succeeded and autoCheckIn is enabled, check in the patient
+        if (createResult.success && autoCheckIn) {
           try {
-            const checkInResult = await checkInAttendance(createResult.value.id.toString());
-            
-            if (!checkInResult.success) {
-              console.warn(`Failed to check in attendance ${createResult.value.id}:`, checkInResult.error);
-              // Return the original creation result even if check-in fails
-              // The attendance will remain in "scheduled" status
-            }
+            await AttendanceService.checkInAttendance({
+              attendanceId: createResult.data!.id,
+              patientName: name
+            });
           } catch (error) {
-            console.warn(`Error during check-in for attendance ${createResult.value.id}:`, error);
+            console.warn(`Error during check-in for attendance ${createResult.data!.id}:`, error);
             // Continue with the original creation result
           }
         }
@@ -188,7 +213,7 @@ export function useAttendanceManagement(
         // Refresh attendances to show any successful records
         await refreshCurrentDate();
         
-        return false; // Return false when there are failures
+        return false;
       } else {
         const isToday = nextAvailableDate === new Date().toISOString().split('T')[0];
         const dateMessage = isToday ? 'hoje' : `para ${nextAvailableDate}`;
@@ -199,80 +224,39 @@ export function useAttendanceManagement(
         // Refresh attendances to show the new records
         await refreshCurrentDate();
 
-        // Call parent callback if provided
+        // Call external callback if provided
         if (onRegisterNewAttendance) {
-          onRegisterNewAttendance(name, selectedTypes, isNewPatient, priority, selectedDate);
+          onRegisterNewAttendance(name, selectedTypes, isNewPatient, priority, nextAvailableDate);
         }
 
-        // Reset form only on complete success
+        // Reset form after successful submission
         resetForm();
         
         return true;
       }
     } catch (error) {
       console.error("Error in handleRegisterNewAttendance:", error);
-      setError("Erro inesperado ao processar check-in. Tente novamente.");
+      setError("Erro inesperado ao processar a solicitação. Tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleDeleteAttendance = async (attendanceId: number, patientName: string): Promise<boolean> => {
-    setIsSubmitting(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const result = await deleteAttendance(String(attendanceId));
-      
-      if (result.success) {
-        setSuccess(`Atendimento de "${patientName}" removido com sucesso.`);
-        
-        // Refresh attendances to update the current view
-        await refreshCurrentDate();
-        
-        return true;
-      } else {
-        setError(result.error || "Erro ao remover atendimento.");
-        return false;
-      }
-    } catch (error) {
-      console.error("Error in handleDeleteAttendance:", error);
-      setError("Erro inesperado ao remover atendimento. Tente novamente.");
-      return false;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setSelectedPatient("");
-    setError(null);
-    setSuccess(null);
-  };
-
-  const handleSelect = (name: string) => {
-    const selected = filteredPatients.find((p) => p.name === name);
-    setSelectedPatient(name);
-    setSearch(name);
-    setError(null);
-    setSuccess(null);
-    
-    if (selected) {
-      setPriority(selected.priority);
-    }
-  };
-
-  const handleTypeCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, checked } = e.target;
-    setSelectedTypes((prev) =>
-      checked ? [...prev, value] : prev.filter((t) => t !== value)
-    );
-    setError(null);
-    setSuccess(null);
-  };
+  }, [
+    isNewPatient,
+    search,
+    selectedPatient,
+    selectedTypes,
+    priority,
+    notes,
+    patients,
+    attendancesByDate,
+    validationDate,
+    autoCheckIn,
+    refreshPatients,
+    refreshCurrentDate,
+    onRegisterNewAttendance,
+    resetForm
+  ]);
 
   return {
     // Form state
@@ -289,20 +273,18 @@ export function useAttendanceManagement(
     notes,
     setNotes,
     
+    // State management
+    isSubmitting,
+    error,
+    success,
+    
     // Data
     filteredPatients,
     
     // Actions
-    handleRegisterNewAttendance,
-    handleDeleteAttendance,
-    handleInputChange,
-    handleSelect,
-    handleTypeCheckbox,
     resetForm,
-    
-    // Status
-    isSubmitting,
-    error,
-    success,
+    handleRegisterNewAttendance
   };
-}
+};
+
+export default useAttendanceForm;
