@@ -66,8 +66,6 @@ const PatientTreatmentRecords: React.FC<PatientTreatmentRecordsProps> = ({
           <div className="bg-blue-50 p-4 rounded-md">
             <p className="text-blue-800 text-sm">
               Formulário de registro de tratamento será implementado aqui.
-              <br />
-              Utilizará o componente TreatmentRecordForm existente.
             </p>
             <button
               onClick={() => setShowForm(false)}

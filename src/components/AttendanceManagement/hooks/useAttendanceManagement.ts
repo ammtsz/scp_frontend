@@ -12,6 +12,7 @@ import { sortPatientsByPriority } from "@/utils/businessRules";
 import { updateAttendanceStatus } from "@/api/attendanceSync";
 import { getIncompleteAttendances } from "../utils/attendanceDataUtils";
 import { IDraggedItem } from "../types";
+import type { SpiritualTreatmentData } from "../components/TreatmentForms";
 
 interface ExternalCheckIn {
   name: string;
@@ -60,6 +61,20 @@ export const useAttendanceManagement = ({
   // Patient edit modal state
   const [editPatientModalOpen, setEditPatientModalOpen] = useState(false);
   const [patientToEdit, setPatientToEdit] = useState<{ id: string; name: string } | null>(null);
+  
+  // Treatment form modal state (for when completing attendance)
+  const [treatmentFormOpen, setTreatmentFormOpen] = useState(false);
+  const [selectedAttendanceForTreatment, setSelectedAttendanceForTreatment] = useState<{
+    id: number;
+    patientId: number;
+    patientName: string;
+    attendanceType: string;
+    currentTreatmentStatus: "N" | "T" | "A" | "F";
+    currentStartDate?: Date;
+    currentReturnWeeks?: number;
+    isFirstAttendance: boolean;
+  } | null>(null);
+  
   const [checkInProcessed, setCheckInProcessed] = useState(false);
   const [collapsed, setCollapsed] = useState<{
     [key in IAttendanceType]: boolean;
@@ -142,12 +157,28 @@ export const useAttendanceManagement = ({
     if (status === "onGoing") updates.onGoingTime = new Date();
     if (status === "completed") {
       updates.completedTime = new Date();
-      // Trigger patient edit modal when attendance is completed
+      // Trigger treatment form modal when attendance is completed
       // Find the patient in the patients list to get their ID
       const fullPatient = patients.find(p => p.name === patient.name);
-      if (fullPatient) {
-        setPatientToEdit({ id: fullPatient.id.toString(), name: patient.name });
-        setEditPatientModalOpen(true);
+      if (fullPatient && patient.attendanceId && patient.patientId) {
+        // Get the attendance type from the dragged item or determine from data
+        const attendanceType = dragged?.type || "spiritual"; // Default to spiritual if not available
+        
+        // Determine if this is a first attendance based on patient status
+        // "N" indicates new patient, priority "1" often indicates urgent/new patients
+        const isFirstAttendance = fullPatient.status === "N";
+        
+        setSelectedAttendanceForTreatment({
+          id: patient.attendanceId,
+          patientId: patient.patientId,
+          patientName: patient.name,
+          attendanceType,
+          currentTreatmentStatus: "N", // Default to new patient - form will fetch actual data
+          currentStartDate: undefined, // Will be fetched from backend in form
+          currentReturnWeeks: undefined, // Will be fetched from backend in form
+          isFirstAttendance,
+        });
+        setTreatmentFormOpen(true);
       }
     }
     return { ...patient, ...updates };
@@ -424,6 +455,26 @@ export const useAttendanceManagement = ({
     refreshCurrentDate();
   };
 
+  // Treatment form modal handlers
+  const handleTreatmentFormCancel = () => {
+    setTreatmentFormOpen(false);
+    setSelectedAttendanceForTreatment(null);
+  };
+
+  const handleTreatmentFormSubmit = async (data: SpiritualTreatmentData) => {
+    // TODO: Implement treatment form submission logic
+    // This will handle:
+    // 1. Saving treatment data to backend
+    // 2. Scheduling follow-up appointments if needed
+    // 3. Updating patient treatment status
+    console.log("Treatment form submitted:", data);
+    
+    setTreatmentFormOpen(false);
+    setSelectedAttendanceForTreatment(null);
+    // Refresh current date to show updated data
+    refreshCurrentDate();
+  };
+
   const handleAttendanceCompletion = async (attendanceId: number) => {
     if (!attendancesByDate) {
       console.error("No attendance data available");
@@ -501,6 +552,8 @@ export const useAttendanceManagement = ({
     collapsed,
     editPatientModalOpen,
     patientToEdit,
+    treatmentFormOpen,
+    selectedAttendanceForTreatment,
     isDayFinalized,
     
     // Functions
@@ -516,6 +569,8 @@ export const useAttendanceManagement = ({
     refreshCurrentDate,
     handleEditPatientCancel,
     handleEditPatientSuccess,
+    handleTreatmentFormCancel,
+    handleTreatmentFormSubmit,
     handleAttendanceCompletion,
     handleAttendanceReschedule,
     finalizeDay,

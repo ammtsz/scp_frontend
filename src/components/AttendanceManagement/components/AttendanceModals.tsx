@@ -1,9 +1,9 @@
 import React from "react";
 import ConfirmModal from "@/components/ConfirmModal/index";
 import PatientEditModal from "@/components/PatientForm/PatientEditModal";
-import SpiritualConsultationForm from "./TreatmentForms/SpiritualConsultationForm";
+import TreatmentFormModal from "./TreatmentFormModal";
 import EndOfDayModal from "./EndOfDay/EndOfDayModal";
-import type { SpiritualConsultationData } from "./TreatmentForms/SpiritualConsultationForm";
+import type { SpiritualTreatmentData, TreatmentStatus } from "./TreatmentForms";
 import type { IAttendanceStatusDetail, IPatient } from "@/types/globals";
 import { IAttendanceStatusDetailWithType } from "../utils/attendanceDataUtils";
 
@@ -27,13 +27,22 @@ interface AttendanceModalsProps {
   onCloseNewPatientCheckIn: () => void;
   onNewPatientSuccess: (updatedPatient: IPatient) => void;
 
-  // Treatment workflow modals
-  spiritualConsultationOpen: boolean;
-  selectedAttendanceForConsultation: { id: number; patientName: string } | null;
-  onSpiritualConsultationSubmit: (
-    data: SpiritualConsultationData
-  ) => Promise<void>;
-  onSpiritualConsultationCancel: () => void;
+  // Treatment workflow modals - Removed unused spiritual consultation
+
+  // Treatment form modal (when completing attendance)
+  treatmentFormOpen: boolean;
+  selectedAttendanceForTreatment: {
+    id: number;
+    patientId: number;
+    patientName: string;
+    attendanceType: string;
+    currentTreatmentStatus: TreatmentStatus;
+    currentStartDate?: Date;
+    currentReturnWeeks?: number;
+    isFirstAttendance: boolean;
+  } | null;
+  onTreatmentFormSubmit: (data: SpiritualTreatmentData) => Promise<void>;
+  onTreatmentFormCancel: () => void;
 
   // End of day modal
   endOfDayModalOpen: boolean;
@@ -74,10 +83,10 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
   onCloseNewPatientCheckIn,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onNewPatientSuccess,
-  spiritualConsultationOpen,
-  selectedAttendanceForConsultation,
-  onSpiritualConsultationSubmit,
-  onSpiritualConsultationCancel,
+  treatmentFormOpen,
+  selectedAttendanceForTreatment,
+  onTreatmentFormSubmit,
+  onTreatmentFormCancel,
   endOfDayModalOpen,
   onEndOfDayClose,
   onHandleCompletion,
@@ -129,14 +138,18 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
       )}
       */}
 
-      {/* Treatment Workflow Modals */}
-      {spiritualConsultationOpen && selectedAttendanceForConsultation && (
-        <SpiritualConsultationForm
-          attendanceId={selectedAttendanceForConsultation.id}
-          patientName={selectedAttendanceForConsultation.patientName}
-          onSubmit={onSpiritualConsultationSubmit}
-          onCancel={onSpiritualConsultationCancel}
-          isLoading={false}
+      {/* Treatment Form Modal (when completing attendance) */}
+      {treatmentFormOpen && selectedAttendanceForTreatment && (
+        <TreatmentFormModal
+          isOpen={treatmentFormOpen}
+          onClose={onTreatmentFormCancel}
+          attendanceId={selectedAttendanceForTreatment.id}
+          patientId={selectedAttendanceForTreatment.patientId}
+          patientName={selectedAttendanceForTreatment.patientName}
+          currentTreatmentStatus={
+            selectedAttendanceForTreatment.currentTreatmentStatus
+          }
+          onSubmit={onTreatmentFormSubmit}
         />
       )}
 

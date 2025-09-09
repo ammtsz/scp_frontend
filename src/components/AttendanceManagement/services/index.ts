@@ -22,7 +22,6 @@ export type {
 } from './patientService';
 
 export type {
-  SpiritualConsultationData,
   AbsenceJustification,
   EndOfDayCompletionData
 } from './treatmentService';

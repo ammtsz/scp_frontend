@@ -16,12 +16,9 @@ import {
   markAttendanceAsMissed,
   completeAttendance,
 } from "@/api/attendances";
-import { createTreatmentRecord } from "@/api/treatment-records";
 import { IAttendanceByDate, IAttendanceStatusDetail } from "@/types/globals";
 import { transformAttendanceWithPatientByDate } from "@/utils/apiTransformers";
 import { AttendanceStatus } from "@/api/types";
-import type { SpiritualConsultationData } from "@/components/AttendanceManagement/components/TreatmentForms/SpiritualConsultationForm";
-import type { CreateTreatmentRecordRequest } from "@/api/types";
 
 // Interfaces for the new end-of-day workflow
 interface AbsenceJustification {
@@ -69,11 +66,6 @@ interface AttendancesContextProps {
   bulkUpdateStatus: (ids: number[], status: string) => Promise<boolean>;
   initializeSelectedDate: () => Promise<void>;
   refreshCurrentDate: () => Promise<void>;
-  // Treatment workflow functions
-  createSpiritualConsultationRecord: (
-    attendanceId: number,
-    data: SpiritualConsultationData
-  ) => Promise<boolean>;
   // New end-of-day workflow functions
   checkEndOfDayStatus: () => EndOfDayResult;
   finalizeEndOfDay: (data?: EndOfDayData) => Promise<EndOfDayResult>;
@@ -186,39 +178,7 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Treatment workflow functions
-  const createSpiritualConsultationRecord = useCallback(
-    async (
-      attendanceId: number,
-      data: SpiritualConsultationData
-    ): Promise<boolean> => {
-      try {
-        const treatmentData: CreateTreatmentRecordRequest = {
-          attendance_id: attendanceId,
-          food: data.food,
-          water: data.water,
-          ointments: data.ointments,
-          spiritual_treatment: data.spiritualTreatment,
-          light_bath: data.recommendations.lightBath ? true : false,
-          light_bath_color: data.recommendations.lightBath?.color,
-          rod: data.recommendations.rod ? true : false,
-          return_in_weeks: data.recommendations.returnWeeks,
-          notes: data.notes,
-        };
-
-        const result = await createTreatmentRecord(treatmentData);
-        if (result.success) {
-          await refreshCurrentDate();
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error("Error creating spiritual consultation record:", error);
-        return false;
-      }
-    },
-    [refreshCurrentDate]
-  );
+  // Treatment workflow functions - removed createSpiritualConsultationRecord
 
   // New end-of-day workflow implementation
   const checkEndOfDayStatus = useCallback((): EndOfDayResult => {
@@ -553,7 +513,6 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
         initializeSelectedDate,
         refreshCurrentDate,
         bulkUpdateStatus,
-        createSpiritualConsultationRecord,
         checkEndOfDayStatus,
         finalizeEndOfDay,
         handleIncompleteAttendances,

@@ -69,11 +69,10 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
   });
 
   const handleTypeCheckbox = (typeValue: string, checked: boolean) => {
-    setSelectedTypes((prev: string[]) =>
-      checked
-        ? [...prev, typeValue]
-        : prev.filter((t: string) => t !== typeValue)
-    );
+    const newTypes = checked
+      ? [...selectedTypes, typeValue]
+      : selectedTypes.filter((t: string) => t !== typeValue);
+    setSelectedTypes(newTypes);
   };
 
   const handlePatientSelect = (patientName: string) => {

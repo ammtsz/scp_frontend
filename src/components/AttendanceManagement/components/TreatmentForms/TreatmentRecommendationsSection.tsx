@@ -1,17 +1,11 @@
 import React, { useCallback } from "react";
-import LocationSelector from "./LocationSelector";
-import type { TreatmentRecommendation } from "./SpiritualConsultationForm";
-
-// Light bath colors available for treatment
-const LIGHT_BATH_COLORS = [
-  "azul",
-  "verde",
-  "amarelo",
-  "vermelho",
-  "violeta",
-  "branco",
-  "laranja",
-] as const;
+import BodyLocationSelector from "./BodyLocationSelector";
+import LocationTreatmentCard from "./LocationTreatmentCard";
+import type {
+  TreatmentRecommendation,
+  LightBathLocationTreatment,
+  RodLocationTreatment,
+} from "./types";
 
 interface TreatmentRecommendationsSectionProps {
   recommendations: TreatmentRecommendation;
@@ -21,26 +15,9 @@ interface TreatmentRecommendationsSectionProps {
 const TreatmentRecommendationsSection: React.FC<
   TreatmentRecommendationsSectionProps
 > = ({ recommendations, onChange }) => {
-  const handleReturnWeeksChange = useCallback(
-    (weeks: number) => {
-      onChange({
-        ...recommendations,
-        returnWeeks: Math.max(1, Math.min(52, weeks)),
-      });
-    },
-    [recommendations, onChange]
-  );
+  // Removed handleReturnWeeksChange - using default 1 week
 
-  const handleDischargeChange = useCallback(
-    (discharged: boolean) => {
-      onChange({
-        ...recommendations,
-        spiritualMedicalDischarge: discharged,
-      });
-    },
-    [recommendations, onChange]
-  );
-
+  // Light Bath Handlers
   const handleLightBathToggle = useCallback(
     (enabled: boolean) => {
       if (enabled) {
@@ -48,10 +25,7 @@ const TreatmentRecommendationsSection: React.FC<
           ...recommendations,
           lightBath: {
             startDate: new Date(),
-            bodyLocation: [],
-            color: "azul",
-            duration: 1,
-            quantity: 1,
+            treatments: [],
           },
         });
       } else {
@@ -63,6 +37,71 @@ const TreatmentRecommendationsSection: React.FC<
     [recommendations, onChange]
   );
 
+  const handleLightBathLocationAdd = useCallback(
+    (location: string) => {
+      if (!recommendations.lightBath) return;
+
+      // Default start date: 1 week from today
+      const defaultStartDate = new Date();
+      defaultStartDate.setDate(defaultStartDate.getDate() + 7);
+
+      const newTreatment: LightBathLocationTreatment = {
+        location,
+        color: "",
+        duration: 1,
+        quantity: 1,
+        startDate: defaultStartDate,
+      };
+
+      onChange({
+        ...recommendations,
+        lightBath: {
+          ...recommendations.lightBath,
+          treatments: [...recommendations.lightBath.treatments, newTreatment],
+        },
+      });
+    },
+    [recommendations, onChange]
+  );
+
+  const handleLightBathTreatmentChange = useCallback(
+    (index: number, treatment: LightBathLocationTreatment) => {
+      if (!recommendations.lightBath) return;
+
+      const updatedTreatments = [...recommendations.lightBath.treatments];
+      updatedTreatments[index] = treatment;
+
+      onChange({
+        ...recommendations,
+        lightBath: {
+          ...recommendations.lightBath,
+          treatments: updatedTreatments,
+        },
+      });
+    },
+    [recommendations, onChange]
+  );
+
+  const handleLightBathTreatmentRemove = useCallback(
+    (index: number) => {
+      if (!recommendations.lightBath) return;
+
+      const updatedTreatments = recommendations.lightBath.treatments.filter(
+        (_, i) => i !== index
+      );
+
+      onChange({
+        ...recommendations,
+        lightBath: {
+          ...recommendations.lightBath,
+          treatments: updatedTreatments,
+        },
+      });
+    },
+    [recommendations, onChange]
+  );
+
+  // Rod Handlers
   const handleRodToggle = useCallback(
     (enabled: boolean) => {
       if (enabled) {
@@ -70,8 +109,7 @@ const TreatmentRecommendationsSection: React.FC<
           ...recommendations,
           rod: {
             startDate: new Date(),
-            bodyLocation: [],
-            quantity: 1,
+            treatments: [],
           },
         });
       } else {
@@ -83,36 +121,62 @@ const TreatmentRecommendationsSection: React.FC<
     [recommendations, onChange]
   );
 
-  const handleLightBathChange = useCallback(
-    (
-      field: keyof NonNullable<TreatmentRecommendation["lightBath"]>,
-      value: unknown
-    ) => {
-      if (!recommendations.lightBath) return;
+  const handleRodLocationAdd = useCallback(
+    (location: string) => {
+      if (!recommendations.rod) return;
+
+      // Default start date: 1 week from today
+      const defaultStartDate = new Date();
+      defaultStartDate.setDate(defaultStartDate.getDate() + 7);
+
+      const newTreatment: RodLocationTreatment = {
+        location,
+        quantity: 1,
+        startDate: defaultStartDate,
+      };
 
       onChange({
         ...recommendations,
-        lightBath: {
-          ...recommendations.lightBath,
-          [field]: value,
+        rod: {
+          ...recommendations.rod,
+          treatments: [...recommendations.rod.treatments, newTreatment],
         },
       });
     },
     [recommendations, onChange]
   );
 
-  const handleRodChange = useCallback(
-    (
-      field: keyof NonNullable<TreatmentRecommendation["rod"]>,
-      value: unknown
-    ) => {
+  const handleRodTreatmentChange = useCallback(
+    (index: number, treatment: RodLocationTreatment) => {
       if (!recommendations.rod) return;
+
+      const updatedTreatments = [...recommendations.rod.treatments];
+      updatedTreatments[index] = treatment;
 
       onChange({
         ...recommendations,
         rod: {
           ...recommendations.rod,
-          [field]: value,
+          treatments: updatedTreatments,
+        },
+      });
+    },
+    [recommendations, onChange]
+  );
+
+  const handleRodTreatmentRemove = useCallback(
+    (index: number) => {
+      if (!recommendations.rod) return;
+
+      const updatedTreatments = recommendations.rod.treatments.filter(
+        (_, i) => i !== index
+      );
+
+      onChange({
+        ...recommendations,
+        rod: {
+          ...recommendations.rod,
+          treatments: updatedTreatments,
         },
       });
     },
@@ -125,234 +189,87 @@ const TreatmentRecommendationsSection: React.FC<
         Recomendações de Tratamento
       </h3>
 
-      {/* Return Schedule */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label
-            htmlFor="returnWeeks"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Retorno em (semanas)
-          </label>
-          <input
-            type="number"
-            id="returnWeeks"
-            min="1"
-            max="52"
-            value={recommendations.returnWeeks}
-            onChange={(e) =>
-              handleReturnWeeksChange(parseInt(e.target.value) || 2)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <div className="flex items-center">
+      {/* Light Bath Section */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
           <input
             type="checkbox"
-            id="spiritualDischarge"
-            checked={recommendations.spiritualMedicalDischarge}
-            onChange={(e) => handleDischargeChange(e.target.checked)}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <label
-            htmlFor="spiritualDischarge"
-            className="ml-2 text-sm text-gray-700"
-          >
-            Alta espiritual/médica
-          </label>
-        </div>
-      </div>
-
-      {/* Light Bath Treatment */}
-      <div className="border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center mb-4">
-          <input
-            type="checkbox"
-            id="lightBathEnabled"
+            id="lightBath"
             checked={!!recommendations.lightBath}
             onChange={(e) => handleLightBathToggle(e.target.checked)}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
           <label
-            htmlFor="lightBathEnabled"
-            className="ml-2 text-sm font-medium text-gray-700"
+            htmlFor="lightBath"
+            className="text-sm font-medium text-gray-700"
           >
             Banho de Luz
           </label>
         </div>
 
         {recommendations.lightBath && (
-          <div className="space-y-4 ml-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label
-                  htmlFor="lightBathStartDate"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Data de Início
-                </label>
-                <input
-                  type="date"
-                  id="lightBathStartDate"
-                  value={
-                    recommendations.lightBath.startDate
-                      .toISOString()
-                      .split("T")[0]
-                  }
-                  onChange={(e) =>
-                    handleLightBathChange("startDate", new Date(e.target.value))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Cor
-                </label>
-                <select
-                  value={recommendations.lightBath.color}
-                  onChange={(e) =>
-                    handleLightBathChange("color", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {LIGHT_BATH_COLORS.map((color) => (
-                    <option key={color} value={color}>
-                      {color.charAt(0).toUpperCase() + color.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Duração (7min = 1)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={recommendations.lightBath.duration}
-                  onChange={(e) =>
-                    handleLightBathChange(
-                      "duration",
-                      parseInt(e.target.value) || 1
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Quantidade de Sessões
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="20"
-                value={recommendations.lightBath.quantity}
-                onChange={(e) =>
-                  handleLightBathChange(
-                    "quantity",
-                    parseInt(e.target.value) || 1
+          <div className="ml-6 space-y-4">
+            {/* Existing Light Bath Treatments */}
+            {recommendations.lightBath.treatments.map((treatment, index) => (
+              <LocationTreatmentCard
+                key={index}
+                location={treatment.location}
+                treatmentType="lightBath"
+                treatment={treatment}
+                onChange={(updatedTreatment) =>
+                  handleLightBathTreatmentChange(
+                    index,
+                    updatedTreatment as LightBathLocationTreatment
                   )
                 }
-                className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onRemove={() => handleLightBathTreatmentRemove(index)}
               />
-            </div>
+            ))}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Locais do Corpo
-              </label>
-              <LocationSelector
-                selectedLocations={recommendations.lightBath.bodyLocation}
-                customLocation=""
-                onLocationChange={(locations) =>
-                  handleLightBathChange("bodyLocation", locations)
-                }
-                onCustomLocationChange={() => {}} // Not used in this context
-              />
-            </div>
+            {/* Add New Light Bath Location */}
+            <BodyLocationSelector
+              onLocationSelect={handleLightBathLocationAdd}
+            />
           </div>
         )}
       </div>
 
-      {/* Rod Treatment */}
-      <div className="border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center mb-4">
+      {/* Rod Section */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
           <input
             type="checkbox"
-            id="rodEnabled"
+            id="rod"
             checked={!!recommendations.rod}
             onChange={(e) => handleRodToggle(e.target.checked)}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
-          <label
-            htmlFor="rodEnabled"
-            className="ml-2 text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="rod" className="text-sm font-medium text-gray-700">
             Tratamento com Bastão
           </label>
         </div>
 
         {recommendations.rod && (
-          <div className="space-y-4 ml-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="rodStartDate"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Data de Início
-                </label>
-                <input
-                  type="date"
-                  id="rodStartDate"
-                  value={
-                    recommendations.rod.startDate.toISOString().split("T")[0]
-                  }
-                  onChange={(e) =>
-                    handleRodChange("startDate", new Date(e.target.value))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantidade de Sessões
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={recommendations.rod.quantity}
-                  onChange={(e) =>
-                    handleRodChange("quantity", parseInt(e.target.value) || 1)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Locais do Corpo
-              </label>
-              <LocationSelector
-                selectedLocations={recommendations.rod.bodyLocation}
-                customLocation=""
-                onLocationChange={(locations) =>
-                  handleRodChange("bodyLocation", locations)
+          <div className="ml-6 space-y-4">
+            {/* Existing Rod Treatments */}
+            {recommendations.rod.treatments.map((treatment, index) => (
+              <LocationTreatmentCard
+                key={index}
+                location={treatment.location}
+                treatmentType="rod"
+                treatment={treatment}
+                onChange={(updatedTreatment) =>
+                  handleRodTreatmentChange(
+                    index,
+                    updatedTreatment as RodLocationTreatment
+                  )
                 }
-                onCustomLocationChange={() => {}} // Not used in this context
+                onRemove={() => handleRodTreatmentRemove(index)}
               />
-            </div>
+            ))}
+
+            {/* Add New Rod Location */}
+            <BodyLocationSelector onLocationSelect={handleRodLocationAdd} />
           </div>
         )}
       </div>

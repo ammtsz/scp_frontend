@@ -80,6 +80,8 @@ const AttendanceManagement: React.FC<{
     collapsed,
     editPatientModalOpen,
     patientToEdit,
+    treatmentFormOpen,
+    selectedAttendanceForTreatment,
     isDayFinalized,
 
     // Functions
@@ -95,6 +97,8 @@ const AttendanceManagement: React.FC<{
     refreshCurrentDate,
     handleEditPatientCancel,
     handleEditPatientSuccess,
+    handleTreatmentFormCancel,
+    handleTreatmentFormSubmit,
     handleAttendanceCompletion,
     handleAttendanceReschedule,
     finalizeDay,
@@ -119,14 +123,10 @@ const AttendanceManagement: React.FC<{
 
   // Treatment workflow hook
   const {
-    spiritualConsultationOpen,
     endOfDayModalOpen,
-    selectedAttendanceForConsultation,
-    handleSpiritualConsultationSubmit,
     handleEndOfDaySubmit,
     openEndOfDayModal,
     closeEndOfDayModal,
-    closeSpiritualConsultation,
   } = useTreatmentWorkflow(refreshCurrentDate, finalizeDay);
 
   // Show loading state
@@ -166,7 +166,7 @@ const AttendanceManagement: React.FC<{
         onUnFinalizeClick={unFinalizeDay}
         isDayFinalized={isDayFinalized}
       />
-
+      {/* TODO: replace all *Open with an array of isOpen and all modal names inside that array will be opened. Then try to do the same for all on* props in order to reduce the amount of props */}
       <AttendanceModals
         confirmOpen={confirmOpen}
         multiSectionModalOpen={multiSectionModalOpen}
@@ -181,10 +181,10 @@ const AttendanceManagement: React.FC<{
         patientToCheckIn={patientToCheckIn}
         onCloseNewPatientCheckIn={closeNewPatientCheckIn}
         onNewPatientSuccess={handleNewPatientSuccess}
-        spiritualConsultationOpen={spiritualConsultationOpen}
-        selectedAttendanceForConsultation={selectedAttendanceForConsultation}
-        onSpiritualConsultationSubmit={handleSpiritualConsultationSubmit}
-        onSpiritualConsultationCancel={closeSpiritualConsultation}
+        treatmentFormOpen={treatmentFormOpen}
+        selectedAttendanceForTreatment={selectedAttendanceForTreatment}
+        onTreatmentFormSubmit={handleTreatmentFormSubmit}
+        onTreatmentFormCancel={handleTreatmentFormCancel}
         endOfDayModalOpen={endOfDayModalOpen}
         onEndOfDayClose={closeEndOfDayModal}
         onHandleCompletion={handleAttendanceCompletion}

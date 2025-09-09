@@ -1,33 +1,17 @@
 /**
  * Treatment Service - Centralized business logic for treatment operations
  * 
- * This service handles treatment workflow operations including spiritual consultations,
- * treatment records, and end-of-day workflows.
+ * This service handles treatment workflow operations and end-of-day workflows.
  */
 
-import { createTreatmentRecord } from "@/api/treatment-records";
 import { 
   markAttendanceAsMissed, 
   updateAttendance 
 } from "@/api/attendances";
 import { IAttendanceStatusDetail, IAttendanceByDate } from "@/types/globals";
-import { CreateTreatmentRecordRequest } from "@/api/types";
 import { AttendanceService } from "./attendanceService";
 
-export interface SpiritualConsultationData {
-  food?: string;
-  water?: string;
-  ointments?: string;
-  spiritualTreatment?: boolean;
-  notes?: string;
-  recommendations: {
-    lightBath?: {
-      color?: string;
-    };
-    rod?: boolean;
-    returnWeeks?: number;
-  };
-}
+// Removed SpiritualConsultationData interface - no longer needed
 
 export interface AbsenceJustification {
   attendanceId: number;
@@ -47,43 +31,7 @@ export interface EndOfDayCompletionData {
  * Treatment Service Class
  */
 export class TreatmentService {
-  /**
-   * Create a spiritual consultation treatment record
-   */
-  static async createSpiritualConsultation(
-    attendanceId: number,
-    data: SpiritualConsultationData
-  ) {
-    try {
-      const treatmentData: CreateTreatmentRecordRequest = {
-        attendance_id: attendanceId,
-        food: data.food,
-        water: data.water,
-        ointments: data.ointments,
-        spiritual_treatment: data.spiritualTreatment,
-        light_bath: data.recommendations.lightBath ? true : false,
-        light_bath_color: data.recommendations.lightBath?.color,
-        rod: data.recommendations.rod ? true : false,
-        return_in_weeks: data.recommendations.returnWeeks,
-        notes: data.notes,
-      };
-
-      const result = await createTreatmentRecord(treatmentData);
-      
-      return {
-        success: result.success,
-        data: result.value,
-        error: result.error
-      };
-    } catch (error) {
-      console.error("Error creating spiritual consultation record:", error);
-      return {
-        success: false,
-        data: null,
-        error: "Failed to create spiritual consultation record"
-      };
-    }
-  }
+  // Removed createSpiritualConsultation method - no longer needed
 
   /**
    * Handle absence justifications for scheduled patients
