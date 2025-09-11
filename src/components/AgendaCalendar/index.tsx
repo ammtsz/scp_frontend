@@ -24,7 +24,7 @@ const AgendaCalendar: React.FC = () => {
     setShowNewAttendance,
     handleRemovePatient,
     handleConfirmRemove,
-    handleNewAttendance,
+    handleFormSuccess,
     loading,
   } = useAgendaCalendar();
 
@@ -169,8 +169,8 @@ const AgendaCalendar: React.FC = () => {
       />
       {showNewAttendance && (
         <NewAttendanceFormModal
-          onRegisterNewAttendance={handleNewAttendance}
           onClose={() => setShowNewAttendance(false)}
+          onSuccess={handleFormSuccess}
           title="Novo Agendamento"
           subtitle="Agendar atendimento para paciente"
           showDateField={true}

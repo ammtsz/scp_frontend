@@ -2,6 +2,8 @@
 export * from './patients';
 export * from './attendances';
 export * from './treatment-records';
+export * from './treatment-sessions';
+export * from './treatment-session-records';
 export * from './schedule-settings';
 
 // Export types

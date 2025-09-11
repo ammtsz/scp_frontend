@@ -32,6 +32,7 @@ const AttendanceManagement: React.FC<{
   // New patient check-in hook
   const {
     patientToCheckIn,
+    attendanceId,
     openNewPatientCheckIn,
     closeNewPatientCheckIn,
     handleNewPatientSuccess,
@@ -41,7 +42,10 @@ const AttendanceManagement: React.FC<{
   const { attendancesByDate } = useAttendances();
 
   // Handle new patient detection from drag and drop
-  const handleNewPatientDetected = (patient: IPatients) => {
+  const handleNewPatientDetected = (
+    patient: IPatients,
+    attendanceId?: number
+  ) => {
     // Convert IPatients to IPatient for the check-in form
     const patientForCheckIn = {
       ...patient,
@@ -63,7 +67,14 @@ const AttendanceManagement: React.FC<{
       },
       previousAttendances: [], // Default empty array
     };
-    openNewPatientCheckIn(patientForCheckIn);
+
+    console.log(
+      "New patient detected for check-in:",
+      patientForCheckIn,
+      "with attendanceId:",
+      attendanceId
+    );
+    openNewPatientCheckIn(patientForCheckIn, attendanceId);
   };
 
   const {
@@ -179,6 +190,7 @@ const AttendanceManagement: React.FC<{
         onEditPatientCancel={handleEditPatientCancel}
         onEditPatientSuccess={handleEditPatientSuccess}
         patientToCheckIn={patientToCheckIn}
+        attendanceId={attendanceId}
         onCloseNewPatientCheckIn={closeNewPatientCheckIn}
         onNewPatientSuccess={handleNewPatientSuccess}
         treatmentFormOpen={treatmentFormOpen}

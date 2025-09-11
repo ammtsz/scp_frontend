@@ -1,13 +1,9 @@
 import { useState, useMemo } from "react";
-import { IAttendanceType, IPriority } from "@/types/globals";
-import { usePatients } from "@/contexts/PatientsContext";
+import { IAttendanceType } from "@/types/globals";
 import { useAgenda } from "@/contexts/AgendaContext";
-import { getNextAttendanceDate } from "@/api/attendances";
-import { AttendanceType } from "@/api/types";
 
 export function useAgendaCalendar() {
-  const { agenda, loading, error, refreshAgenda, removePatientFromAgenda, addPatientToAgenda } = useAgenda();
-  const { patients } = usePatients();
+  const { agenda, loading, error, refreshAgenda, removePatientFromAgenda } = useAgenda();
   const [selectedDate, setSelectedDate] = useState("");
   const [showNext5Dates, setShowNext5Dates] = useState(false); // Default to showing next 5 dates
   const [confirmRemove, setConfirmRemove] = useState<{
@@ -112,57 +108,11 @@ export function useAgendaCalendar() {
     }
   }
 
-  // Get next available date
-  const getNextAvailableDate = async (): Promise<string> => {
-    try {
-      const result = await getNextAttendanceDate();
-      if (result.success && result.value?.next_date) {
-        return result.value.next_date;
-      }
-    } catch (error) {
-      console.warn('Error fetching next available date:', error);
-    }
-    
-    // Fallback to today if API call fails
-    return new Date().toISOString().split('T')[0];
+  // Simplified: No more complex callback pattern
+  // Form handles everything, agenda just manages modal UI state
+  const handleFormSuccess = () => {
+    setShowNewAttendance(false);
   };
-
-  async function handleNewAttendance(
-    patientName: string,
-    types: string[],
-    isNew: boolean,
-    priority: IPriority,
-    date?: string
-  ) {
-    try {
-      const patient = patients.find((p) => p.name === patientName);
-      if (!patient) {
-        console.warn('Patient not found for new attendance:', patientName);
-        return;
-      }
-
-      const scheduleDate = date || await getNextAvailableDate();
-      
-      // Create attendances for each selected type
-      for (const type of types) {
-        const attendanceType = type === 'spiritual' ? AttendanceType.SPIRITUAL : AttendanceType.LIGHT_BATH;
-        
-        const attendanceData = {
-          patient_id: Number(patient.id),
-          type: attendanceType,
-          scheduled_date: scheduleDate,
-          scheduled_time: '21:00',
-          notes: `Agendamento via agenda - ${isNew ? 'Novo paciente' : 'Paciente existente'}`,
-        };
-
-        await addPatientToAgenda(attendanceData);
-      }
-      
-      setShowNewAttendance(false);
-    } catch (error) {
-      console.error('Error creating new attendance:', error);
-    }
-  }
 
   return {
     selectedDate,
@@ -180,7 +130,7 @@ export function useAgendaCalendar() {
     filteredAgenda,
     handleRemovePatient,
     handleConfirmRemove,
-    handleNewAttendance,
+    handleFormSuccess,
     loading,
     error,
     refreshAgenda,

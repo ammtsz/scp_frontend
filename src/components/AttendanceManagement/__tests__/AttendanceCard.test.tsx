@@ -43,6 +43,26 @@ jest.mock("../components/cards/AttendanceTimes", () => {
   };
 });
 
+// Mock the TreatmentSessionProgress component
+jest.mock("../components/TreatmentSessionProgress", () => {
+  return function MockTreatmentSessionProgress({
+    patientId,
+    attendanceType,
+    showDetails,
+  }: {
+    patientId: number;
+    attendanceType: string;
+    showDetails: boolean;
+  }) {
+    return (
+      <div data-testid="treatment-session-progress">
+        Progress for patient {patientId} - Type: {attendanceType} - Details:{" "}
+        {showDetails.toString()}
+      </div>
+    );
+  };
+});
+
 describe("AttendanceCard Component", () => {
   const mockPatient: IAttendanceStatusDetail = {
     name: "João Silva",
@@ -514,6 +534,103 @@ describe("AttendanceCard Component", () => {
       fireEvent.click(deleteButton, mockEvent);
 
       expect(mockOnDelete).toHaveBeenCalled();
+    });
+  });
+
+  describe("Treatment Session Progress", () => {
+    it("should render treatment session progress for lightBath type", () => {
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          type="lightBath"
+          patient={{
+            ...mockPatient,
+            patientId: 456,
+          }}
+        />
+      );
+
+      expect(
+        screen.getByTestId("treatment-session-progress")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Progress for patient 456 - Type: light_bath - Details: false"
+        )
+      ).toBeInTheDocument();
+    });
+
+    it("should render treatment session progress for rod type", () => {
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          type="rod"
+          patient={{
+            ...mockPatient,
+            patientId: 789,
+          }}
+        />
+      );
+
+      expect(
+        screen.getByTestId("treatment-session-progress")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Progress for patient 789 - Type: rod - Details: false"
+        )
+      ).toBeInTheDocument();
+    });
+
+    it("should not render treatment session progress for spiritual type", () => {
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          type="spiritual"
+          patient={{
+            ...mockPatient,
+            patientId: 456,
+          }}
+        />
+      );
+
+      expect(
+        screen.queryByTestId("treatment-session-progress")
+      ).not.toBeInTheDocument();
+    });
+
+    it("should not render treatment session progress when patientId is undefined", () => {
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          type="lightBath"
+          patient={{
+            ...mockPatient,
+            patientId: undefined,
+          }}
+        />
+      );
+
+      expect(
+        screen.queryByTestId("treatment-session-progress")
+      ).not.toBeInTheDocument();
+    });
+
+    it("should render treatment session progress with showDetails=false", () => {
+      render(
+        <AttendanceCard
+          {...defaultProps}
+          type="lightBath"
+          patient={{
+            ...mockPatient,
+            patientId: 123,
+          }}
+        />
+      );
+
+      const progressElement = screen.getByTestId("treatment-session-progress");
+      expect(progressElement).toBeInTheDocument();
+      expect(progressElement).toHaveTextContent("Details: false");
     });
   });
 });

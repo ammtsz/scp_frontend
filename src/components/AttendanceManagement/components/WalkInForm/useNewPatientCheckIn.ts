@@ -4,7 +4,8 @@ import { IPatient } from "@/types/globals";
 interface UseNewPatientCheckInReturn {
   isNewPatientModalOpen: boolean;
   patientToCheckIn: IPatient | null;
-  openNewPatientCheckIn: (patient: IPatient) => void;
+  attendanceId: number | undefined;
+  openNewPatientCheckIn: (patient: IPatient, attendanceId?: number) => void;
   closeNewPatientCheckIn: () => void;
   handleNewPatientSuccess: (updatedPatient: IPatient) => void;
 }
@@ -12,15 +13,18 @@ interface UseNewPatientCheckInReturn {
 export const useNewPatientCheckIn = (): UseNewPatientCheckInReturn => {
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [patientToCheckIn, setPatientToCheckIn] = useState<IPatient | null>(null);
+  const [attendanceId, setAttendanceId] = useState<number | undefined>(undefined);
 
-  const openNewPatientCheckIn = useCallback((patient: IPatient) => {
+  const openNewPatientCheckIn = useCallback((patient: IPatient, attendanceId?: number) => {
     setPatientToCheckIn(patient);
+    setAttendanceId(attendanceId);
     setIsNewPatientModalOpen(true);
   }, []);
 
   const closeNewPatientCheckIn = useCallback(() => {
     setIsNewPatientModalOpen(false);
     setPatientToCheckIn(null);
+    setAttendanceId(undefined);
   }, []);
 
   const handleNewPatientSuccess = useCallback((updatedPatient: IPatient) => {
@@ -33,6 +37,7 @@ export const useNewPatientCheckIn = (): UseNewPatientCheckInReturn => {
   return {
     isNewPatientModalOpen,
     patientToCheckIn,
+    attendanceId,
     openNewPatientCheckIn,
     closeNewPatientCheckIn,
     handleNewPatientSuccess,

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAttendances } from "@/contexts/AttendancesContext";
 import { usePatients } from "@/contexts/PatientsContext";
+import { createTreatmentRecord } from "@/api/treatment-records";
+import type { CreateTreatmentRecordRequest } from "@/api/types";
 import {
   IAttendanceProgression,
   IAttendanceType,
@@ -24,7 +26,7 @@ interface ExternalCheckIn {
 interface UseAttendanceListProps {
   unscheduledCheckIn?: ExternalCheckIn | null;
   onCheckInProcessed?: () => void;
-  onNewPatientDetected?: (patient: IPatients) => void;
+  onNewPatientDetected?: (patient: IPatients, attendanceId?: number) => void;
 }
 
 export const useAttendanceManagement = ({
@@ -250,7 +252,7 @@ export const useAttendanceManagement = ({
       const patientData = patients.find(p => p.id === patient.patientId?.toString());
       if (patientData?.status === "N") {
         // This is a new patient - trigger new patient check-in modal
-        onNewPatientDetected?.(patientData);
+        onNewPatientDetected?.(patientData, patient.attendanceId);
         setDragged(null);
         return;
       }
@@ -461,18 +463,46 @@ export const useAttendanceManagement = ({
     setSelectedAttendanceForTreatment(null);
   };
 
-  const handleTreatmentFormSubmit = async (data: SpiritualTreatmentData) => {
-    // TODO: Implement treatment form submission logic
-    // This will handle:
-    // 1. Saving treatment data to backend
-    // 2. Scheduling follow-up appointments if needed
-    // 3. Updating patient treatment status
-    console.log("Treatment form submitted:", data);
-    
-    setTreatmentFormOpen(false);
-    setSelectedAttendanceForTreatment(null);
-    // Refresh current date to show updated data
-    refreshCurrentDate();
+  const handleTreatmentFormSubmit = async (data: SpiritualTreatmentData): Promise<{ treatmentRecordId: number }> => {
+    if (!selectedAttendanceForTreatment) {
+      throw new Error("No attendance selected for treatment");
+    }
+
+    try {
+      // Create the treatment record request
+      const treatmentRequest: CreateTreatmentRecordRequest = {
+        attendance_id: selectedAttendanceForTreatment.id,
+        food: data.food,
+        water: data.water,
+        ointments: data.ointments,
+        spiritual_treatment: true, // This is always true for spiritual consultations
+        return_in_weeks: data.returnWeeks,
+        notes: data.notes,
+        // Legacy lightbath/rod flags for backward compatibility
+        light_bath: data.recommendations.lightBath ? true : false,
+        light_bath_color: data.recommendations.lightBath?.treatments?.[0]?.color,
+        rod: data.recommendations.rod ? true : false,
+      };
+
+      // Create the treatment record
+      const response = await createTreatmentRecord(treatmentRequest);
+      
+      if (!response.success || !response.value) {
+        throw new Error(response.error || "Failed to create treatment record");
+      }
+
+      console.log("Treatment record created successfully:", response.value);
+
+      // Close modal and refresh data
+      setTreatmentFormOpen(false);
+      setSelectedAttendanceForTreatment(null);
+      refreshCurrentDate();
+
+      return { treatmentRecordId: response.value.id };
+    } catch (error) {
+      console.error("Error creating treatment record:", error);
+      throw error;
+    }
   };
 
   const handleAttendanceCompletion = async (attendanceId: number) => {

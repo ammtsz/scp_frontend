@@ -6,8 +6,7 @@ import { IPriority } from "@/types/globals";
 import BaseModal from "@/components/common/BaseModal";
 import ErrorDisplay from "@/components/common/ErrorDisplay";
 
-// FIX: When adding a lightbath or rod, it adds an extra lightbath session for this patient
-// FIX: When adding a spiritual consultant, it adds twice
+// ✅ FIXED: Multiple attendance creation issue resolved by removing duplicate API calls in useAgendaCalendar
 // FIX: When try to schedule a new attendance for a patient that already has an appointment on a different day, it is showing the message saying that the patient already has an appointment for that day, even he/she doesn't.
 
 interface NewAttendanceFormModalProps {
@@ -19,6 +18,7 @@ interface NewAttendanceFormModalProps {
     date?: string
   ) => void;
   onClose?: () => void;
+  onSuccess?: () => void;
   title?: string;
   subtitle?: string;
   showDateField?: boolean;
@@ -28,6 +28,7 @@ interface NewAttendanceFormModalProps {
 const NewAttendanceFormModal: React.FC<NewAttendanceFormModalProps> = ({
   onRegisterNewAttendance,
   onClose,
+  onSuccess,
   title = "Novo Agendamento",
   subtitle = "Agendar atendimento para paciente",
   showDateField = true,
@@ -45,13 +46,13 @@ const NewAttendanceFormModal: React.FC<NewAttendanceFormModalProps> = ({
     try {
       setError(null);
 
+      // Call the external callback if provided (for backward compatibility)
       if (onRegisterNewAttendance) {
         onRegisterNewAttendance(patientName, types, isNew, priority, date);
       }
 
-      if (onClose) {
-        onClose();
-      }
+      // Note: Form success is now handled internally by useAttendanceForm
+      // Modal will be closed by the form's success handler
     } catch (error) {
       console.error("Error in form submission:", error);
       setError("Erro ao processar agendamento. Tente novamente.");
@@ -65,6 +66,7 @@ const NewAttendanceFormModal: React.FC<NewAttendanceFormModalProps> = ({
         onRegisterNewAttendance={handleSubmit}
         showDateField={showDateField}
         validationDate={validationDate}
+        onFormSuccess={onSuccess} // Pass the success handler for form completion
       />
     </>
   );

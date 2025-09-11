@@ -10,19 +10,20 @@ import ErrorDisplay from "@/components/common/ErrorDisplay";
 
 interface NewAttendanceFormProps {
   onRegisterNewAttendance?: (
-    patientName: string,
-    types: string[],
-    isNew: boolean,
+    name: string,
+    selectedTypes: string[],
+    isNewPatient: boolean,
     priority: IPriority,
-    date?: string
+    nextAvailableDate?: string
   ) => void;
   showDateField?: boolean;
   validationDate?: string;
+  onFormSuccess?: () => void;
 }
 
 const attendanceTypes = [
   { value: "spiritual", label: "Consulta Espiritual" },
-  { value: "lightbath", label: "Banho de Luz" },
+  { value: "lightBath", label: "Banho de Luz" },
   { value: "rod", label: "Bastão" },
 ];
 
@@ -30,6 +31,7 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
   onRegisterNewAttendance,
   showDateField = true,
   validationDate,
+  onFormSuccess,
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>(
     validationDate || formatDateForInput(new Date())
@@ -63,6 +65,7 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
     success,
   } = useAttendanceManagement({
     onRegisterNewAttendance,
+    onFormSuccess,
     autoCheckIn: false, // autoCheckIn = false for scheduling
     defaultNotes: "",
     validationDate,
@@ -90,6 +93,11 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
   const handleNewPatientToggle = (checked: boolean) => {
     setIsNewPatient(checked);
     setShowSuggestions(false);
+
+    // When new patient toggle is turned on, set spiritual consultation as default
+    if (checked && !selectedTypes.includes("spiritual")) {
+      setSelectedTypes([...selectedTypes, "spiritual"]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

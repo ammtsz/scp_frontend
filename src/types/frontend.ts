@@ -178,3 +178,62 @@ export interface PatientDetails extends Patient {
   } & Recommendations;
   previousAttendances: PreviousAttendance[];
 }
+
+// Treatment Session types (frontend camelCase version)
+export type TreatmentSessionStatus = 'active' | 'completed' | 'suspended' | 'cancelled';
+export type TreatmentSessionFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
+export interface TreatmentSession {
+  id: number;
+  patientId: number;
+  type: AttendanceType;
+  status: TreatmentSessionStatus;
+  totalSessionsRecommended: number;
+  sessionsCompleted: number;
+  startDate: Date;
+  endDate?: Date;
+  frequency: TreatmentSessionFrequency;
+  notes?: string;
+  completionDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Treatment Session Record types (frontend camelCase version)
+export type TreatmentSessionRecordStatus = 'scheduled' | 'completed' | 'missed' | 'rescheduled' | 'cancelled';
+
+export interface TreatmentSessionRecord {
+  id: number;
+  treatmentSessionId: number;
+  attendanceId?: number;
+  sessionNumber: number;
+  status: TreatmentSessionRecordStatus;
+  scheduledDate: Date;
+  scheduledTime: string; // HH:mm
+  completionDate?: Date;
+  missedDate?: Date;
+  notes?: string;
+  completionNotes?: string;
+  missedReason?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Treatment Analytics types
+export interface TreatmentAnalytics {
+  completionRate: number;
+  totalSessions: number;
+  completedSessions: number;
+  missedSessions: number;
+  patientId?: number;
+  periodStart?: Date;
+  periodEnd?: Date;
+}
+
+export interface MissedSessionsAnalytics {
+  totalMissed: number;
+  missedByReason: Record<string, number>;
+  patientId?: number;
+  periodStart?: Date;
+  periodEnd?: Date;
+}

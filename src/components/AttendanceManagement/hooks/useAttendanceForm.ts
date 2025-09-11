@@ -25,6 +25,7 @@ export interface UseAttendanceFormProps {
   autoCheckIn?: boolean;
   defaultNotes?: string;
   validationDate?: string;
+  onFormSuccess?: () => void; // New prop for handling success internally
 }
 
 export interface UseAttendanceFormReturn {
@@ -62,7 +63,8 @@ export const useAttendanceForm = ({
   onRegisterNewAttendance,
   autoCheckIn = true,
   defaultNotes = "",
-  validationDate
+  validationDate,
+  onFormSuccess
 }: UseAttendanceFormProps = {}): UseAttendanceFormReturn => {
   
   const { patients, refreshPatients } = usePatients();
@@ -120,7 +122,12 @@ export const useAttendanceForm = ({
       }
 
       // Check if patient is already scheduled for the specific selected types
-      if (isPatientAlreadyScheduled(name, selectedTypes, attendancesByDate)) {
+      // Only validate for the current date to avoid false positives when scheduling for future dates
+      const targetDate = selectedDate || new Date().toISOString().split('T')[0];
+      const currentContextDate = new Date().toISOString().split('T')[0]; // Today's date that context has loaded
+      
+      // Only perform validation if we're scheduling for today (the date currently loaded in context)
+      if (targetDate === currentContextDate && isPatientAlreadyScheduled(name, selectedTypes, attendancesByDate)) {
         const dateText = validationDate && validationDate !== new Date().toISOString().split('T')[0] 
           ? `para ${new Date(validationDate + 'T00:00:00').toLocaleDateString('pt-BR')}`
           : 'para hoje';
@@ -232,6 +239,11 @@ export const useAttendanceForm = ({
         // Reset form after successful submission
         resetForm();
         
+        // Call success callback (e.g., to close modal)
+        if (onFormSuccess) {
+          onFormSuccess();
+        }
+        
         return true;
       }
     } catch (error) {
@@ -255,6 +267,7 @@ export const useAttendanceForm = ({
     refreshPatients,
     refreshCurrentDate,
     onRegisterNewAttendance,
+    onFormSuccess,
     resetForm
   ]);
 

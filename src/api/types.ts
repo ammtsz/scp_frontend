@@ -200,3 +200,120 @@ export interface ApiResponse<T> {
   value?: T;
   error?: string;
 }
+
+// Treatment Session types
+export type TreatmentSessionStatus = 'active' | 'completed' | 'suspended' | 'cancelled';
+export type TreatmentSessionFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
+export interface TreatmentSessionResponseDto {
+  id: number;
+  patient_id: number;
+  type: AttendanceType;
+  status: TreatmentSessionStatus;
+  total_sessions_recommended: number;
+  sessions_completed: number;
+  start_date: string; // ISO date string
+  end_date?: string; // ISO date string
+  frequency: TreatmentSessionFrequency;
+  notes?: string;
+  completion_date?: string; // ISO datetime string
+  created_at: string; // ISO datetime string
+  updated_at: string; // ISO datetime string
+}
+
+export interface CreateTreatmentSessionRequest {
+  treatment_record_id: number;
+  attendance_id: number;
+  patient_id: number;
+  treatment_type: 'light_bath' | 'rod';
+  body_location: string;
+  start_date: string; // ISO date string
+  planned_sessions: number;
+  end_date?: string; // ISO date string
+  duration_minutes?: number; // Required for light_bath
+  color?: string; // Required for light_bath
+  notes?: string;
+}
+
+export interface UpdateTreatmentSessionRequest {
+  total_sessions_recommended?: number;
+  end_date?: string; // ISO date string
+  frequency?: TreatmentSessionFrequency;
+  notes?: string;
+}
+
+// Treatment Session Record types
+export type TreatmentSessionRecordStatus = 'scheduled' | 'completed' | 'missed' | 'rescheduled' | 'cancelled';
+
+export interface TreatmentSessionRecordResponseDto {
+  id: number;
+  treatment_session_id: number;
+  attendance_id?: number;
+  session_number: number;
+  status: TreatmentSessionRecordStatus;
+  scheduled_date: string; // ISO date string
+  scheduled_time: string; // HH:mm
+  completion_date?: string; // ISO datetime string
+  missed_date?: string; // ISO datetime string
+  notes?: string;
+  completion_notes?: string;
+  missed_reason?: string;
+  created_at: string; // ISO datetime string
+  updated_at: string; // ISO datetime string
+}
+
+export interface CreateTreatmentSessionRecordRequest {
+  treatment_session_id: number;
+  attendance_id?: number;
+  session_number: number;
+  scheduled_date: string; // ISO date string
+  scheduled_time: string; // HH:mm
+  notes?: string;
+}
+
+export interface UpdateTreatmentSessionRecordRequest {
+  scheduled_date?: string; // ISO date string
+  scheduled_time?: string; // HH:mm
+  notes?: string;
+}
+
+export interface CompleteTreatmentSessionRecordRequest {
+  completion_notes?: string;
+}
+
+export interface MarkMissedTreatmentSessionRecordRequest {
+  missed_reason?: string;
+}
+
+export interface RescheduleTreatmentSessionRecordRequest {
+  new_date: string; // ISO date string
+  new_time: string; // HH:mm
+  reschedule_reason?: string;
+}
+
+export interface CompleteTreatmentSessionRequest {
+  completion_notes?: string;
+}
+
+export interface SuspendTreatmentSessionRequest {
+  suspension_reason?: string;
+}
+
+// Analytics types
+export interface TreatmentAnalyticsData {
+  completion_rate: number;
+  total_sessions: number;
+  completed_sessions: number;
+  missed_sessions: number;
+  patient_id?: number;
+  period_start?: string;
+  period_end?: string;
+}
+
+export interface MissedSessionsAnalyticsData {
+  total_missed: number;
+  missed_by_reason: Record<string, number>;
+  patient_id?: number;
+  period_start?: string;
+  period_end?: string;
+}

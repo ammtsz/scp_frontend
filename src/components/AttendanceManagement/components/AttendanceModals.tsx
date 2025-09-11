@@ -3,6 +3,7 @@ import ConfirmModal from "@/components/ConfirmModal/index";
 import PatientEditModal from "@/components/PatientForm/PatientEditModal";
 import TreatmentFormModal from "./TreatmentFormModal";
 import EndOfDayModal from "./EndOfDay/EndOfDayModal";
+import NewPatientCheckInModal from "./NewPatientCheckInModal";
 import type { SpiritualTreatmentData, TreatmentStatus } from "./TreatmentForms";
 import type { IAttendanceStatusDetail, IPatient } from "@/types/globals";
 import { IAttendanceStatusDetailWithType } from "../utils/attendanceDataUtils";
@@ -24,6 +25,7 @@ interface AttendanceModalsProps {
 
   // New patient check-in
   patientToCheckIn: IPatient | null;
+  attendanceId?: number;
   onCloseNewPatientCheckIn: () => void;
   onNewPatientSuccess: (updatedPatient: IPatient) => void;
 
@@ -41,7 +43,9 @@ interface AttendanceModalsProps {
     currentReturnWeeks?: number;
     isFirstAttendance: boolean;
   } | null;
-  onTreatmentFormSubmit: (data: SpiritualTreatmentData) => Promise<void>;
+  onTreatmentFormSubmit: (
+    data: SpiritualTreatmentData
+  ) => Promise<{ treatmentRecordId: number }>;
   onTreatmentFormCancel: () => void;
 
   // End of day modal
@@ -77,11 +81,12 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
   onEditPatientCancel,
   onEditPatientSuccess,
   // TODO: These props are for the future NewPatientCheckInForm component
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   patientToCheckIn,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  attendanceId,
+
   onCloseNewPatientCheckIn,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   onNewPatientSuccess,
   treatmentFormOpen,
   selectedAttendanceForTreatment,
@@ -126,17 +131,16 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
         />
       )}
 
-      {/* TODO: New Patient Check-in - Need to recreate component for checking in existing patients */}
-      {/* 
+      {/* New Patient Check-in for drag-and-drop of new patients */}
       {patientToCheckIn && (
-        <PatientWalkInForm
+        <NewPatientCheckInModal
           patient={patientToCheckIn}
+          attendanceId={attendanceId}
           isOpen={true}
           onClose={onCloseNewPatientCheckIn}
           onSuccess={onNewPatientSuccess}
         />
       )}
-      */}
 
       {/* Treatment Form Modal (when completing attendance) */}
       {treatmentFormOpen && selectedAttendanceForTreatment && (

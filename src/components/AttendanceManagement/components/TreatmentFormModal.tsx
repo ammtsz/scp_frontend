@@ -10,7 +10,9 @@ interface TreatmentFormModalProps {
   patientId: number;
   patientName: string;
   currentTreatmentStatus: TreatmentStatus;
-  onSubmit: (data: SpiritualTreatmentData) => Promise<void>;
+  onSubmit: (
+    data: SpiritualTreatmentData
+  ) => Promise<{ treatmentRecordId: number }>;
   isLoading?: boolean;
 }
 

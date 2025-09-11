@@ -1,6 +1,15 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { useFormHandler } from "@/hooks/useFormHandler";
 import { getPatientById } from "@/api/patients";
+import { createTreatmentSession } from "@/api/treatment-sessions";
+import { createAttendance } from "@/api/attendances";
+import { createTreatmentSessionRecord } from "@/api/treatment-session-records";
+import { AttendanceType } from "@/api/types";
+import type {
+  CreateTreatmentSessionRequest,
+  CreateAttendanceRequest,
+  CreateTreatmentSessionRecordRequest,
+} from "@/api/types";
 import ErrorDisplay from "@/components/common/ErrorDisplay";
 import LoadingButton from "@/components/common/LoadingButton";
 import TreatmentRecommendationsSection from "./TreatmentRecommendationsSection";
@@ -25,15 +34,19 @@ export interface SpiritualTreatmentData {
   recommendations: TreatmentRecommendation;
   notes: string;
 }
+
 interface SpiritualTreatmentFormProps {
   attendanceId: number;
   patientId: number;
   patientName: string;
   currentTreatmentStatus: TreatmentStatus;
-  onSubmit: (data: SpiritualTreatmentData) => Promise<void>;
+  onSubmit: (
+    data: SpiritualTreatmentData
+  ) => Promise<{ treatmentRecordId: number }>; // Updated to return treatment record ID
   onCancel: () => void;
   isLoading?: boolean;
   initialData?: Partial<SpiritualTreatmentData>;
+  onTreatmentSessionsCreated?: (sessionIds: number[]) => void; // NEW: Callback when sessions are created
 }
 
 const SpiritualTreatmentForm: React.FC<SpiritualTreatmentFormProps> = ({
@@ -45,7 +58,205 @@ const SpiritualTreatmentForm: React.FC<SpiritualTreatmentFormProps> = ({
   onCancel,
   isLoading: externalLoading = false,
   initialData,
+  onTreatmentSessionsCreated,
 }) => {
+  // Helper function to create attendance appointments for treatment sessions
+  const createAttendanceAppointments = useCallback(
+    async (
+      sessionId: number,
+      startDate: Date,
+      quantity: number,
+      treatmentType: "light_bath" | "rod"
+    ): Promise<string[]> => {
+      const errors: string[] = [];
+
+      try {
+        // Map treatment types to AttendanceType enum values
+        const attendanceType =
+          treatmentType === "light_bath"
+            ? AttendanceType.LIGHT_BATH
+            : AttendanceType.ROD;
+
+        for (let i = 0; i < quantity; i++) {
+          // Calculate the date for this session (weekly intervals)
+          const sessionDate = new Date(startDate);
+          sessionDate.setDate(sessionDate.getDate() + i * 7); // Add weeks
+
+          // Format date for API
+          const scheduledDate = sessionDate.toISOString().split("T")[0]; // YYYY-MM-DD
+          const scheduledTime = "08:00"; // Default morning time
+
+          // Create attendance appointment
+          const attendanceRequest: CreateAttendanceRequest = {
+            patient_id: patientId,
+            type: attendanceType,
+            scheduled_date: scheduledDate,
+            scheduled_time: scheduledTime,
+            notes: `Sessão ${i + 1} de ${quantity} - Criado automaticamente`,
+          };
+
+          const attendanceResponse = await createAttendance(attendanceRequest);
+
+          if (attendanceResponse.success && attendanceResponse.value) {
+            // Create treatment session record to link session with attendance
+            const sessionRecordRequest: CreateTreatmentSessionRecordRequest = {
+              treatment_session_id: sessionId,
+              attendance_id: attendanceResponse.value.id,
+              session_number: i + 1,
+              scheduled_date: scheduledDate,
+              scheduled_time: scheduledTime,
+              notes: `Sessão ${i + 1} agendada automaticamente`,
+            };
+
+            const recordResponse = await createTreatmentSessionRecord(
+              sessionRecordRequest
+            );
+
+            if (!recordResponse.success) {
+              errors.push(
+                `Erro ao criar registro da sessão ${i + 1}: ${
+                  recordResponse.error
+                }`
+              );
+            }
+          } else {
+            errors.push(
+              `Erro ao agendar sessão ${i + 1} (${scheduledDate}): ${
+                attendanceResponse.error
+              }`
+            );
+          }
+        }
+      } catch (error) {
+        errors.push(`Erro inesperado ao criar agendamentos: ${error}`);
+      }
+
+      return errors;
+    },
+    [patientId]
+  );
+
+  // Helper function to create treatment sessions from recommendations
+  const createTreatmentSessionsFromRecommendations = useCallback(
+    async (
+      recommendations: TreatmentRecommendation,
+      treatmentRecordId: number
+    ): Promise<number[]> => {
+      const createdSessionIds: number[] = [];
+      const allErrors: string[] = [];
+
+      try {
+        // Create Light Bath sessions
+        if (
+          recommendations.lightBath?.treatments &&
+          recommendations.lightBath.treatments.length > 0
+        ) {
+          for (const treatment of recommendations.lightBath.treatments) {
+            const sessionRequest: CreateTreatmentSessionRequest = {
+              treatment_record_id: treatmentRecordId,
+              attendance_id: attendanceId,
+              patient_id: patientId,
+              treatment_type: "light_bath" as const,
+              body_location: treatment.location,
+              start_date: treatment.startDate.toISOString().split("T")[0],
+              planned_sessions: treatment.quantity,
+              duration_minutes: treatment.duration, // Duration is already in 7-minute units
+              color: treatment.color,
+              notes: `Banho de luz - ${treatment.color} - ${
+                treatment.duration * 7
+              } minutos`,
+            };
+
+            const sessionResponse = await createTreatmentSession(
+              sessionRequest
+            );
+            if (sessionResponse.success && sessionResponse.value) {
+              const sessionId = sessionResponse.value.id;
+              createdSessionIds.push(sessionId);
+
+              // Create attendance appointments for each planned session
+              const attendanceErrors = await createAttendanceAppointments(
+                sessionId,
+                treatment.startDate,
+                treatment.quantity,
+                "light_bath"
+              );
+
+              if (attendanceErrors.length > 0) {
+                allErrors.push(...attendanceErrors);
+              }
+            } else {
+              allErrors.push(
+                `Erro ao criar sessão de banho de luz: ${sessionResponse.error}`
+              );
+            }
+          }
+        }
+
+        // Create Rod sessions
+        if (
+          recommendations.rod?.treatments &&
+          recommendations.rod.treatments.length > 0
+        ) {
+          for (const treatment of recommendations.rod.treatments) {
+            const sessionRequest: CreateTreatmentSessionRequest = {
+              treatment_record_id: treatmentRecordId,
+              attendance_id: attendanceId,
+              patient_id: patientId,
+              treatment_type: "rod" as const,
+              body_location: treatment.location,
+              start_date: treatment.startDate.toISOString().split("T")[0],
+              planned_sessions: treatment.quantity,
+              notes: `Tratamento com bastão`,
+            };
+
+            const sessionResponse = await createTreatmentSession(
+              sessionRequest
+            );
+            if (sessionResponse.success && sessionResponse.value) {
+              const sessionId = sessionResponse.value.id;
+              createdSessionIds.push(sessionId);
+
+              // Create attendance appointments for each planned session
+              const attendanceErrors = await createAttendanceAppointments(
+                sessionId,
+                treatment.startDate,
+                treatment.quantity,
+                "rod"
+              );
+
+              if (attendanceErrors.length > 0) {
+                allErrors.push(...attendanceErrors);
+              }
+            } else {
+              allErrors.push(
+                `Erro ao criar sessão com bastão: ${sessionResponse.error}`
+              );
+            }
+          }
+        }
+
+        // If there are any errors, throw them to be displayed to the user
+        if (allErrors.length > 0) {
+          throw new Error(allErrors.join("\n\n"));
+        }
+
+        return createdSessionIds;
+      } catch (error) {
+        // If it's our custom error with collected messages, re-throw it
+        if (error instanceof Error && allErrors.length > 0) {
+          throw error;
+        }
+
+        // For unexpected errors, wrap them
+        throw new Error(
+          `Erro inesperado ao criar sessões de tratamento: ${error}`
+        );
+      }
+    },
+    [patientId, attendanceId, createAttendanceAppointments]
+  );
+
   // State for patient data fetching
   const [patientData, setPatientData] = useState<PatientResponseDto | null>(
     null
@@ -150,6 +361,36 @@ const SpiritualTreatmentForm: React.FC<SpiritualTreatmentFormProps> = ({
     [today]
   );
 
+  // Custom submit handler that creates treatment sessions
+  const handleFormSubmit = useCallback(
+    async (data: SpiritualTreatmentData) => {
+      try {
+        // First, submit the spiritual treatment record (existing flow)
+        const result = await onSubmit(data);
+
+        // Then, create treatment sessions for lightbath/rod recommendations
+        const sessionIds = await createTreatmentSessionsFromRecommendations(
+          data.recommendations,
+          result.treatmentRecordId
+        );
+
+        // Notify parent component about created sessions
+        if (sessionIds.length > 0 && onTreatmentSessionsCreated) {
+          onTreatmentSessionsCreated(sessionIds);
+        }
+      } catch (error) {
+        // If spiritual treatment submission fails, don't create sessions
+        // The error will be handled by the form handler
+        throw error;
+      }
+    },
+    [
+      onSubmit,
+      createTreatmentSessionsFromRecommendations,
+      onTreatmentSessionsCreated,
+    ]
+  );
+
   const {
     formData,
     setFormData,
@@ -176,7 +417,7 @@ const SpiritualTreatmentForm: React.FC<SpiritualTreatmentFormProps> = ({
       },
       notes: initialData?.notes || "",
     },
-    onSubmit,
+    onSubmit: handleFormSubmit, // Use our custom submit handler instead of the original onSubmit
     validate: validateTreatment,
     formatters: {
       returnWeeks: (value: unknown) =>
