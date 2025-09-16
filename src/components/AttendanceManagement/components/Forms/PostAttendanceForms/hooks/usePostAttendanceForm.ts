@@ -2,13 +2,8 @@ import { useCallback, useMemo, useState, useEffect } from "react";
 import { useFormHandler } from "@/hooks/useFormHandler";
 import { getPatientById } from "@/api/patients";
 import { createTreatmentSession } from "@/api/treatment-sessions";
-import { createAttendance } from "@/api/attendances";
-import { createTreatmentSessionRecord } from "@/api/treatment-session-records";
-import { AttendanceType } from "@/api/types";
 import type {
   CreateTreatmentSessionRequest,
-  CreateAttendanceRequest,
-  CreateTreatmentSessionRecordRequest,
   PatientResponseDto,
 } from "@/api/types";
 import type { TreatmentRecommendation } from "../types";
@@ -61,78 +56,6 @@ export function usePostAttendanceForm({
   // Get current date for default values (memoized to prevent dependency changes)
   const today = useMemo(() => new Date(), []);
 
-  // Helper function to create attendance appointments for treatment sessions
-  const createAttendanceAppointments = useCallback(
-    async (
-      sessionId: number,
-      startDate: Date,
-      quantity: number,
-      treatmentType: "light_bath" | "rod"
-    ): Promise<string[]> => {
-      const errors: string[] = [];
-
-      try {
-        // Map treatment types to AttendanceType enum values
-        const attendanceType =
-          treatmentType === "light_bath"
-            ? AttendanceType.LIGHT_BATH
-            : AttendanceType.ROD;
-
-        for (let i = 0; i < quantity; i++) {
-          // Calculate the date for this session (weekly intervals)
-          const sessionDate = new Date(startDate);
-          sessionDate.setDate(sessionDate.getDate() + i * 7); // Add weeks
-
-          // Format date for API
-          const scheduledDate = sessionDate.toISOString().split("T")[0]; // YYYY-MM-DD
-          const scheduledTime = "08:00"; // Default morning time
-
-          // Create attendance appointment
-          const attendanceRequest: CreateAttendanceRequest = {
-            patient_id: patientId,
-            type: attendanceType,
-            scheduled_date: scheduledDate,
-            scheduled_time: scheduledTime,
-            notes: `Sessão ${i + 1} de ${quantity} - Criado automaticamente`,
-          };
-
-          const attendanceResponse = await createAttendance(attendanceRequest);
-
-          if (attendanceResponse.success && attendanceResponse.value) {
-            // Create treatment session record to link session with attendance
-            const sessionRecordRequest: CreateTreatmentSessionRecordRequest = {
-              treatment_session_id: sessionId,
-              attendance_id: attendanceResponse.value.id,
-              session_number: i + 1,
-              scheduled_date: scheduledDate,
-              scheduled_time: scheduledTime,
-              notes: `Sessão ${i + 1} agendada automaticamente`,
-            };
-
-            const recordResponse = await createTreatmentSessionRecord(
-              sessionRecordRequest
-            );
-
-            if (!recordResponse.success) {
-              errors.push(
-                `Erro ao criar registro da sessão ${i + 1}: ${recordResponse.error}`
-              );
-            }
-          } else {
-            errors.push(
-              `Erro ao agendar sessão ${i + 1} (${scheduledDate}): ${attendanceResponse.error}`
-            );
-          }
-        }
-      } catch (error) {
-        errors.push(`Erro inesperado ao criar agendamentos: ${error}`);
-      }
-
-      return errors;
-    },
-    [patientId]
-  );
-
   // Helper function to create treatment sessions from recommendations
   const createTreatmentSessionsFromRecommendations = useCallback(
     async (
@@ -171,17 +94,9 @@ export function usePostAttendanceForm({
                 const sessionId = sessionResponse.value.id;
                 createdSessionIds.push(sessionId);
 
-                // Create attendance appointments for each planned session
-                const attendanceErrors = await createAttendanceAppointments(
-                  sessionId,
-                  treatment.startDate,
-                  treatment.quantity,
-                  "light_bath"
-                );
-
-                if (attendanceErrors.length > 0) {
-                  allErrors.push(...attendanceErrors);
-                }
+                // NOTE: Attendances are now automatically created by the backend
+                // when treatment sessions are created (see TreatmentRecordService)
+                console.log(`✅ Treatment session created: ${sessionId} - Attendances will be automatically scheduled`);
               } else {
                 allErrors.push(
                   `Erro ao criar sessão de banho de luz para ${location}: ${sessionResponse.error}`
@@ -215,17 +130,9 @@ export function usePostAttendanceForm({
                 const sessionId = sessionResponse.value.id;
                 createdSessionIds.push(sessionId);
 
-                // Create attendance appointments for each planned session
-                const attendanceErrors = await createAttendanceAppointments(
-                  sessionId,
-                  treatment.startDate,
-                  treatment.quantity,
-                  "rod"
-                );
-
-                if (attendanceErrors.length > 0) {
-                  allErrors.push(...attendanceErrors);
-                }
+                // NOTE: Attendances are now automatically created by the backend
+                // when treatment sessions are created (see TreatmentRecordService)
+                console.log(`✅ Treatment session created: ${sessionId} - Attendances will be automatically scheduled`);
               } else {
                 allErrors.push(
                   `Erro ao criar sessão com bastão para ${location}: ${sessionResponse.error}`
@@ -253,7 +160,7 @@ export function usePostAttendanceForm({
         );
       }
     },
-    [patientId, attendanceId, createAttendanceAppointments]
+    [patientId, attendanceId]
   );
 
   // Fetch patient data when component mounts

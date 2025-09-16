@@ -11,7 +11,7 @@ import {
   shouldShowTypeIndicator,
   getTooltipContent,
 } from "../../styles/cardStyles";
-import AttendanceTimes from "./AttendanceTimes";
+import AttendanceTimes from "../AttendanceCards/AttendanceTimes";
 import TreatmentSessionProgress from "../../../TreatmentSessionProgress";
 
 interface AttendanceCardProps {
