@@ -90,10 +90,39 @@ Current: **560+ tests passing** with comprehensive coverage
 src/
 ├── api/              # Backend integration layer
 ├── components/       # Reusable UI components
+│   └── AttendanceManagement/
+│       ├── hooks/    # Specialized React hooks for attendance features
+│       ├── services/ # Business logic services (AttendanceService, PatientService)
+│       └── components/ # UI components
 ├── contexts/         # React context providers
 ├── types/            # TypeScript type definitions
 └── utils/            # Utility functions
 ```
+
+## Architecture
+
+### Hooks Architecture
+
+The project uses a **specialized hooks pattern** for clean separation of concerns:
+
+- **useDragAndDrop**: Handles drag & drop operations, confirmations, multi-section logic
+- **useModalManagement**: Manages patient edit modals, treatment form modals
+- **useAttendanceWorkflow**: Day finalization, UI state, completion/rescheduling workflows
+- **useExternalCheckIn**: Processes external check-in functionality from props
+- **useAttendanceData**: Centralized data fetching and state management
+- **useAttendanceForm**: Form state and validation logic
+- **useTreatmentWorkflow**: Treatment-specific workflows and actions
+- **useNewPatientCheckIn**: New patient registration and check-in flows
+
+### Service Layer
+
+Business logic is separated into service classes:
+
+- **AttendanceService**: Centralized attendance operations (create, update, delete, check-in)
+- **PatientService**: Patient management operations
+- **TreatmentService**: Treatment-related business logic
+
+This architecture replaces the previous monolithic hook approach with focused, testable, and maintainable components.
 
 ## Development Guidelines
 

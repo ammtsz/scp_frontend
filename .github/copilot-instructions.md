@@ -58,6 +58,29 @@
 
 ### Component Architecture Patterns
 
+#### Specialized Hooks Architecture
+- **Pattern**: Single responsibility React hooks replacing monolithic hook approach
+- **Service Integration**: Business logic separated into service classes (AttendanceService, PatientService, TreatmentService)
+- **Benefits**: Better testability, maintainability, and separation of concerns
+- **Implementation**: 
+  - `useDragAndDrop`: Handles drag & drop operations, confirmations, multi-section logic with backend sync
+  - `useModalManagement`: Patient edit modals, treatment form modals with lifecycle management  
+  - `useAttendanceWorkflow`: Day finalization, UI state, completion/rescheduling with localStorage persistence
+  - `useExternalCheckIn`: External check-in processing from component props
+  - `useAttendanceData`: Centralized data fetching and state management (existing)
+  - `useAttendanceForm`: Form state and validation logic (existing)
+  - `useTreatmentWorkflow`: Treatment-specific workflows and actions (existing)
+  - `useNewPatientCheckIn`: New patient registration and check-in flows (existing)
+- **Composition**: Main components use clean hook composition instead of monolithic dependencies
+- **Migration**: Successfully replaced 609-line legacy hook with focused, specialized hooks
+
+#### Service Layer Pattern
+- **AttendanceService**: Centralized business logic for attendance operations (create, update, delete, check-in, bulk operations)
+- **Location**: `/src/components/AttendanceManagement/services/attendanceService.ts`
+- **Features**: Static methods for all attendance operations with consistent error handling and type safety
+- **Integration**: Used by hooks for backend operations, maintaining separation between React logic and business logic
+- **Benefits**: Testable business logic, consistent API interaction patterns, reusable across components
+
 #### Multiselect Components
 - **BodyLocationSelector**: Modern multiselect dropdown for body location selection with batch submission and search functionality
 - **Location**: `/src/components/AttendanceManagement/components/TreatmentForms/BodyLocationSelector.tsx`
@@ -111,6 +134,8 @@
 
 - API calls: `/src/api/`
 - Components: `/src/components/` with co-located tests in `__tests__/` folders
+- **Specialized Hooks**: `/src/components/AttendanceManagement/hooks/` - focused, single-responsibility hooks
+- **Service Layer**: `/src/components/AttendanceManagement/services/` - business logic separation from React code
 - Contexts: `/src/contexts/`
 - Types: `/src/types/globals.ts` (legacy) and `/src/api/types/frontend.ts` (new)
 - Utils: `/src/utils/` for transformers and business rules

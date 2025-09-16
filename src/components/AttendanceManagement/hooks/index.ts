@@ -9,9 +9,30 @@
 // These hooks use the service layer for business logic
 
 /**
- * useAttendanceData - Consolidated data management hook
- * Replaces scattered data logic from multiple useAttendanceManagement hooks.
- * Use this for: fetching data, patient operations, basic CRUD
+ * useAttendanceData Hook
+ * 
+ * Centralized hook for managing attendance data operations.
+ * Replaces scattered data logic from specialized hooks.
+ * 
+ * Features:
+ * - Attendance data fetching and state management
+ * - Context integration with AttendancesContext
+ * - Error handling and loading states
+ * - Data transformation and validation
+ * 
+ * This hook provides:
+ * - `attendancesByDate`: Organized attendance data by date
+ * - `isLoading`: Loading state for async operations
+ * - `error`: Error state for failed operations
+ * - `refreshAttendances`: Function to refresh data
+ * 
+ * Dependencies:
+ * - AttendancesContext for global state
+ * - Backend API through attendance services
+ * - Date utilities for data organization
+ * 
+ * Migration Note: This hook is part of the specialized hooks architecture
+ * that replaced the legacy monolithic hook approach for better maintainability.
  */
 export { useAttendanceData } from './useAttendanceData';
 export type { 
@@ -68,14 +89,8 @@ export type {
  */
 export { useTreatmentWorkflow } from './useTreatmentWorkflow';
 
-// ===== LEGACY HOOKS - DEPRECATED =====
-// These hooks are being replaced by the organized hooks above.
-// Do not use in new implementations.
-
-/**
- * useAttendanceManagement - LEGACY HOOK
- * Large complex hook with drag & drop, form management, and data operations.
- * ⚠️  DEPRECATED: Replaced by specialized hooks above.
- * ⚠️  Removed from exports - migration complete.
- */
-// export { useAttendanceManagement } from './useAttendanceManagement'; // REMOVED
+// ===== MIGRATION COMPLETE =====
+// The monolithic useAttendanceManagement hook (609 lines) has been successfully
+// replaced with the specialized hooks architecture above. This provides:
+// ✅ Better separation of concerns  ✅ Improved testability
+// ✅ Enhanced maintainability      ✅ Service layer integration

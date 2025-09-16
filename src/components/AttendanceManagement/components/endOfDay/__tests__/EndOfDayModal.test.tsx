@@ -19,17 +19,16 @@ const mockOnClose = jest.fn<() => void>();
 const mockOnFinalize = jest.fn<(data: EndOfDayData) => Promise<void>>();
 const mockOnHandleCompletion = jest.fn<(attendanceId: number) => void>();
 const mockOnReschedule = jest.fn<(attendanceId: number) => void>();
-const mockOnSubmitEndOfDay =
-  jest.fn<
-    (
-      absenceJustifications: Array<{
-        patientId: number;
-        patientName: string;
-        justified: boolean;
-        notes: string;
-      }>
-    ) => void
-  >();
+const mockOnSubmitEndOfDay = jest.fn<
+  (
+    absenceJustifications: Array<{
+      patientId: number;
+      patientName: string;
+      justified: boolean;
+      notes: string;
+    }>
+  ) => void
+>();
 
 const createMockIncompleteAttendance = (
   id: number,
