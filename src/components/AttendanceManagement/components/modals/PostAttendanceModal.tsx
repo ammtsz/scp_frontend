@@ -8,6 +8,7 @@ import {
   GeneralRecommendationsTab,
   TreatmentRecommendationsTab,
 } from "../Forms/PostAttendanceForms/Tabs";
+import TreatmentSessionConfirmation from "../Forms/PostAttendanceForms/components/TreatmentSessionConfirmation";
 import type {
   SpiritualTreatmentData,
   TreatmentStatus,
@@ -51,6 +52,9 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
     isLoading,
     error,
     clearError,
+    showConfirmation,
+    createdSessions,
+    resetConfirmation,
   } = usePostAttendanceForm({
     attendanceId,
     patientId,
@@ -84,6 +88,12 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
+  };
+
+  // Handle confirmation acknowledgment
+  const handleConfirmationAcknowledge = () => {
+    resetConfirmation();
+    onCancel(); // Close the modal after confirmation
   };
 
   // Auto-scroll to top on error
@@ -164,19 +174,26 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
     <TabbedModal
       isOpen={true}
       onClose={onCancel}
-      title={`Formulário de Tratamento Espiritual - ${patientName}`}
-      subtitle={`Atendimento #${attendanceId} • Paciente #${patientId}`}
-      tabs={tabs}
+      title={showConfirmation ? 
+        `Tratamento Concluído - ${patientName}` : 
+        `Formulário de Tratamento Espiritual - ${patientName}`
+      }
+      subtitle={showConfirmation ? 
+        "Agendamentos criados automaticamente" : 
+        `Atendimento #${attendanceId} • Paciente #${patientId}`
+      }
+      tabs={showConfirmation ? [] : tabs} // Hide tabs in confirmation view
       activeTab={activeTab}
       onTabChange={handleTabChange}
-      actions={actions}
+      actions={showConfirmation ? null : actions} // Hide actions in confirmation view
       maxWidth="2xl"
     >
-      {error && (
+      {/* Only show errors when not in confirmation mode */}
+      {!showConfirmation && error && (
         <ErrorDisplay error={error} dismissible={true} onDismiss={clearError} />
       )}
 
-      {fetchError && (
+      {!showConfirmation && fetchError && (
         <ErrorDisplay
           error={fetchError}
           dismissible={true}
@@ -184,7 +201,16 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
         />
       )}
 
-      {renderTabContent()}
+      {/* Render confirmation or form content */}
+      {showConfirmation ? (
+        <TreatmentSessionConfirmation
+          sessions={createdSessions}
+          patientName={patientName}
+          onAcknowledge={handleConfirmationAcknowledge}
+        />
+      ) : (
+        renderTabContent()
+      )}
     </TabbedModal>
   );
 };

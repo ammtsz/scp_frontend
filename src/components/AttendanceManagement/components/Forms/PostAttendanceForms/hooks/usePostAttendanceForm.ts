@@ -7,6 +7,7 @@ import type {
   PatientResponseDto,
 } from "@/api/types";
 import type { TreatmentRecommendation } from "../types";
+import type { CreatedTreatmentSession } from "../components/TreatmentSessionConfirmation";
 
 // Treatment status options as per requirements
 export type TreatmentStatus = "N" | "T" | "A" | "F";
@@ -53,6 +54,10 @@ export function usePostAttendanceForm({
   const [fetchingPatient, setFetchingPatient] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  // State for treatment session confirmation
+  const [createdSessions, setCreatedSessions] = useState<CreatedTreatmentSession[]>([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
   // Get current date for default values (memoized to prevent dependency changes)
   const today = useMemo(() => new Date(), []);
 
@@ -61,8 +66,9 @@ export function usePostAttendanceForm({
     async (
       recommendations: TreatmentRecommendation,
       treatmentRecordId: number
-    ): Promise<number[]> => {
+    ): Promise<{ sessionIds: number[], sessions: CreatedTreatmentSession[] }> => {
       const createdSessionIds: number[] = [];
+      const createdSessionsData: CreatedTreatmentSession[] = [];
       const allErrors: string[] = [];
 
       try {
@@ -91,12 +97,31 @@ export function usePostAttendanceForm({
 
               const sessionResponse = await createTreatmentSession(sessionRequest);
               if (sessionResponse.success && sessionResponse.value) {
-                const sessionId = sessionResponse.value.id;
-                createdSessionIds.push(sessionId);
+                const sessionData = sessionResponse.value;
+                createdSessionIds.push(sessionData.id);
+                // Transform the response to match our interface
+                const sessionForConfirmation: CreatedTreatmentSession = {
+                  id: sessionData.id,
+                  treatment_record_id: treatmentRecordId,
+                  attendance_id: attendanceId,
+                  patient_id: patientId,
+                  treatment_type: "light_bath",
+                  body_location: location,
+                  start_date: treatment.startDate.toISOString().split("T")[0],
+                  planned_sessions: treatment.quantity,
+                  completed_sessions: 0,
+                  status: "scheduled",
+                  duration_minutes: treatment.duration,
+                  color: treatment.color,
+                  notes: `Banho de luz - ${treatment.color} - ${treatment.duration * 7} minutos`,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                };
+                createdSessionsData.push(sessionForConfirmation);
 
                 // NOTE: Attendances are now automatically created by the backend
                 // when treatment sessions are created (see TreatmentRecordService)
-                console.log(`✅ Treatment session created: ${sessionId} - Attendances will be automatically scheduled`);
+                console.log(`✅ Treatment session created: ${sessionData.id} - Attendances will be automatically scheduled`);
               } else {
                 allErrors.push(
                   `Erro ao criar sessão de banho de luz para ${location}: ${sessionResponse.error}`
@@ -127,12 +152,29 @@ export function usePostAttendanceForm({
 
               const sessionResponse = await createTreatmentSession(sessionRequest);
               if (sessionResponse.success && sessionResponse.value) {
-                const sessionId = sessionResponse.value.id;
-                createdSessionIds.push(sessionId);
+                const sessionData = sessionResponse.value;
+                createdSessionIds.push(sessionData.id);
+                // Transform the response to match our interface
+                const sessionForConfirmation: CreatedTreatmentSession = {
+                  id: sessionData.id,
+                  treatment_record_id: treatmentRecordId,
+                  attendance_id: attendanceId,
+                  patient_id: patientId,
+                  treatment_type: "rod",
+                  body_location: location,
+                  start_date: treatment.startDate.toISOString().split("T")[0],
+                  planned_sessions: treatment.quantity,
+                  completed_sessions: 0,
+                  status: "scheduled",
+                  notes: `Tratamento com bastão`,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                };
+                createdSessionsData.push(sessionForConfirmation);
 
                 // NOTE: Attendances are now automatically created by the backend
                 // when treatment sessions are created (see TreatmentRecordService)
-                console.log(`✅ Treatment session created: ${sessionId} - Attendances will be automatically scheduled`);
+                console.log(`✅ Treatment session created: ${sessionData.id} - Attendances will be automatically scheduled`);
               } else {
                 allErrors.push(
                   `Erro ao criar sessão com bastão para ${location}: ${sessionResponse.error}`
@@ -147,7 +189,7 @@ export function usePostAttendanceForm({
           throw new Error(allErrors.join("\n\n"));
         }
 
-        return createdSessionIds;
+        return { sessionIds: createdSessionIds, sessions: createdSessionsData };
       } catch (error) {
         // If it's our custom error with collected messages, re-throw it
         if (error instanceof Error && allErrors.length > 0) {
@@ -265,14 +307,22 @@ export function usePostAttendanceForm({
         const result = await onSubmit(data);
 
         // Then, create treatment sessions for lightbath/rod recommendations
-        const sessionIds = await createTreatmentSessionsFromRecommendations(
+        const { sessionIds, sessions } = await createTreatmentSessionsFromRecommendations(
           data.recommendations,
           result.treatmentRecordId
         );
 
-        // Notify parent component about created sessions
+        // Store created sessions for confirmation display
+        setCreatedSessions(sessions);
+
+        // Notify parent component about created sessions (for backward compatibility)
         if (sessionIds.length > 0 && onTreatmentSessionsCreated) {
           onTreatmentSessionsCreated(sessionIds);
+        }
+
+        // Show confirmation view if sessions were created
+        if (sessions.length > 0) {
+          setShowConfirmation(true);
         }
       } catch (error) {
         // If spiritual treatment submission fails, don't create sessions
@@ -280,7 +330,7 @@ export function usePostAttendanceForm({
         throw error;
       }
     },
-    [onSubmit, createTreatmentSessionsFromRecommendations, onTreatmentSessionsCreated]
+    [onSubmit, createTreatmentSessionsFromRecommendations, onTreatmentSessionsCreated, setCreatedSessions, setShowConfirmation]
   );
 
   const {
@@ -374,6 +424,12 @@ export function usePostAttendanceForm({
     return labels[status];
   };
 
+  // Function to reset confirmation state
+  const resetConfirmation = useCallback(() => {
+    setShowConfirmation(false);
+    setCreatedSessions([]);
+  }, []);
+
   return {
     // Form state and handlers
     formData,
@@ -395,6 +451,11 @@ export function usePostAttendanceForm({
     // Error handling
     error,
     clearError,
+    
+    // Confirmation states
+    showConfirmation,
+    createdSessions,
+    resetConfirmation,
     
     // Utility functions
     formatDateForInput,
