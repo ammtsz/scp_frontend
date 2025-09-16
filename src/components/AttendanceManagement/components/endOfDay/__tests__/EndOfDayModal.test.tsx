@@ -2,8 +2,7 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import EndOfDayModal from "../EndOfDayContainer";
-import type { IAttendanceStatusDetailWithType } from "../../utils/attendanceDataUtils";
-import type { AbsenceJustification } from "../types";
+import type { IAttendanceStatusDetail } from "@/types/globals";
 
 interface EndOfDayData {
   incompleteAttendances: IAttendanceStatusDetail[];

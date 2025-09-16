@@ -20,6 +20,35 @@ export type {
 } from './useAttendanceData';
 
 /**
+ * useDragAndDrop - Drag and drop functionality
+ * Handles all drag and drop operations, confirmations, and multi-section logic.
+ * Use this for: patient movement between statuses, drag interactions
+ */
+export { useDragAndDrop } from './useDragAndDrop';
+
+/**
+ * useModalManagement - Modal state management
+ * Handles all modal states and their lifecycle.
+ * Use this for: patient edit modals, treatment form modals
+ */
+export { useModalManagement } from './useModalManagement';
+export type { ModalManagementState } from './useModalManagement';
+
+/**
+ * useAttendanceWorkflow - Workflow state management
+ * Handles workflow-specific states like day finalization, collapsed sections.
+ * Use this for: day finalization, UI state, attendance completion/rescheduling
+ */
+export { useAttendanceWorkflow } from './useAttendanceWorkflow';
+
+/**
+ * useExternalCheckIn - External check-in processing
+ * Handles external check-in functionality from props.
+ * Use this for: processing unscheduled check-ins from external sources
+ */
+export { useExternalCheckIn } from './useExternalCheckIn';
+
+/**
  * useAttendanceForm - Form management hook  
  * Handles form state and validation for creating new attendances.
  * Use this for: attendance creation forms, patient registration forms
@@ -39,10 +68,14 @@ export type {
  */
 export { useTreatmentWorkflow } from './useTreatmentWorkflow';
 
+// ===== LEGACY HOOKS - DEPRECATED =====
+// These hooks are being replaced by the organized hooks above.
+// Do not use in new implementations.
+
 /**
  * useAttendanceManagement - LEGACY HOOK
  * Large complex hook with drag & drop, form management, and data operations.
- * ⚠️  Being gradually replaced by specialized hooks above.
- * ⚠️  Use new hooks for new implementations.
+ * ⚠️  DEPRECATED: Replaced by specialized hooks above.
+ * ⚠️  Removed from exports - migration complete.
  */
-export { useAttendanceManagement } from './useAttendanceManagement';
+// export { useAttendanceManagement } from './useAttendanceManagement'; // REMOVED

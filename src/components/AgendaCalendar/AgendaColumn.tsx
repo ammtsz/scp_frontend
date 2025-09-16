@@ -2,7 +2,7 @@ import React from "react";
 import AttendanceTypeTag from "@/components/AttendanceManagement/components/AttendanceCards/AttendanceTypeTag";
 import { formatDateWithDayOfWeekBR } from "@/utils/dateHelpers";
 import { IAttendanceType } from "@/types/globals";
-import Spinner from "@/components/Spinner";
+import Spinner from "@/components/common/Spinner";
 
 interface Patient {
   id: string;

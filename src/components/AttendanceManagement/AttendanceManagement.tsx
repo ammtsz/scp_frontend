@@ -2,10 +2,13 @@
 
 import React from "react";
 import { IPriority, IPatients } from "../../types/globals";
-import { useAttendanceManagement } from "./hooks/useAttendanceManagement";
 import { useAttendanceData } from "./hooks/useAttendanceData";
+import { useDragAndDrop } from "./hooks/useDragAndDrop";
+import { useModalManagement } from "./hooks/useModalManagement";
+import { useAttendanceWorkflow } from "./hooks/useAttendanceWorkflow";
 import { useNewPatientCheckIn } from "./hooks/useNewPatientCheckIn";
 import { useTreatmentWorkflow } from "./hooks/useTreatmentWorkflow";
+import { useExternalCheckIn } from "./hooks/useExternalCheckIn";
 import { useAttendances } from "../../contexts/AttendancesContext";
 import {
   getIncompleteAttendances,
@@ -29,6 +32,19 @@ const AttendanceManagement: React.FC<{
   } | null;
   onCheckInProcessed?: () => void;
 }> = ({ unscheduledCheckIn, onCheckInProcessed }) => {
+  // Data management hook
+  const {
+    attendancesByDate,
+    selectedDate,
+    loading,
+    error,
+    refreshData,
+    deleteAttendance,
+  } = useAttendanceData();
+
+  // AttendancesContext for additional functionality
+  const { setSelectedDate } = useAttendances();
+
   // New patient check-in hook
   const {
     patientToCheckIn,
@@ -37,9 +53,6 @@ const AttendanceManagement: React.FC<{
     closeNewPatientCheckIn,
     handleNewPatientSuccess,
   } = useNewPatientCheckIn();
-
-  // AttendancesContext for data
-  const { attendancesByDate } = useAttendances();
 
   // Handle new patient detection from drag and drop
   const handleNewPatientDetected = (
@@ -77,26 +90,24 @@ const AttendanceManagement: React.FC<{
     openNewPatientCheckIn(patientForCheckIn, attendanceId);
   };
 
+  // Modal management hook
   const {
-    // Data
-    selectedDate,
-    setSelectedDate,
-    loading,
-    error,
-
-    // State
-    dragged,
-    confirmOpen,
-    multiSectionModalOpen,
-    collapsed,
     editPatientModalOpen,
     patientToEdit,
     treatmentFormOpen,
     selectedAttendanceForTreatment,
-    isDayFinalized,
+    handleEditPatientCancel,
+    handleEditPatientSuccess,
+    handleTreatmentFormCancel,
+    handleTreatmentFormSubmit,
+    openTreatmentFormModal,
+  } = useModalManagement({ refreshData });
 
-    // Functions
-    getPatients,
+  // Drag and drop hook
+  const {
+    dragged,
+    confirmOpen,
+    multiSectionModalOpen,
     handleDragStart,
     handleDragEnd,
     handleDropWithConfirm,
@@ -104,41 +115,45 @@ const AttendanceManagement: React.FC<{
     handleCancel,
     handleMultiSectionConfirm,
     handleMultiSectionCancel,
-    toggleCollapsed,
-    refreshCurrentDate,
-    handleEditPatientCancel,
-    handleEditPatientSuccess,
-    handleTreatmentFormCancel,
-    handleTreatmentFormSubmit,
-    handleAttendanceCompletion,
-    handleAttendanceReschedule,
-    finalizeDay,
-    unFinalizeDay,
-  } = useAttendanceManagement({
-    unscheduledCheckIn,
-    onCheckInProcessed,
+    getPatients,
+  } = useDragAndDrop({
     onNewPatientDetected: handleNewPatientDetected,
+    onTreatmentFormOpen: openTreatmentFormModal,
   });
 
-  // Add delete functionality from data hook
-  const { deleteAttendance } = useAttendanceData();
+  // Workflow management hook
+  const {
+    collapsed,
+    isDayFinalized,
+    finalizeDay,
+    unFinalizeDay,
+    toggleCollapsed,
+    handleAttendanceCompletion,
+    handleAttendanceReschedule,
+  } = useAttendanceWorkflow();
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleDelete = async (attendanceId: number, _patientName: string) => {
-    const success = await deleteAttendance(attendanceId);
-    if (success) {
-      // Refresh the attendance list to reflect the deletion
-      refreshCurrentDate();
-    }
-  };
+  // External check-in hook
+  useExternalCheckIn({
+    unscheduledCheckIn,
+    onCheckInProcessed,
+  });
 
-  // Treatment workflow hook
+  // Treatment workflow hook (for end of day modal)
   const {
     endOfDayModalOpen,
     handleEndOfDaySubmit,
     openEndOfDayModal,
     closeEndOfDayModal,
-  } = useTreatmentWorkflow(refreshCurrentDate, finalizeDay);
+  } = useTreatmentWorkflow(refreshData, finalizeDay);
+
+  // Handle delete functionality
+  const handleDelete = async (attendanceId: number) => {
+    const success = await deleteAttendance(attendanceId);
+    if (success) {
+      // Refresh the attendance list to reflect the deletion
+      refreshData();
+    }
+  };
 
   // Show loading state
   if (loading) {
@@ -147,7 +162,7 @@ const AttendanceManagement: React.FC<{
 
   // Show error state
   if (error) {
-    return <ErrorState error={error} onRetry={refreshCurrentDate} />;
+    return <ErrorState error={error} onRetry={refreshData} />;
   }
 
   return (
