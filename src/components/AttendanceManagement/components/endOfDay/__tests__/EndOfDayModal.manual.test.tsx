@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import EndOfDayModal from "../EndOfDayModal";
+import EndOfDayModal from "../EndOfDayContainer";
 import type { IAttendanceStatusDetail, IPriority } from "@/types/globals";
 
 // Manual test to verify our core fixes work

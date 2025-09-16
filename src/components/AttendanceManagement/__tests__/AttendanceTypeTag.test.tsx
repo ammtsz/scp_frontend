@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import AttendanceTypeTag from "../components/Cards/AttendanceTypeTag";
+import AttendanceTypeTag from "../components/AttendanceCards/AttendanceTypeTag";
 import { IAttendanceType } from "@/types/globals";
 
 describe("AttendanceTypeTag", () => {

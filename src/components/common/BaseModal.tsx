@@ -8,6 +8,8 @@ interface BaseModalProps {
   children: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
   showCloseButton?: boolean;
+  preventOverflow?: boolean;
+  height?: string;
 }
 
 const BaseModal: React.FC<BaseModalProps> = ({
@@ -18,6 +20,8 @@ const BaseModal: React.FC<BaseModalProps> = ({
   children,
   maxWidth = "2xl",
   showCloseButton = true,
+  preventOverflow = false,
+  height,
 }) => {
   if (!isOpen) return null;
 
@@ -30,9 +34,13 @@ const BaseModal: React.FC<BaseModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60  flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div
-        className={`bg-white rounded-lg shadow-xl ${maxWidthClasses[maxWidth]} w-full max-h-[90vh] overflow-y-auto`}
+        className={`bg-white rounded-lg shadow-xl ${
+          maxWidthClasses[maxWidth]
+        } w-full ${height ? height : "max-h-[90vh]"} ${
+          preventOverflow ? "flex flex-col" : "overflow-y-auto"
+        }`}
       >
         {/* Header */}
         <div className="p-4 border-b border-gray-100">

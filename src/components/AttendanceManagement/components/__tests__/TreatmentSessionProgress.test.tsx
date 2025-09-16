@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import TreatmentSessionProgress from "../TreatmentSessionProgress";
+import TreatmentSessionProgress from "../../../TreatmentSessionProgress";
 import * as treatmentSessionsApi from "@/api/treatment-sessions";
 import * as treatmentSessionRecordsApi from "@/api/treatment-session-records";
 

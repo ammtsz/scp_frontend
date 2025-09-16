@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import EndOfDayModal from "../EndOfDayModal";
+import EndOfDayModal from "../EndOfDayContainer";
 import type { IAttendanceStatusDetail } from "@/types/globals";
 import { useEndOfDay } from "../useEndOfDay";
 

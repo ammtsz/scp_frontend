@@ -4,7 +4,7 @@ import React from "react";
 import { IPriority, IPatients } from "../../types/globals";
 import { useAttendanceManagement } from "./hooks/useAttendanceManagement";
 import { useAttendanceData } from "./hooks/useAttendanceData";
-import { useNewPatientCheckIn } from "./components/WalkInForm/useNewPatientCheckIn";
+import { useNewPatientCheckIn } from "./hooks/useNewPatientCheckIn";
 import { useTreatmentWorkflow } from "./hooks/useTreatmentWorkflow";
 import { useAttendances } from "../../contexts/AttendancesContext";
 import {
@@ -18,7 +18,7 @@ import { LoadingState, ErrorState } from "./components/StateComponents";
 import { AttendanceHeader } from "./components/AttendanceHeader";
 import { AttendanceSections } from "./components/AttendanceSections";
 import { TreatmentWorkflowButtons } from "./components/TreatmentWorkflowButtons";
-import { AttendanceModals } from "./components/AttendanceModals";
+import { AttendanceModals } from "./components/Modals/AttendanceModals";
 
 const AttendanceManagement: React.FC<{
   unscheduledCheckIn?: {

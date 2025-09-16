@@ -5,7 +5,7 @@ import {
   IAttendanceStatusDetail,
 } from "@/types/globals";
 import { IDraggedItem } from "../types";
-import AttendanceCard from "./Cards/AttendanceCard";
+import AttendanceCard from "./AttendanceCards/AttendanceCard";
 import { getStatusColor, getStatusLabel } from "../styles/cardStyles";
 
 interface PatientWithType extends IAttendanceStatusDetail {

@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import ConfirmationStep from "../ConfirmationStep";
+import ConfirmationStep from "../Steps/ConfirmationStep";
 import type { AbsenceJustification } from "../types";
 
 // Mock data factories

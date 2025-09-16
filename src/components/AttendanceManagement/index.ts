@@ -22,7 +22,7 @@ export * from './hooks';
 
 // Component layer - UI components using hooks
 export { default as AttendanceColumn } from './components/AttendanceColumn';
-export { default as AttendanceCard } from './components/Cards/AttendanceCard';
+export { default as AttendanceCard } from './components/AttendanceCards/AttendanceCard';
 
 // Types
 export * from './types';

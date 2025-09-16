@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import ConfirmModal from "@/components/ConfirmModal/index";
-import NewAttendanceFormModal from "@/components/AttendanceManagement/components/NewAttendanceForm/NewAttendanceFormModal";
-import Switch from "@/components/Switch";
+import ConfirmModal from "@/components/common/ConfirmModal/index";
+import NewAttendanceFormModal from "@/components/AttendanceManagement/components/Modals/NewAttendanceFormModal";
+import Switch from "@/components/common/Switch";
 import AgendaColumn from "./AgendaColumn";
 import { useAgendaCalendar } from "./useAgendaCalendar";
 

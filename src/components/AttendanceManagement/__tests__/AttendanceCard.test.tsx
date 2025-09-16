@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import AttendanceCard from "../components/Cards/AttendanceCard";
+import AttendanceCard from "../components/AttendanceCards/AttendanceCard";
 import {
   IAttendanceProgression,
   IAttendanceType,

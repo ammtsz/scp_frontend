@@ -1,5 +1,5 @@
 import React from "react";
-import AttendanceTypeTag from "@/components/AttendanceManagement/components/Cards/AttendanceTypeTag";
+import AttendanceTypeTag from "@/components/AttendanceManagement/components/AttendanceCards/AttendanceTypeTag";
 import { formatDateWithDayOfWeekBR } from "@/utils/dateHelpers";
 import { IAttendanceType } from "@/types/globals";
 import Spinner from "@/components/Spinner";

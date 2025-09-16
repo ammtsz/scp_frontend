@@ -1,7 +1,7 @@
 "use client";
 
 import PatientForm from "@/components/PatientForm";
-import Breadcrumb from "@/components/Breadcrumb";
+import Breadcrumb from "@/components/common/Breadcrumb";
 
 export default function NewPatientPage() {
   const breadcrumbItems = [

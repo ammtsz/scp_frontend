@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import TabNav from "@/components/TabNav";
+import TabNav from "@/components/common/TabNav";
 import { PatientsProvider } from "@/contexts/PatientsContext";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { AgendaProvider } from "@/contexts/AgendaContext";

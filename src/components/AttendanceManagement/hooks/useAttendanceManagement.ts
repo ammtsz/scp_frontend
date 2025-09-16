@@ -14,7 +14,7 @@ import { sortPatientsByPriority } from "@/utils/businessRules";
 import { updateAttendanceStatus } from "@/api/attendanceSync";
 import { getIncompleteAttendances } from "../utils/attendanceDataUtils";
 import { IDraggedItem } from "../types";
-import type { SpiritualTreatmentData } from "../components/TreatmentForms";
+import type { SpiritualTreatmentData } from "../components/Forms/PostAttendanceForms";
 
 interface ExternalCheckIn {
   name: string;

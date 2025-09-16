@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import EndOfDayModal from "../EndOfDayModal";
+import EndOfDayModal from "../EndOfDayContainer";
 
 // Test to verify date handling is correct
 describe("EndOfDayModal - Date Handling Fix", () => {

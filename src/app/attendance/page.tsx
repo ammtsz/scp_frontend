@@ -1,7 +1,7 @@
 "use client";
 
 import AttendanceManagement from "@/components/AttendanceManagement";
-import { PatientWalkInPanel } from "@/components/AttendanceManagement/components/WalkInForm";
+import { PatientWalkInPanel } from "@/components/AttendanceManagement/components/Forms/WalkInForm";
 import { IPriority } from "@/types/globals";
 import React, { useState } from "react";
 

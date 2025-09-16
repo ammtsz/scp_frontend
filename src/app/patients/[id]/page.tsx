@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { formatDateBR } from "@/utils/dateHelpers";
-import Breadcrumb from "@/components/Breadcrumb";
+import Breadcrumb from "@/components/common/Breadcrumb";
 import { AttendancesDropdown } from "@/components/AttendanceManagement/components";
 import { getPatientById } from "@/api/patients";
 import { transformSinglePatientFromApi } from "@/utils/apiTransformers";

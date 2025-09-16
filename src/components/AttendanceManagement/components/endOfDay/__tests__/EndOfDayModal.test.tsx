@@ -1,8 +1,9 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
-import EndOfDayModal from "../EndOfDayModal";
-import type { IAttendanceStatusDetail } from "@/types/globals";
+import EndOfDayModal from "../EndOfDayContainer";
+import type { IAttendanceStatusDetailWithType } from "../../utils/attendanceDataUtils";
+import type { AbsenceJustification } from "../types";
 
 interface EndOfDayData {
   incompleteAttendances: IAttendanceStatusDetail[];
@@ -17,6 +18,19 @@ interface EndOfDayData {
 
 const mockOnClose = jest.fn<() => void>();
 const mockOnFinalize = jest.fn<(data: EndOfDayData) => Promise<void>>();
+const mockOnHandleCompletion = jest.fn<(attendanceId: number) => void>();
+const mockOnReschedule = jest.fn<(attendanceId: number) => void>();
+const mockOnSubmitEndOfDay =
+  jest.fn<
+    (
+      absenceJustifications: Array<{
+        patientId: number;
+        patientName: string;
+        justified: boolean;
+        notes: string;
+      }>
+    ) => void
+  >();
 
 const createMockIncompleteAttendance = (
   id: number,
@@ -45,9 +59,13 @@ const createMockScheduledAbsence = (
 const defaultProps = {
   isOpen: true,
   onClose: mockOnClose,
-  onFinalize: mockOnFinalize,
+  selectedDate: "2025-01-15",
   incompleteAttendances: [],
+  completedAttendances: [],
   scheduledAbsences: [],
+  onHandleCompletion: mockOnHandleCompletion,
+  onReschedule: mockOnReschedule,
+  onSubmitEndOfDay: mockOnSubmitEndOfDay,
 };
 
 describe("EndOfDayModal", () => {

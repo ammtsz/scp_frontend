@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import EndOfDayModal from "../EndOfDayModal";
+import EndOfDayModal from "../EndOfDayContainer";
 import type { IAttendanceStatusDetail, IPriority } from "@/types/globals";
 
 // Mock factory for creating attendance data

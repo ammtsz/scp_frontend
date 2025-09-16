@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import IncompleteAttendancesStep from "../IncompleteAttendancesStep";
+import IncompleteAttendancesStep from "../Steps/IncompleteAttendancesStep";
 import type { IAttendanceStatusDetailWithType } from "../../../utils/attendanceDataUtils";
 
 // Mock data factory

@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import AbsenceJustificationStep from "../AbsenceJustificationStep";
+import AbsenceJustificationStep from "../Steps/AbsenceJustificationStep";
 import type { AbsenceJustification, ScheduledAbsence } from "../types";
 
 // Mock data factories

@@ -56,6 +56,57 @@
   - `completed` → `checked_in` (reopening)
   - `cancelled` → `scheduled` (rescheduling)
 
+### Component Architecture Patterns
+
+#### Multiselect Components
+- **BodyLocationSelector**: Modern multiselect dropdown for body location selection with batch submission and search functionality
+- **Location**: `/src/components/AttendanceManagement/components/TreatmentForms/BodyLocationSelector.tsx`
+- **Features**: 
+  - Single dropdown interface replacing two-step selection (region → specific location)
+  - Grouped options by body region for better organization
+  - **Search functionality**: Real-time filtering with case-insensitive search input
+  - Multiple selection with checkboxes and visual feedback
+  - Custom location input option with "Local Personalizado" checkbox
+  - Selected items display as removable tags with close buttons
+  - "Adicionar Tratamento" button for batch submission
+  - Click outside to close functionality
+  - Responsive design with max-height and scroll for long lists
+  - Smart display text truncation for many selections
+  - Auto-reset after submission for multiple treatment creation
+  - Search term clearing on dropdown open/close and form submission
+- **Search Features**:
+  - Real-time filtering as user types
+  - Case-insensitive search across all body locations
+  - "No results found" message for empty search results
+  - Auto-clear search on dropdown close, open, or form submission
+  - Fixed header with search input and scrollable results area
+- **Interface**: Uses `onLocationsSubmit(locations: string[])` callback for batch submission
+- **Behavior**: Users can search and select multiple locations, then click "Adicionar Tratamento" to create one treatment card with all selected locations sharing the same treatment parameters (start date, color, duration, quantity)
+- **Data Structure**: 
+  - Types updated to support `locations: string[]` instead of single `location: string`
+  - Flat object with location → region mapping for efficient multiselect rendering
+- **User Experience**: "Shopping cart" approach with search capability - search, select multiple locations, submit as batch, reset for next group
+- **Testing**: Comprehensive test suite with 20 test cases covering batch selection, submission behavior, and search functionality
+
+#### Tabbed Modals
+- **TabbedModal Component**: Reusable generic tabbed modal system for complex forms
+- **Location**: `/src/components/common/TabbedModal/`
+- **Structure**: Modern underlined tabs with clean design (active tab has blue underline and background tint)
+- **Scroll Behavior**: Fixed header/tabs with scrollable content area only (prevents modal jumping)
+- **Height**: Fixed at 70% viewport height for consistent sizing
+- **Validation**: Per-tab validation with visual status indicators (✅ valid, ⚠️ warning, ❌ invalid)
+- **Form Submission**: Use `canSubmitForm(tabs)` helper to check if form can be submitted (warnings allow submission, invalid tabs prevent it)
+- **Usage Pattern**: Wrap complex forms with 3+ sections to improve UX
+- **Styling**: Clean underlined design with blue accent for active tabs
+
+#### Treatment Forms Architecture
+- **Tabbed Implementation**: `SpiritualTreatmentFormTabbed` with three logical sections
+  - BasicInfoTab: Essential patient information and complaint
+  - GeneralRecommendationsTab: Dietary and general care recommendations  
+  - TreatmentRecommendationsTab: Specific treatment protocols and scheduling
+- **Validation Hook**: `useTabValidation` for centralized tab state management
+- **Integration**: Maintains existing API integration and form submission logic
+
 ### File Organization
 
 - API calls: `/src/api/`
@@ -64,9 +115,10 @@
 - Types: `/src/types/globals.ts` (legacy) and `/src/api/types/frontend.ts` (new)
 - Utils: `/src/utils/` for transformers and business rules
 - **Tests**: All test files organized in `__tests__/` folders within their respective directories
-- **Forms**: Two main attendance forms:
+- **Forms**: Treatment forms now use tabbed interface:
+  - `SpiritualTreatmentFormTabbed`: Modern tabbed version with improved UX
   - `NewAttendanceForm`: Core form component with all logic
-  - `NewAttendanceFormModal`: Modal wrapper for the form with error handlingpace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
+  - `NewAttendanceFormModal`: Modal wrapper for the form with error handling
 
 # MVP Center - Frontend Project Instructions
 
