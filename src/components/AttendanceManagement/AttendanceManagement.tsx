@@ -212,6 +212,14 @@ const AttendanceManagement: React.FC<{
         selectedAttendanceForTreatment={selectedAttendanceForTreatment}
         onTreatmentFormSubmit={handleTreatmentFormSubmit}
         onTreatmentFormCancel={handleTreatmentFormCancel}
+        onTreatmentSessionsCreated={(sessionIds) => {
+          console.log(
+            `✅ Treatment sessions created: ${sessionIds.join(
+              ", "
+            )} - Refreshing attendance data`
+          );
+          refreshData();
+        }}
         endOfDayModalOpen={endOfDayModalOpen}
         onEndOfDayClose={closeEndOfDayModal}
         onHandleCompletion={handleAttendanceCompletion}

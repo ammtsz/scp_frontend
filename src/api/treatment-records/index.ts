@@ -5,6 +5,7 @@ import type {
   CreateTreatmentRecordRequest,
   UpdateTreatmentRecordRequest,
   TreatmentRecordResponseDto,
+  UpdateTreatmentRecordResponseDto,
   ApiResponse
 } from '../types';
 
@@ -38,7 +39,7 @@ export const getTreatmentRecordByAttendance = async (attendanceId: string): Prom
   }
 };
 
-export const createTreatmentRecord = async (treatmentData: CreateTreatmentRecordRequest): Promise<ApiResponse<TreatmentRecordResponseDto>> => {
+export const createTreatmentRecord = async (treatmentData: CreateTreatmentRecordRequest): Promise<ApiResponse<UpdateTreatmentRecordResponseDto>> => {
   try {
     const { data } = await api.post('/treatment-records', treatmentData);
     return { success: true, value: data };

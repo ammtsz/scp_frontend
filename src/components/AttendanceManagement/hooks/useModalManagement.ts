@@ -131,7 +131,9 @@ export const useModalManagement = ({
         setSelectedAttendanceForTreatment(null);
         refreshData?.();
 
-        return { treatmentRecordId: response.value.id };
+        // The backend returns { record: { id: 15, ... } }, so we access record.id
+        const treatmentRecordId = response.value.record.id;
+        return { treatmentRecordId };
       } catch (error) {
         console.error("Error creating treatment record:", error);
         throw error;

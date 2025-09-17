@@ -71,6 +71,16 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
           <div
             className={`absolute top-1 left-1 rounded px-1 py-0.5 text-xs ${typeConfig.className}`}
           >
+            {/* Treatment Session Progress for lightBath and rod types */}
+            {(type === "lightBath" || type === "rod") && patient.patientId && (
+              <div className="mr-2 inline-block align-middle">
+                <TreatmentSessionProgress
+                  patientId={patient.patientId}
+                  attendanceType={type === "lightBath" ? "light_bath" : "rod"}
+                  showDetails={false}
+                />
+              </div>
+            )}
             {typeConfig.label}
           </div>
         )}
@@ -89,17 +99,6 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
           {status === "checkedIn" ? `${index + 1}. ` : ""}
           {patient.name} ({patient.priority})
         </span>
-
-        {/* Treatment Session Progress for lightBath and rod types */}
-        {(type === "lightBath" || type === "rod") && patient.patientId && (
-          <div className="px-2 mt-1">
-            <TreatmentSessionProgress
-              patientId={patient.patientId}
-              attendanceType={type === "lightBath" ? "light_bath" : "rod"}
-              showDetails={false}
-            />
-          </div>
-        )}
 
         <AttendanceTimes
           status={status}

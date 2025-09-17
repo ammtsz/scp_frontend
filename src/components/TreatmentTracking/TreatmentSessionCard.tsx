@@ -64,38 +64,23 @@ export function TreatmentSessionCard({
     }
   };
 
-  const getFrequencyLabel = (frequency: string) => {
-    switch (frequency) {
-      case "daily":
-        return "Diário";
-      case "weekly":
-        return "Semanal";
-      case "biweekly":
-        return "Quinzenal";
-      case "monthly":
-        return "Mensal";
-      default:
-        return frequency;
-    }
-  };
-
   const progressPercentage =
-    session.total_sessions_recommended > 0
-      ? (session.sessions_completed / session.total_sessions_recommended) * 100
+    session.planned_sessions > 0
+      ? (session.completed_sessions / session.planned_sessions) * 100
       : 0;
 
   const canActivate = session.status === "suspended";
   const canSuspend = session.status === "active";
   const canComplete =
     session.status === "active" &&
-    session.sessions_completed >= session.total_sessions_recommended;
+    session.completed_sessions >= session.planned_sessions;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
-          Tratamento {getTypeLabel(session.type)}
+          Tratamento {getTypeLabel(session.treatment_type)}
         </h3>
         <span
           className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
@@ -133,9 +118,9 @@ export function TreatmentSessionCard({
           )}
 
           <div className="flex items-center gap-2">
-            <span className="text-gray-500">🔄</span>
+            <span className="text-gray-500">�</span>
             <span className="text-gray-700">
-              Frequência: {getFrequencyLabel(session.frequency)}
+              Local: {session.body_location}
             </span>
           </div>
         </div>
@@ -145,8 +130,7 @@ export function TreatmentSessionCard({
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Progresso</span>
             <span className="text-gray-900 font-medium">
-              {session.sessions_completed} /{" "}
-              {session.total_sessions_recommended} sessões
+              {session.completed_sessions} / {session.planned_sessions} sessões
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -199,9 +183,9 @@ export function TreatmentSessionCard({
           </div>
         )}
 
-        {session.completion_date && (
+        {session.end_date && session.status === "completed" && (
           <div className="text-xs text-gray-500 mt-2">
-            Completado em: {formatDate(session.completion_date)}
+            Completado em: {formatDate(session.end_date)}
           </div>
         )}
 

@@ -8,6 +8,7 @@ import type {
 } from "@/api/types";
 import type { TreatmentRecommendation } from "../types";
 import type { CreatedTreatmentSession } from "../components/TreatmentSessionConfirmation";
+import type { TreatmentSessionError } from "../components/TreatmentSessionErrors";
 
 // Treatment status options as per requirements
 export type TreatmentStatus = "N" | "T" | "A" | "F";
@@ -57,9 +58,120 @@ export function usePostAttendanceForm({
   // State for treatment session confirmation
   const [createdSessions, setCreatedSessions] = useState<CreatedTreatmentSession[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  
+  // State for treatment session error handling
+  const [sessionErrors, setSessionErrors] = useState<TreatmentSessionError[]>([]);
+  const [showErrors, setShowErrors] = useState(false);
 
   // Get current date for default values (memoized to prevent dependency changes)
   const today = useMemo(() => new Date(), []);
+
+  // Helper function to parse session creation errors into the format expected by TreatmentSessionErrors
+  const parseSessionCreationErrors = useCallback((
+    error: unknown,
+    recommendations: TreatmentRecommendation
+  ): TreatmentSessionError[] => {
+    const errors: TreatmentSessionError[] = [];
+    
+    try {
+      // Check if the error has structured error details from our collection
+      const errorDetails = (error as { errorDetails?: { lightBathErrors: string[], rodErrors: string[], allErrors: string[] } })?.errorDetails;
+      
+      if (errorDetails) {
+        // Use the structured errors we collected
+        if (errorDetails.lightBathErrors && errorDetails.lightBathErrors.length > 0) {
+          errors.push({
+            treatment_type: 'light_bath',
+            errors: errorDetails.lightBathErrors
+          });
+        }
+        
+        if (errorDetails.rodErrors && errorDetails.rodErrors.length > 0) {
+          errors.push({
+            treatment_type: 'rod',
+            errors: errorDetails.rodErrors
+          });
+        }
+      } else {
+        // Fallback to parsing the error message
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        
+        // Check if we have light bath treatments that might have failed
+        if (recommendations.lightBath?.treatments && recommendations.lightBath.treatments.length > 0) {
+          const lightBathErrors: string[] = [];
+          
+          // Look for light bath related errors in the message
+          if (errorMessage.toLowerCase().includes('banho de luz') || 
+              errorMessage.toLowerCase().includes('light_bath')) {
+            lightBathErrors.push(errorMessage);
+          } else if (errorMessage.includes('422') || errorMessage.includes('Validation failed')) {
+            lightBathErrors.push('Erro de validação ao criar sessões de banho de luz. Verifique os dados informados.');
+          }
+          
+          if (lightBathErrors.length > 0) {
+            errors.push({
+              treatment_type: 'light_bath',
+              errors: lightBathErrors
+            });
+          }
+        }
+        
+        // Check if we have rod treatments that might have failed
+        if (recommendations.rod?.treatments && recommendations.rod.treatments.length > 0) {
+          const rodErrors: string[] = [];
+          
+          // Look for rod related errors in the message
+          if (errorMessage.toLowerCase().includes('bastão') || 
+              errorMessage.toLowerCase().includes('rod')) {
+            rodErrors.push(errorMessage);
+          } else if (errorMessage.includes('422') || errorMessage.includes('Validation failed')) {
+            rodErrors.push('Erro de validação ao criar sessões de tratamento com vara. Verifique os dados informados.');
+          }
+          
+          if (rodErrors.length > 0) {
+            errors.push({
+              treatment_type: 'rod',
+              errors: rodErrors
+            });
+          }
+        }
+        
+        // If no specific treatment errors were found but we have recommendations, 
+        // create a generic error for the first treatment type
+        if (errors.length === 0) {
+          if (recommendations.lightBath?.treatments && recommendations.lightBath.treatments.length > 0) {
+            errors.push({
+              treatment_type: 'light_bath',
+              errors: [errorMessage || 'Erro inesperado ao criar sessões de banho de luz.']
+            });
+          } else if (recommendations.rod?.treatments && recommendations.rod.treatments.length > 0) {
+            errors.push({
+              treatment_type: 'rod',
+              errors: [errorMessage || 'Erro inesperado ao criar sessões de tratamento com vara.']
+            });
+          }
+        }
+      }
+    } catch (parseError) {
+      console.error('Error parsing session creation errors:', parseError);
+      
+      // Fallback: create generic errors for any treatment types that were requested
+      if (recommendations.lightBath?.treatments && recommendations.lightBath.treatments.length > 0) {
+        errors.push({
+          treatment_type: 'light_bath',
+          errors: ['Erro inesperado ao criar sessões de banho de luz.']
+        });
+      }
+      if (recommendations.rod?.treatments && recommendations.rod.treatments.length > 0) {
+        errors.push({
+          treatment_type: 'rod',
+          errors: ['Erro inesperado ao criar sessões de tratamento com vara.']
+        });
+      }
+    }
+    
+    return errors;
+  }, []);
 
   // Helper function to create treatment sessions from recommendations
   const createTreatmentSessionsFromRecommendations = useCallback(
@@ -69,7 +181,8 @@ export function usePostAttendanceForm({
     ): Promise<{ sessionIds: number[], sessions: CreatedTreatmentSession[] }> => {
       const createdSessionIds: number[] = [];
       const createdSessionsData: CreatedTreatmentSession[] = [];
-      const allErrors: string[] = [];
+      const lightBathErrors: string[] = [];
+      const rodErrors: string[] = [];
 
       try {
         // Create Light Bath sessions
@@ -80,51 +193,57 @@ export function usePostAttendanceForm({
           for (const treatment of recommendations.lightBath.treatments) {
             // Create a session for each location in the treatment
             for (const location of treatment.locations) {
-              const sessionRequest: CreateTreatmentSessionRequest = {
-                treatment_record_id: treatmentRecordId,
-                attendance_id: attendanceId,
-                patient_id: patientId,
-                treatment_type: "light_bath" as const,
-                body_location: location,
-                start_date: treatment.startDate.toISOString().split("T")[0],
-                planned_sessions: treatment.quantity,
-                duration_minutes: treatment.duration, // Duration is already in 7-minute units
-                color: treatment.color,
-                notes: `Banho de luz - ${treatment.color} - ${
-                  treatment.duration * 7
-                } minutos`,
-              };
-
-              const sessionResponse = await createTreatmentSession(sessionRequest);
-              if (sessionResponse.success && sessionResponse.value) {
-                const sessionData = sessionResponse.value;
-                createdSessionIds.push(sessionData.id);
-                // Transform the response to match our interface
-                const sessionForConfirmation: CreatedTreatmentSession = {
-                  id: sessionData.id,
+              try {
+                const sessionRequest: CreateTreatmentSessionRequest = {
                   treatment_record_id: treatmentRecordId,
                   attendance_id: attendanceId,
                   patient_id: patientId,
-                  treatment_type: "light_bath",
+                  treatment_type: "light_bath" as const,
                   body_location: location,
-                  start_date: treatment.startDate.toISOString().split("T")[0],
+                  start_date: `${treatment.startDate.getFullYear()}-${String(treatment.startDate.getMonth() + 1).padStart(2, '0')}-${String(treatment.startDate.getDate()).padStart(2, '0')}`,
                   planned_sessions: treatment.quantity,
-                  completed_sessions: 0,
-                  status: "scheduled",
-                  duration_minutes: treatment.duration,
+                  duration_minutes: treatment.duration, // Duration is already in 7-minute units
                   color: treatment.color,
-                  notes: `Banho de luz - ${treatment.color} - ${treatment.duration * 7} minutos`,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
+                  notes: `Banho de luz - ${treatment.color} - ${
+                    treatment.duration * 7
+                  } minutos`,
                 };
-                createdSessionsData.push(sessionForConfirmation);
 
-                // NOTE: Attendances are now automatically created by the backend
-                // when treatment sessions are created (see TreatmentRecordService)
-                console.log(`✅ Treatment session created: ${sessionData.id} - Attendances will be automatically scheduled`);
-              } else {
-                allErrors.push(
-                  `Erro ao criar sessão de banho de luz para ${location}: ${sessionResponse.error}`
+                const sessionResponse = await createTreatmentSession(sessionRequest);
+                if (sessionResponse.success && sessionResponse.value) {
+                  const sessionData = sessionResponse.value;
+                  createdSessionIds.push(sessionData.id);
+                  // Transform the response to match our interface
+                  const sessionForConfirmation: CreatedTreatmentSession = {
+                    id: sessionData.id,
+                    treatment_record_id: treatmentRecordId,
+                    attendance_id: attendanceId,
+                    patient_id: patientId,
+                    treatment_type: "light_bath",
+                    body_location: location,
+                    start_date: `${treatment.startDate.getFullYear()}-${String(treatment.startDate.getMonth() + 1).padStart(2, '0')}-${String(treatment.startDate.getDate()).padStart(2, '0')}`,
+                    planned_sessions: treatment.quantity,
+                    completed_sessions: 0,
+                    status: "scheduled",
+                    duration_minutes: treatment.duration,
+                    color: treatment.color,
+                    notes: `Banho de luz - ${treatment.color} - ${treatment.duration * 7} minutos`,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  };
+                  createdSessionsData.push(sessionForConfirmation);
+
+                  // NOTE: Attendances are now automatically created by the backend
+                  // when treatment sessions are created (see TreatmentRecordService)
+                  console.log(`✅ Treatment session created: ${sessionData.id} - Attendances will be automatically scheduled`);
+                } else {
+                  lightBathErrors.push(
+                    `Erro ao criar sessão de banho de luz para ${location}: ${sessionResponse.error}`
+                  );
+                }
+              } catch (error) {
+                lightBathErrors.push(
+                  `Erro inesperado ao criar sessão de banho de luz para ${location}: ${error instanceof Error ? error.message : String(error)}`
                 );
               }
             }
@@ -139,67 +258,75 @@ export function usePostAttendanceForm({
           for (const treatment of recommendations.rod.treatments) {
             // Create a session for each location in the treatment
             for (const location of treatment.locations) {
-              const sessionRequest: CreateTreatmentSessionRequest = {
-                treatment_record_id: treatmentRecordId,
-                attendance_id: attendanceId,
-                patient_id: patientId,
-                treatment_type: "rod" as const,
-                body_location: location,
-                start_date: treatment.startDate.toISOString().split("T")[0],
-                planned_sessions: treatment.quantity,
-                notes: `Tratamento com bastão`,
-              };
-
-              const sessionResponse = await createTreatmentSession(sessionRequest);
-              if (sessionResponse.success && sessionResponse.value) {
-                const sessionData = sessionResponse.value;
-                createdSessionIds.push(sessionData.id);
-                // Transform the response to match our interface
-                const sessionForConfirmation: CreatedTreatmentSession = {
-                  id: sessionData.id,
+              try {
+                const sessionRequest: CreateTreatmentSessionRequest = {
                   treatment_record_id: treatmentRecordId,
                   attendance_id: attendanceId,
                   patient_id: patientId,
-                  treatment_type: "rod",
+                  treatment_type: "rod" as const,
                   body_location: location,
-                  start_date: treatment.startDate.toISOString().split("T")[0],
+                  start_date: `${treatment.startDate.getFullYear()}-${String(treatment.startDate.getMonth() + 1).padStart(2, '0')}-${String(treatment.startDate.getDate()).padStart(2, '0')}`,
                   planned_sessions: treatment.quantity,
-                  completed_sessions: 0,
-                  status: "scheduled",
                   notes: `Tratamento com bastão`,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
                 };
-                createdSessionsData.push(sessionForConfirmation);
 
-                // NOTE: Attendances are now automatically created by the backend
-                // when treatment sessions are created (see TreatmentRecordService)
-                console.log(`✅ Treatment session created: ${sessionData.id} - Attendances will be automatically scheduled`);
-              } else {
-                allErrors.push(
-                  `Erro ao criar sessão com bastão para ${location}: ${sessionResponse.error}`
+                const sessionResponse = await createTreatmentSession(sessionRequest);
+                if (sessionResponse.success && sessionResponse.value) {
+                  const sessionData = sessionResponse.value;
+                  createdSessionIds.push(sessionData.id);
+                  // Transform the response to match our interface
+                  const sessionForConfirmation: CreatedTreatmentSession = {
+                    id: sessionData.id,
+                    treatment_record_id: treatmentRecordId,
+                    attendance_id: attendanceId,
+                    patient_id: patientId,
+                    treatment_type: "rod",
+                    body_location: location,
+                    start_date: `${treatment.startDate.getFullYear()}-${String(treatment.startDate.getMonth() + 1).padStart(2, '0')}-${String(treatment.startDate.getDate()).padStart(2, '0')}`,
+                    planned_sessions: treatment.quantity,
+                    completed_sessions: 0,
+                    status: "scheduled",
+                    notes: `Tratamento com bastão`,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  };
+                  createdSessionsData.push(sessionForConfirmation);
+
+                  // NOTE: Attendances are now automatically created by the backend
+                  // when treatment sessions are created (see TreatmentRecordService)
+                  console.log(`✅ Treatment session created: ${sessionData.id} - Attendances will be automatically scheduled`);
+                } else {
+                  rodErrors.push(
+                    `Erro ao criar sessão com bastão para ${location}: ${sessionResponse.error}`
+                  );
+                }
+              } catch (error) {
+                rodErrors.push(
+                  `Erro inesperado ao criar sessão com bastão para ${location}: ${error instanceof Error ? error.message : String(error)}`
                 );
               }
             }
           }
         }
 
-        // If there are any errors, throw them to be displayed to the user
+        // If there are any errors, throw them with the collected error details
+        const allErrors = [...lightBathErrors, ...rodErrors];
         if (allErrors.length > 0) {
-          throw new Error(allErrors.join("\n\n"));
+          // Create a structured error that includes treatment type information
+          const errorDetails = {
+            lightBathErrors,
+            rodErrors,
+            allErrors
+          };
+          const error = new Error(allErrors.join("\n\n"));
+          (error as Error & { errorDetails: typeof errorDetails }).errorDetails = errorDetails;
+          throw error;
         }
 
         return { sessionIds: createdSessionIds, sessions: createdSessionsData };
       } catch (error) {
-        // If it's our custom error with collected messages, re-throw it
-        if (error instanceof Error && allErrors.length > 0) {
-          throw error;
-        }
-
-        // For unexpected errors, wrap them
-        throw new Error(
-          `Erro inesperado ao criar sessões de tratamento: ${error}`
-        );
+        // Re-throw the error to be handled by the calling function
+        throw error;
       }
     },
     [patientId, attendanceId]
@@ -307,22 +434,38 @@ export function usePostAttendanceForm({
         const result = await onSubmit(data);
 
         // Then, create treatment sessions for lightbath/rod recommendations
-        const { sessionIds, sessions } = await createTreatmentSessionsFromRecommendations(
-          data.recommendations,
-          result.treatmentRecordId
-        );
+        try {
+          const { sessionIds, sessions } = await createTreatmentSessionsFromRecommendations(
+            data.recommendations,
+            result.treatmentRecordId
+          );
 
-        // Store created sessions for confirmation display
-        setCreatedSessions(sessions);
+          // Store created sessions for confirmation display
+          setCreatedSessions(sessions);
 
-        // Notify parent component about created sessions (for backward compatibility)
-        if (sessionIds.length > 0 && onTreatmentSessionsCreated) {
-          onTreatmentSessionsCreated(sessionIds);
-        }
+          // Notify parent component about created sessions (for backward compatibility)
+          if (sessionIds.length > 0 && onTreatmentSessionsCreated) {
+            onTreatmentSessionsCreated(sessionIds);
+          }
 
-        // Show confirmation view if sessions were created
-        if (sessions.length > 0) {
-          setShowConfirmation(true);
+          // Show confirmation view if sessions were created
+          if (sessions.length > 0) {
+            setShowConfirmation(true);
+          }
+        } catch (sessionError) {
+          // Handle treatment session creation errors specifically
+          console.error("Treatment session creation failed:", sessionError);
+          
+          // Parse the error and convert it to TreatmentSessionError format
+          const parsedErrors = parseSessionCreationErrors(sessionError, data.recommendations);
+          
+          if (parsedErrors.length > 0) {
+            setSessionErrors(parsedErrors);
+            setShowErrors(true);
+          } else {
+            // If we can't parse the error, show it as a general error
+            throw sessionError;
+          }
         }
       } catch (error) {
         // If spiritual treatment submission fails, don't create sessions
@@ -330,7 +473,7 @@ export function usePostAttendanceForm({
         throw error;
       }
     },
-    [onSubmit, createTreatmentSessionsFromRecommendations, onTreatmentSessionsCreated, setCreatedSessions, setShowConfirmation]
+    [onSubmit, createTreatmentSessionsFromRecommendations, onTreatmentSessionsCreated, setCreatedSessions, setShowConfirmation, parseSessionCreationErrors, setSessionErrors, setShowErrors]
   );
 
   const {
@@ -430,6 +573,19 @@ export function usePostAttendanceForm({
     setCreatedSessions([]);
   }, []);
 
+  // Function to reset error state
+  const resetErrors = useCallback(() => {
+    setShowErrors(false);
+    setSessionErrors([]);
+  }, []);
+
+  // Function to retry treatment session creation
+  const retrySessionCreation = useCallback(() => {
+    resetErrors();
+    // Note: This would typically trigger a new submission attempt
+    // The actual retry logic would depend on how the form is structured
+  }, [resetErrors]);
+
   return {
     // Form state and handlers
     formData,
@@ -456,6 +612,12 @@ export function usePostAttendanceForm({
     showConfirmation,
     createdSessions,
     resetConfirmation,
+    
+    // Error states
+    showErrors,
+    sessionErrors,
+    resetErrors,
+    retrySessionCreation,
     
     // Utility functions
     formatDateForInput,

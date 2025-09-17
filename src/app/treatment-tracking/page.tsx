@@ -250,7 +250,7 @@ export default function TreatmentTrackingPage() {
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">
-                    Tratamento {selectedSession.type} -{" "}
+                    Tratamento {selectedSession.treatment_type} -{" "}
                     {getPatientName(selectedSession.patient_id)}
                   </h3>
                   <button

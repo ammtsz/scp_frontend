@@ -9,6 +9,7 @@ import {
   TreatmentRecommendationsTab,
 } from "../Forms/PostAttendanceForms/Tabs";
 import TreatmentSessionConfirmation from "../Forms/PostAttendanceForms/components/TreatmentSessionConfirmation";
+import TreatmentSessionErrors from "../Forms/PostAttendanceForms/components/TreatmentSessionErrors";
 import type {
   SpiritualTreatmentData,
   TreatmentStatus,
@@ -55,6 +56,10 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
     showConfirmation,
     createdSessions,
     resetConfirmation,
+    showErrors,
+    sessionErrors,
+    resetErrors,
+    retrySessionCreation,
   } = usePostAttendanceForm({
     attendanceId,
     patientId,
@@ -93,7 +98,20 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
   // Handle confirmation acknowledgment
   const handleConfirmationAcknowledge = () => {
     resetConfirmation();
-    onCancel(); // Close the modal after confirmation
+    onCancel(); // Close modal after acknowledgment
+  };
+
+  // Handle error acknowledgment
+  const handleErrorContinue = () => {
+    resetErrors();
+    onCancel(); // Close modal after acknowledgment
+  };
+
+  // Handle error retry
+  const handleErrorRetry = () => {
+    retrySessionCreation();
+    // The retry logic would depend on the specific implementation
+    // For now, we'll just reset the error state
   };
 
   // Auto-scroll to top on error
@@ -174,39 +192,58 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
     <TabbedModal
       isOpen={true}
       onClose={onCancel}
-      title={showConfirmation ? 
-        `Tratamento Concluído - ${patientName}` : 
-        `Formulário de Tratamento Espiritual - ${patientName}`
+      title={
+        showConfirmation
+          ? `Tratamento Concluído - ${patientName}`
+          : showErrors
+          ? `Problemas no Tratamento - ${patientName}`
+          : `Formulário de Tratamento Espiritual - ${patientName}`
       }
-      subtitle={showConfirmation ? 
-        "Agendamentos criados automaticamente" : 
-        `Atendimento #${attendanceId} • Paciente #${patientId}`
+      subtitle={
+        showConfirmation
+          ? "Agendamentos criados automaticamente"
+          : showErrors
+          ? "Alguns agendamentos não puderam ser criados"
+          : `Atendimento #${attendanceId} • Paciente #${patientId}`
       }
-      tabs={showConfirmation ? [] : tabs} // Hide tabs in confirmation view
+      tabs={showConfirmation || showErrors ? [] : tabs} // Hide tabs in confirmation/error view
       activeTab={activeTab}
       onTabChange={handleTabChange}
-      actions={showConfirmation ? null : actions} // Hide actions in confirmation view
+      actions={showConfirmation || showErrors ? null : actions} // Hide actions in confirmation/error view
       maxWidth="2xl"
     >
-      {/* Only show errors when not in confirmation mode */}
-      {!showConfirmation && error && (
-        <ErrorDisplay error={error} dismissible={true} onDismiss={clearError} />
+      {/* Only show errors when not in confirmation or error mode */}
+      {!showConfirmation && !showErrors && error && (
+        <ErrorDisplay
+          error={error}
+          dismissible={true}
+          onDismiss={clearError}
+          className="mb-4"
+        />
       )}
 
-      {!showConfirmation && fetchError && (
+      {!showConfirmation && !showErrors && fetchError && (
         <ErrorDisplay
           error={fetchError}
           dismissible={true}
           onDismiss={() => setFetchError(null)}
+          className="mb-4"
         />
       )}
 
-      {/* Render confirmation or form content */}
+      {/* Render confirmation, errors, or form content */}
       {showConfirmation ? (
         <TreatmentSessionConfirmation
           sessions={createdSessions}
           patientName={patientName}
           onAcknowledge={handleConfirmationAcknowledge}
+        />
+      ) : showErrors ? (
+        <TreatmentSessionErrors
+          errors={sessionErrors}
+          patientName={patientName}
+          onRetry={handleErrorRetry}
+          onContinue={handleErrorContinue}
         />
       ) : (
         renderTabContent()
