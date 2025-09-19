@@ -47,7 +47,7 @@ export const useExternalCheckIn = ({
           attendancesByDate[type as IAttendanceType].checkedIn.push({
             name: unscheduledCheckIn.name,
             priority: unscheduledCheckIn.priority || "3",
-            checkedInTime: new Date(),
+            checkedInTime: new Date().toTimeString().split(' ')[0],
           });
         }
       });

@@ -58,7 +58,7 @@ const mockExistingAttendances = [
       name: "João Silva",
     },
     status: "checked_in",
-    checkedInAt: "2025-01-15T10:00:00Z",
+    checkedInTime: "10:00:00",
     createdAt: "2025-01-15T10:00:00Z",
     updatedAt: "2025-01-15T10:00:00Z",
   },
@@ -142,7 +142,7 @@ describe("PatientWalkInForm", () => {
         attendanceType: "lightBath",
         patientId: 1,
         status: "checked_in",
-        checkedInAt: "2025-01-15T11:00:00Z",
+        checkedInTime: "11:00:00",
         createdAt: "2025-01-15T11:00:00Z",
         updatedAt: "2025-01-15T11:00:00Z",
       });

@@ -52,10 +52,10 @@ export interface AttendanceResponseDto {
   status: AttendanceStatus;
   scheduled_date: string; // YYYY-MM-DD
   scheduled_time: string; // HH:mm
-  checked_in_at?: string; // ISO datetime string
-  started_at?: string; // ISO datetime string
-  completed_at?: string; // ISO datetime string
-  cancelled_at?: string; // ISO datetime string
+  checked_in_time?: string; // HH:mm:ss
+  started_time?: string; // HH:mm:ss
+  completed_time?: string; // HH:mm:ss
+  cancelled_date?: string; // YYYY-MM-DD (only cancellation might happen on different date)
   absence_justified?: boolean;
   absence_notes?: string; // Notes explaining reason for absence
   notes?: string;
@@ -155,10 +155,14 @@ export interface UpdateAttendanceRequest {
   status?: AttendanceStatus;
   scheduled_date?: string; // YYYY-MM-DD
   scheduled_time?: string; // HH:mm
-  checked_in_at?: string; // ISO datetime string
-  started_at?: string; // ISO datetime string
-  completed_at?: string; // ISO datetime string
-  cancelled_at?: string; // ISO datetime string
+  checked_in_date?: string; // YYYY-MM-DD
+  checked_in_time?: string; // HH:mm:ss
+  started_date?: string; // YYYY-MM-DD
+  started_time?: string; // HH:mm:ss
+  completed_date?: string; // YYYY-MM-DD
+  completed_time?: string; // HH:mm:ss
+  cancelled_date?: string; // YYYY-MM-DD
+  cancelled_time?: string; // HH:mm:ss
   absence_justified?: boolean;
   absence_notes?: string; // Notes explaining reason for absence
   notes?: string;
@@ -225,7 +229,7 @@ export interface TreatmentSessionResponseDto {
   attendance_id: number;
   patient_id: number;
   treatment_type: 'light_bath' | 'rod';
-  body_location: string;
+  body_locations: string[];
   start_date: string; // ISO date string
   planned_sessions: number;
   completed_sessions: number;

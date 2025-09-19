@@ -50,7 +50,6 @@ interface AttendanceModalsProps {
     data: SpiritualTreatmentData
   ) => Promise<{ treatmentRecordId: number }>;
   onTreatmentFormCancel: () => void;
-  onTreatmentSessionsCreated?: (sessionIds: number[]) => void;
 
   // End of day modal
   endOfDayModalOpen: boolean;
@@ -96,7 +95,6 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
   selectedAttendanceForTreatment,
   onTreatmentFormSubmit,
   onTreatmentFormCancel,
-  onTreatmentSessionsCreated,
   endOfDayModalOpen,
   onEndOfDayClose,
   onHandleCompletion,
@@ -158,7 +156,6 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
           }
           onSubmit={onTreatmentFormSubmit}
           onCancel={onTreatmentFormCancel}
-          onTreatmentSessionsCreated={onTreatmentSessionsCreated}
         />
       )}
 

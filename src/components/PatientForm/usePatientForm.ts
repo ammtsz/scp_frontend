@@ -172,7 +172,6 @@ export function usePatientForm() {
                 
                 const attendanceResult = await createAttendance(attendanceData);
                 if (attendanceResult.success) {
-                  console.log(`Próxima consulta agendada com sucesso para ${time}!`);
                   attendanceCreated = true;
                   // Refresh attendances to show the new appointment
                   await refreshCurrentDate();

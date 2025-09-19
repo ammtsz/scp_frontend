@@ -65,7 +65,7 @@ describe('Case Converters', () => {
         },
         attendance_info: {
           scheduled_time: '09:00',
-          checked_in_at: null
+          checked_in_time: null
         }
       };
 
@@ -76,7 +76,7 @@ describe('Case Converters', () => {
         },
         attendanceInfo: {
           scheduledTime: '09:00',
-          checkedInAt: null
+          checkedInTime: null
         }
       };
 
@@ -134,7 +134,7 @@ describe('Case Converters', () => {
         },
         attendanceInfo: {
           scheduledTime: '09:00',
-          checkedInAt: null
+          checkedInTime: null
         }
       };
 
@@ -145,7 +145,7 @@ describe('Case Converters', () => {
         },
         attendance_info: {
           scheduled_time: '09:00',
-          checked_in_at: null
+          checked_in_time: null
         }
       };
 
@@ -189,7 +189,7 @@ describe('Case Converters', () => {
         attendance_list: [
           {
             scheduled_date: '2025-01-15',
-            checked_in_at: null
+            checked_in_time: null
           }
         ]
       };

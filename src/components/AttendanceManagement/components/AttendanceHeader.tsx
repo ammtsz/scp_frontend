@@ -1,4 +1,5 @@
 import React from "react";
+import { ChevronLeft, ChevronRight } from "react-feather";
 
 interface AttendanceHeaderProps {
   selectedDate: string;
@@ -16,6 +17,18 @@ export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
     onDateChange(today);
   };
 
+  const handlePreviousDayClick = () => {
+    const previousDay = new Date(selectedDate);
+    previousDay.setDate(previousDay.getDate() - 1);
+    onDateChange(previousDay.toISOString().split("T")[0]);
+  };
+
+  const handleNextDayClick = () => {
+    const nextDay = new Date(selectedDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    onDateChange(nextDay.toISOString().split("T")[0]);
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto p-4">
       <h2 className="text-lg mb-4 text-[color:var(--primary-dark)] flex items-center gap-2">
@@ -29,6 +42,20 @@ export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
           onChange={(e) => onDateChange(e.target.value)}
           lang="pt-BR"
         />
+        <button
+          type="button"
+          className="button button-outline card-shadow"
+          onClick={handlePreviousDayClick}
+        >
+          <ChevronLeft />
+        </button>
+        <button
+          type="button"
+          className="button button-outline card-shadow"
+          onClick={handleNextDayClick}
+        >
+          <ChevronRight />
+        </button>
         <button
           type="button"
           className="button button-outline card-shadow"

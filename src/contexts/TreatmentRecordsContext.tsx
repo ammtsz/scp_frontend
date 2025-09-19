@@ -113,8 +113,8 @@ export const TreatmentRecordsProvider: React.FC<
       try {
         const result = await createTreatmentRecord(data);
         if (result.success && result.value) {
-          setTreatmentRecords((prev) => [...prev, result.value!]);
-          return result.value;
+          setTreatmentRecords((prev) => [...prev, result.value!.record]);
+          return result.value.record;
         } else {
           setError(result.error || "Failed to create treatment record");
           return null;

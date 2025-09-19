@@ -27,8 +27,7 @@ export const useNewPatientCheckIn = (): UseNewPatientCheckInReturn => {
     setAttendanceId(undefined);
   }, []);
 
-  const handleNewPatientSuccess = useCallback((updatedPatient: IPatient) => {
-    console.log("New patient check-in completed:", updatedPatient.name);
+  const handleNewPatientSuccess = useCallback(() => {
     // Patient automatically moved to checked-in column via context update
     // The modal will be closed automatically by the form
     setPatientToCheckIn(null);

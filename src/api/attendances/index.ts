@@ -73,30 +73,42 @@ export const deleteAttendance = async (id: string): Promise<ApiResponse<void>> =
 
 // Convenience methods for attendance status updates
 export const checkInAttendance = async (id: string): Promise<ApiResponse<AttendanceResponseDto>> => {
+  const now = new Date();
+  const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
+  
   return updateAttendance(id, {
     status: AttendanceStatus.CHECKED_IN,
-    checked_in_at: new Date().toISOString()
+    checked_in_time: time
   });
 };
 
 export const startAttendance = async (id: string): Promise<ApiResponse<AttendanceResponseDto>> => {
+  const now = new Date();
+  const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
+  
   return updateAttendance(id, {
     status: AttendanceStatus.IN_PROGRESS,
-    started_at: new Date().toISOString()
+    started_time: time
   });
 };
 
 export const completeAttendance = async (id: string): Promise<ApiResponse<AttendanceResponseDto>> => {
+  const now = new Date();
+  const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
+  
   return updateAttendance(id, {
     status: AttendanceStatus.COMPLETED,
-    completed_at: new Date().toISOString()
+    completed_time: time
   });
 };
 
 export const cancelAttendance = async (id: string): Promise<ApiResponse<AttendanceResponseDto>> => {
+  const now = new Date();
+  const date = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  
   return updateAttendance(id, {
     status: AttendanceStatus.CANCELLED,
-    cancelled_at: new Date().toISOString()
+    cancelled_date: date
   });
 };
 

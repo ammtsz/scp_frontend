@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useEndOfDay } from '../useEndOfDay';
-import type { IAttendanceStatusDetail } from '../../../types';
+import type { IAttendanceStatusDetail } from '@/types/globals';
 import type { ScheduledAbsence } from '../types';
 
 // Mock data factories
@@ -18,6 +18,7 @@ const createMockAttendance = (overrides: Partial<IAttendanceStatusDetail> = {}):
 const createMockScheduledAbsence = (overrides: Partial<ScheduledAbsence> = {}): ScheduledAbsence => ({
   patientId: 1,
   patientName: 'John Doe',
+  attendanceType: 'spiritual',
   ...overrides,
 });
 
@@ -26,6 +27,7 @@ describe('useEndOfDay', () => {
     incompleteAttendances: [],
     scheduledAbsences: [],
     onHandleCompletion: jest.fn(),
+    onReschedule: jest.fn(),
     onSubmitEndOfDay: jest.fn(),
   };
 
@@ -108,7 +110,7 @@ describe('useEndOfDay', () => {
     );
     
     act(() => {
-      result.current.handleJustificationChange(1, true, 'Medical appointment');
+      result.current.handleJustificationChange(1, 'spiritual', true, 'Medical appointment');
     });
     
     expect(result.current.absenceJustifications[0]).toEqual({
@@ -144,7 +146,7 @@ describe('useEndOfDay', () => {
     
     // Set justification
     act(() => {
-      result.current.handleJustificationChange(1, true);
+      result.current.handleJustificationChange(1, 'spiritual', true);
     });
     
     expect(result.current.canProceedFromAbsences).toBe(true);
@@ -160,7 +162,7 @@ describe('useEndOfDay', () => {
     
     // Set justification
     act(() => {
-      result.current.handleJustificationChange(1, true, 'Medical reason');
+      result.current.handleJustificationChange(1, 'spiritual', true, 'Medical reason');
     });
     
     await act(async () => {

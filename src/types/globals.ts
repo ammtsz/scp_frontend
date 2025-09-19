@@ -1,6 +1,6 @@
 export type IPriority = "1" | "2" | "3";
 export type IStatus = "N" | "T" | "A" | "F";
-export type IAttendanceType = "spiritual" | "lightBath" | "rod";
+export type IAttendanceType = "spiritual" | "lightBath" | "rod" | "combined"; // combined for calendar view
 export type IAttendanceProgression = "scheduled" | "checkedIn" | "onGoing" | "completed";
 
 // UI section types for the room layout
@@ -19,9 +19,9 @@ export interface IRecommendations {
 export interface IAttendanceStatusDetail {
   name: string; 
   priority: IPriority; 
-  checkedInTime?: Date | null; 
-  onGoingTime?: Date | null; 
-  completedTime?: Date | null;
+  checkedInTime?: string | null; 
+  onGoingTime?: string | null; 
+  completedTime?: string | null;
   // Backend sync data
   attendanceId?: number;
   patientId?: number;

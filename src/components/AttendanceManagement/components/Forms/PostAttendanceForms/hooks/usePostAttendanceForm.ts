@@ -17,8 +17,8 @@ export interface SpiritualTreatmentData {
   // Main form fields from requirements
   mainComplaint: string;
   treatmentStatus: TreatmentStatus;
-  attendanceDate: Date;
-  startDate: Date;
+  attendanceDate: string;
+  startDate: string;
   returnWeeks: number;
 
   // Recommendations section (reusing existing structure)
@@ -63,8 +63,8 @@ export function usePostAttendanceForm({
   const [sessionErrors, setSessionErrors] = useState<TreatmentSessionError[]>([]);
   const [showErrors, setShowErrors] = useState(false);
 
-  // Get current date for default values (memoized to prevent dependency changes)
-  const today = useMemo(() => new Date(), []);
+  // Get current date as string for default values (memoized to prevent dependency changes)
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   // Helper function to parse session creation errors into the format expected by TreatmentSessionErrors
   const parseSessionCreationErrors = useCallback((
@@ -200,7 +200,7 @@ export function usePostAttendanceForm({
                   patient_id: patientId,
                   treatment_type: "light_bath" as const,
                   body_location: location,
-                  start_date: `${treatment.startDate.getFullYear()}-${String(treatment.startDate.getMonth() + 1).padStart(2, '0')}-${String(treatment.startDate.getDate()).padStart(2, '0')}`,
+                  start_date: treatment.startDate,
                   planned_sessions: treatment.quantity,
                   duration_minutes: treatment.duration, // Duration is already in 7-minute units
                   color: treatment.color,
@@ -221,7 +221,7 @@ export function usePostAttendanceForm({
                     patient_id: patientId,
                     treatment_type: "light_bath",
                     body_location: location,
-                    start_date: `${treatment.startDate.getFullYear()}-${String(treatment.startDate.getMonth() + 1).padStart(2, '0')}-${String(treatment.startDate.getDate()).padStart(2, '0')}`,
+                    start_date: treatment.startDate,
                     planned_sessions: treatment.quantity,
                     completed_sessions: 0,
                     status: "scheduled",
@@ -233,9 +233,8 @@ export function usePostAttendanceForm({
                   };
                   createdSessionsData.push(sessionForConfirmation);
 
-                  // NOTE: Attendances are now automatically created by the backend
-                  // when treatment sessions are created (see TreatmentRecordService)
-                  console.log(`✅ Treatment session created: ${sessionData.id} - Attendances will be automatically scheduled`);
+                  // NOTE: Attendances are automatically created by the backend
+                  // when treatment sessions are created (see TreatmentSessionService.createSessionRecordsForTreatment)
                 } else {
                   lightBathErrors.push(
                     `Erro ao criar sessão de banho de luz para ${location}: ${sessionResponse.error}`
@@ -265,7 +264,7 @@ export function usePostAttendanceForm({
                   patient_id: patientId,
                   treatment_type: "rod" as const,
                   body_location: location,
-                  start_date: `${treatment.startDate.getFullYear()}-${String(treatment.startDate.getMonth() + 1).padStart(2, '0')}-${String(treatment.startDate.getDate()).padStart(2, '0')}`,
+                  start_date: treatment.startDate,
                   planned_sessions: treatment.quantity,
                   notes: `Tratamento com bastão`,
                 };
@@ -282,7 +281,7 @@ export function usePostAttendanceForm({
                     patient_id: patientId,
                     treatment_type: "rod",
                     body_location: location,
-                    start_date: `${treatment.startDate.getFullYear()}-${String(treatment.startDate.getMonth() + 1).padStart(2, '0')}-${String(treatment.startDate.getDate()).padStart(2, '0')}`,
+                    start_date: treatment.startDate,
                     planned_sessions: treatment.quantity,
                     completed_sessions: 0,
                     status: "scheduled",
@@ -292,9 +291,8 @@ export function usePostAttendanceForm({
                   };
                   createdSessionsData.push(sessionForConfirmation);
 
-                  // NOTE: Attendances are now automatically created by the backend
-                  // when treatment sessions are created (see TreatmentRecordService)
-                  console.log(`✅ Treatment session created: ${sessionData.id} - Attendances will be automatically scheduled`);
+                  // NOTE: Attendances are automatically created by the backend
+                  // when treatment sessions are created (see TreatmentSessionService.createSessionRecordsForTreatment)
                 } else {
                   rodErrors.push(
                     `Erro ao criar sessão com bastão para ${location}: ${sessionResponse.error}`
@@ -488,8 +486,8 @@ export function usePostAttendanceForm({
     initialState: {
       mainComplaint: initialData?.mainComplaint || "",
       treatmentStatus: initialData?.treatmentStatus || "T", // Default to "T - Em tratamento"
-      attendanceDate: initialData?.attendanceDate || today,
-      startDate: initialData?.startDate || today,
+      attendanceDate: typeof initialData?.attendanceDate === 'string' ? initialData.attendanceDate : today,
+      startDate: typeof initialData?.startDate === 'string' ? initialData.startDate : today,
       returnWeeks: initialData?.returnWeeks || 1, // Default to 1 week
       food: initialData?.food || "",
       water: initialData?.water || "",
@@ -521,7 +519,7 @@ export function usePostAttendanceForm({
         mainComplaint: patientData.main_complaint || prev.mainComplaint,
         // 4. Data de Início - if patient is new, set for current date, otherwise set for patient start date and disable
         startDate: patientData.start_date
-          ? new Date(patientData.start_date)
+          ? patientData.start_date // Already in YYYY-MM-DD format
           : currentTreatmentStatus === "N"
           ? today
           : prev.startDate,
@@ -544,16 +542,16 @@ export function usePostAttendanceForm({
   const handleDateChange = useCallback(
     (field: "attendanceDate" | "startDate") =>
       (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value ? new Date(e.target.value) : new Date();
+        const value = e.target.value || today;
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (error) clearError();
       },
-    [setFormData, error, clearError]
+    [setFormData, error, clearError, today]
   );
 
-  // Format date for input field (YYYY-MM-DD)
-  const formatDateForInput = (date: Date) => {
-    return date.toISOString().split("T")[0];
+  // Format date for input field (already in YYYY-MM-DD format)
+  const formatDateForInput = (date: string) => {
+    return date;
   };
 
   // Get treatment status label

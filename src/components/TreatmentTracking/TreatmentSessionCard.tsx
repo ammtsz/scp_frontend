@@ -120,7 +120,7 @@ export function TreatmentSessionCard({
           <div className="flex items-center gap-2">
             <span className="text-gray-500">�</span>
             <span className="text-gray-700">
-              Local: {session.body_location}
+              Local: {session.body_locations}
             </span>
           </div>
         </div>

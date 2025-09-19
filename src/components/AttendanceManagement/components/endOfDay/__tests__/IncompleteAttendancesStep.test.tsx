@@ -10,7 +10,7 @@ const createMockAttendance = (
 ): IAttendanceStatusDetailWithType => ({
   name: "John Doe",
   priority: "1",
-  checkedInTime: new Date("2024-01-15T09:00:00"),
+  checkedInTime: "09:00:00",
   onGoingTime: null,
   completedTime: null,
   attendanceId: 1,
@@ -84,7 +84,7 @@ describe("IncompleteAttendancesStep", () => {
   });
 
   it("displays check-in time when available", () => {
-    const checkedInTime = new Date("2024-01-15T10:30:00");
+    const checkedInTime = "10:30:00";
     const incompleteAttendances = [
       createMockAttendance({
         checkedInTime,

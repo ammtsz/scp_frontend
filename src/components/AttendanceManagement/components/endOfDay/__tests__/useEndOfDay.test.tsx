@@ -32,6 +32,7 @@ describe("useEndOfDay", () => {
     incompleteAttendances: [],
     scheduledAbsences: [],
     onHandleCompletion: mockOnHandleCompletion,
+    onReschedule: jest.fn(),
     onSubmitEndOfDay: mockOnSubmitEndOfDay,
   };
 

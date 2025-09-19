@@ -13,6 +13,13 @@ import {
 } from "../../styles/cardStyles";
 import AttendanceTimes from "./AttendanceTimes";
 import TreatmentSessionProgress from "../../../TreatmentSessionProgress";
+import TreatmentIndicator from "./TreatmentIndicator";
+import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
+import type { IGroupedPatient } from "../../utils/patientGrouping";
+import {
+  getCombinedTreatmentStyles,
+  getCombinedTreatmentLabel,
+} from "../../utils/patientGrouping";
 
 interface AttendanceCardProps {
   patient: IAttendanceStatusDetail;
@@ -29,6 +36,9 @@ interface AttendanceCardProps {
   index: number;
   isNextToBeAttended?: boolean;
   isDayFinalized?: boolean;
+  treatmentInfo?: TreatmentInfo;
+  onTreatmentInfoClick?: () => void;
+  groupedPatient?: IGroupedPatient;
 }
 
 const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
@@ -43,6 +53,9 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
     index,
     isNextToBeAttended = false,
     isDayFinalized = false,
+    treatmentInfo,
+    onTreatmentInfoClick,
+    groupedPatient,
   }) => {
     const typeConfig = getTypeIndicatorConfig(type);
 
@@ -51,10 +64,19 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
       dragged?.patientId === patient.patientId &&
       dragged?.status === status;
 
+    // Determine styling based on whether this is a grouped patient with combined treatments
+    const cardStyles = getTypeBasedStyles(
+      groupedPatient ? groupedPatient.combinedType : type
+    );
+
+    // const typeLabel = groupedPatient
+    //   ? getCombinedTreatmentLabel(groupedPatient.treatmentTypes)
+    //   : typeConfig.label;
+
     return (
       <li
         className={`relative h-24 w-full flex items-center justify-center p-2 rounded-lg
-        ${getTypeBasedStyles(type)}
+        ${cardStyles}
         bg-white text-center font-medium transition-all select-none
         ${isBeingDragged ? "opacity-60" : ""}
         ${isDayFinalized ? "opacity-50 cursor-not-allowed" : "cursor-move"}`}
@@ -66,24 +88,55 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
         }
         onDragEnd={isDayFinalized ? undefined : handleDragEnd}
       >
+        {/* TODO: Review */}
         {/* Type indicator badge - show for all types when using AttendanceCard */}
         {shouldShowTypeIndicator(type) && (
           <div
             className={`absolute top-1 left-1 rounded px-1 py-0.5 text-xs ${typeConfig.className}`}
           >
             {/* Treatment Session Progress for lightBath and rod types */}
-            {(type === "lightBath" || type === "rod") && patient.patientId && (
+            {(type === "lightBath" || type === "rod") &&
+              patient.patientId &&
+              !groupedPatient && (
+                <div className="mr-2 inline-block align-middle">
+                  <TreatmentSessionProgress
+                    patientId={patient.patientId}
+                    attendanceType={type === "lightBath" ? "light_bath" : "rod"}
+                    showDetails={false}
+                  />
+                </div>
+              )}
+            {/* Show combined treatment progress for grouped patients */}
+            {groupedPatient && patient.patientId && (
               <div className="mr-2 inline-block align-middle">
-                <TreatmentSessionProgress
-                  patientId={patient.patientId}
-                  attendanceType={type === "lightBath" ? "light_bath" : "rod"}
-                  showDetails={false}
-                />
+                {groupedPatient.treatmentTypes.includes("lightBath") && (
+                  <TreatmentSessionProgress
+                    patientId={patient.patientId}
+                    attendanceType="light_bath"
+                    showDetails={false}
+                  />
+                )}
+                {groupedPatient.treatmentTypes.includes("rod") && (
+                  <TreatmentSessionProgress
+                    patientId={patient.patientId}
+                    attendanceType="rod"
+                    showDetails={false}
+                  />
+                )}
               </div>
             )}
-            {typeConfig.label}
+            {/* {typeLabel} */}
           </div>
         )}
+
+        {/* TODO: remove */}
+        {/* Treatment indicator for combined treatment sessions */}
+        {/* {treatmentInfo && onTreatmentInfoClick && (
+          <TreatmentIndicator
+            treatmentInfo={treatmentInfo}
+            onInfoClick={onTreatmentInfoClick}
+          />
+        )} */}
 
         {/* Next to be attended indicator */}
         {isNextToBeAttended && (
@@ -100,6 +153,7 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
           {patient.name} ({patient.priority})
         </span>
 
+        {/* TODO: fix times */}
         <AttendanceTimes
           status={status}
           checkedInTime={patient.checkedInTime ?? undefined}

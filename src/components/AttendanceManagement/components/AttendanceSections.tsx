@@ -6,6 +6,8 @@ import {
   IAttendanceStatusDetail,
 } from "@/types/globals";
 import { IDraggedItem } from "../types";
+import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
+import { groupPatientsByTreatments } from "../utils/patientGrouping";
 
 interface AttendanceSectionsProps {
   collapsed: Record<string, boolean>;
@@ -28,6 +30,8 @@ interface AttendanceSectionsProps {
   onDelete: (attendanceId: number, patientName: string) => Promise<void>;
   toggleCollapsed: (type: IAttendanceType) => void;
   isDayFinalized?: boolean;
+  treatmentsByPatient?: Map<number, TreatmentInfo>;
+  onTreatmentInfoClick?: (patientId: number) => void;
 }
 
 export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
@@ -40,6 +44,8 @@ export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
   onDelete,
   toggleCollapsed,
   isDayFinalized = false,
+  treatmentsByPatient,
+  onTreatmentInfoClick,
 }) => {
   return (
     <div className="flex flex-col w-full">
@@ -80,6 +86,8 @@ export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
                   handleDrop={() => handleDropWithConfirm("spiritual", status)}
                   onDelete={onDelete}
                   isDayFinalized={isDayFinalized}
+                  treatmentDataMap={treatmentsByPatient}
+                  onTreatmentInfoClick={onTreatmentInfoClick}
                 />
               );
             })}
@@ -97,9 +105,24 @@ export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
             toggleCollapsed("rod");
           }}
         >
-          {collapsed.lightBath && collapsed.rod ? "▶ " : "▼ "}Banhos de Luz +
+          {collapsed.lightBath && collapsed.rod ? "▶ " : "▼ "}Banhos de Luz e
           Bastão
         </button>
+        {/* Dynamic legend based on available types - only show for non-spiritual */}
+        <div className="flex items-center gap-4 text-xs text-gray-800 my-4">
+          <span className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-yellow-400 rounded"></div>
+            Banho de Luz
+          </span>
+          <span className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+            Bastão
+          </span>
+          <span className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-green-500 rounded"></div>
+            Banho de Luz e Bastão
+          </span>
+        </div>
         {!(collapsed.lightBath && collapsed.rod) && (
           <div className="flex flex-row gap-4 w-full mb-8">
             {(
@@ -110,37 +133,32 @@ export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
                 "completed",
               ] as IAttendanceProgression[]
             ).map((status) => {
-              // Combine lightBath and rod patients with type information
-              const lightBathPatients = getPatients("lightBath", status).map(
-                (patient) => ({
-                  ...patient,
-                  originalType: "lightBath" as IAttendanceType,
-                })
+              // Get separate light bath and rod patients
+              const lightBathPatients = getPatients("lightBath", status);
+              const rodPatients = getPatients("rod", status);
+
+              // Group patients by patientId and combine their treatments
+              const groupedPatients = groupPatientsByTreatments(
+                lightBathPatients,
+                rodPatients
               );
-              const rodPatients = getPatients("rod", status).map((patient) => ({
-                ...patient,
-                originalType: "rod" as IAttendanceType,
-              }));
-              const mixedPatients = [...lightBathPatients, ...rodPatients];
 
               return (
                 <AttendanceColumn
                   key={status}
                   status={status}
-                  patients={mixedPatients}
+                  patients={groupedPatients}
                   dragged={dragged}
                   handleDragStart={handleDragStart}
                   handleDragEnd={handleDragEnd}
                   handleDrop={() => {
-                    // For mixed section, we need to determine the drop target based on drag source
-                    if (dragged?.type === "lightBath") {
-                      handleDropWithConfirm("lightBath", status);
-                    } else if (dragged?.type === "rod") {
-                      handleDropWithConfirm("rod", status);
-                    }
+                    if (dragged?.type)
+                      handleDropWithConfirm(dragged?.type, status);
                   }}
                   onDelete={onDelete}
                   isDayFinalized={isDayFinalized}
+                  treatmentDataMap={treatmentsByPatient}
+                  onTreatmentInfoClick={onTreatmentInfoClick}
                 />
               );
             })}

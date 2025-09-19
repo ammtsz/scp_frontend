@@ -3,6 +3,7 @@ import { useAttendances } from "@/contexts/AttendancesContext";
 import { usePatients } from "@/contexts/PatientsContext";
 import { updateAttendanceStatus } from "@/api/attendanceSync";
 import { sortPatientsByPriority } from "@/utils/businessRules";
+import { getTreatmentSessionsByPatient } from "@/api/treatment-sessions";
 import type {
   IAttendanceProgression,
   IAttendanceType,
@@ -23,11 +24,19 @@ interface UseDragAndDropProps {
     currentReturnWeeks?: number;
     isFirstAttendance: boolean;
   }) => void;
+  onTreatmentCompletionOpen?: (attendanceDetails: {
+    attendanceId: number;
+    patientId: number;
+    patientName: string;
+    attendanceType: IAttendanceType;
+    onComplete: (success: boolean) => void;
+  }) => void;
 }
 
 export const useDragAndDrop = ({
   onNewPatientDetected,
   onTreatmentFormOpen,
+  onTreatmentCompletionOpen,
 }: UseDragAndDropProps = {}) => {
   const { patients } = usePatients();
   const { attendancesByDate, setAttendancesByDate } = useAttendances();
@@ -68,10 +77,10 @@ export const useDragAndDrop = ({
       status: IAttendanceProgression
     ): IAttendanceStatusDetail => {
       const updates: Partial<IAttendanceStatusDetail> = {};
-      if (status === "checkedIn") updates.checkedInTime = new Date();
-      if (status === "onGoing") updates.onGoingTime = new Date();
+      if (status === "checkedIn") updates.checkedInTime = new Date().toTimeString().split(' ')[0];
+      if (status === "onGoing") updates.onGoingTime = new Date().toTimeString().split(' ')[0];
       if (status === "completed") {
-        updates.completedTime = new Date();
+        updates.completedTime = new Date().toTimeString().split(' ')[0];
         // Trigger treatment form modal when attendance is completed
         const fullPatient = patients.find((p) => p.name === patient.name);
         if (fullPatient && patient.attendanceId && patient.patientId) {
@@ -259,8 +268,45 @@ export const useDragAndDrop = ({
         return;
       }
 
-      // For same type moves (not involving multi-type scenarios), perform move directly
+      // For same type moves (not involving multi-type scenarios), check if moving to completed with treatments
       if (dragged.type === toType && dragged.status !== toStatus) {
+        // Check if moving to completed status and if the patient has active treatment sessions
+        if (toStatus === "completed" && patient.patientId && patient.attendanceId && onTreatmentCompletionOpen) {
+          // Check for active treatment sessions for this patient
+          getTreatmentSessionsByPatient(patient.patientId.toString())
+            .then((result) => {
+              if (result.success && result.value && result.value.length > 0) {
+                // Patient has active treatment sessions - open treatment completion modal
+                onTreatmentCompletionOpen({
+                  attendanceId: patient.attendanceId!,
+                  patientId: patient.patientId!,
+                  patientName: patient.name,
+                  attendanceType: dragged.type,
+                  onComplete: (success: boolean) => {
+                    if (success) {
+                      // Modal handled the completion, now perform the move
+                      performMove(toType, toStatus);
+                    }
+                    setDragged(null);
+                  },
+                });
+                return;
+              } else {
+                // No active treatment sessions - perform regular move
+                performMove(toType, toStatus);
+                setDragged(null);
+              }
+            })
+            .catch((error) => {
+              console.warn("Failed to check treatment sessions:", error);
+              // Fallback to regular move if API fails
+              performMove(toType, toStatus);
+              setDragged(null);
+            });
+          return;
+        }
+
+        // Regular move for other status changes
         performMove(toType, toStatus);
         setDragged(null);
         return;
@@ -275,6 +321,7 @@ export const useDragAndDrop = ({
       findPatient,
       patients,
       onNewPatientDetected,
+      onTreatmentCompletionOpen,
       performMove,
     ]
   );

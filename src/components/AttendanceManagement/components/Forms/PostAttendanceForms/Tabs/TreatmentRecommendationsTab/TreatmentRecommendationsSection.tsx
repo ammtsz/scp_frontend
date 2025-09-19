@@ -22,10 +22,12 @@ const TreatmentRecommendationsSection: React.FC<
   const handleLightBathToggle = useCallback(
     (enabled: boolean) => {
       if (enabled) {
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split("T")[0];
         onChange({
           ...recommendations,
           lightBath: {
-            startDate: new Date(),
+            startDate: today,
             treatments: [],
           },
         });
@@ -42,16 +44,19 @@ const TreatmentRecommendationsSection: React.FC<
     (locations: string[]) => {
       if (!recommendations.lightBath || locations.length === 0) return;
 
-      // Default start date: 1 week from today
+      // Default start date: 1 week from today in YYYY-MM-DD format
       const defaultStartDate = new Date();
       defaultStartDate.setDate(defaultStartDate.getDate() + 7);
+      const defaultStartDateString = defaultStartDate
+        .toISOString()
+        .split("T")[0];
 
       const newTreatment: LightBathLocationTreatment = {
         locations,
         color: "",
         duration: 1,
         quantity: 1,
-        startDate: defaultStartDate,
+        startDate: defaultStartDateString,
       };
 
       onChange({
@@ -106,10 +111,12 @@ const TreatmentRecommendationsSection: React.FC<
   const handleRodToggle = useCallback(
     (enabled: boolean) => {
       if (enabled) {
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split("T")[0];
         onChange({
           ...recommendations,
           rod: {
-            startDate: new Date(),
+            startDate: today,
             treatments: [],
           },
         });
@@ -126,14 +133,17 @@ const TreatmentRecommendationsSection: React.FC<
     (locations: string[]) => {
       if (!recommendations.rod || locations.length === 0) return;
 
-      // Default start date: 1 week from today
+      // Default start date: 1 week from today in YYYY-MM-DD format
       const defaultStartDate = new Date();
       defaultStartDate.setDate(defaultStartDate.getDate() + 7);
+      const defaultStartDateString = defaultStartDate
+        .toISOString()
+        .split("T")[0];
 
       const newTreatment: RodLocationTreatment = {
         locations,
         quantity: 1,
-        startDate: defaultStartDate,
+        startDate: defaultStartDateString,
       };
 
       onChange({

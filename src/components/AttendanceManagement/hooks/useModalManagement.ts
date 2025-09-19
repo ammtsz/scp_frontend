@@ -124,8 +124,6 @@ export const useModalManagement = ({
           throw new Error(response.error || "Failed to create treatment record");
         }
 
-        console.log("Treatment record created successfully:", response.value);
-
         // Close modal and refresh data
         setTreatmentFormOpen(false);
         setSelectedAttendanceForTreatment(null);

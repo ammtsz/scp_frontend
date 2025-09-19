@@ -44,7 +44,7 @@ export const PRIORITY_LABELS = {
  */
 export const sortPatientsByPriority = <T extends {
   priority: string;
-  checkedInTime?: Date | null;
+  checkedInTime?: string | null;
 }>(patients: T[]): T[] => {
   return [...patients].sort((a, b) => {
     // Primary sort: by priority (1 > 2 > 3)

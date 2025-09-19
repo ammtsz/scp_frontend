@@ -7,6 +7,8 @@ import {
 import { IDraggedItem } from "../types";
 import AttendanceCard from "./AttendanceCards/AttendanceCard";
 import { getStatusColor, getStatusLabel } from "../styles/cardStyles";
+import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
+import type { IGroupedPatient } from "../utils/patientGrouping";
 
 interface PatientWithType extends IAttendanceStatusDetail {
   originalType: IAttendanceType;
@@ -14,7 +16,7 @@ interface PatientWithType extends IAttendanceStatusDetail {
 
 interface AttendanceColumnProps {
   status: IAttendanceProgression;
-  patients: PatientWithType[];
+  patients: (PatientWithType | IGroupedPatient)[];
   dragged: IDraggedItem | null;
   handleDragStart: (
     type: IAttendanceType,
@@ -26,6 +28,8 @@ interface AttendanceColumnProps {
   handleDrop: () => void;
   onDelete: (attendanceId: number, patientName: string) => void;
   isDayFinalized?: boolean;
+  treatmentDataMap?: Map<number, TreatmentInfo>;
+  onTreatmentInfoClick?: (patientId: number) => void;
 }
 
 const AttendanceColumn: React.FC<AttendanceColumnProps> = React.memo(
@@ -38,6 +42,8 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = React.memo(
     handleDrop,
     onDelete,
     isDayFinalized = false,
+    treatmentDataMap,
+    onTreatmentInfoClick,
   }) => {
     // Sort patients by priority (1 = highest)
     const sortedPatients = React.useMemo(
@@ -54,7 +60,19 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = React.memo(
     const typeCounts = React.useMemo(
       () =>
         patients.reduce((acc, patient) => {
-          acc[patient.originalType] = (acc[patient.originalType] || 0) + 1;
+          // Check if this is a grouped patient with combined treatments
+          if ("combinedType" in patient && "treatmentTypes" in patient) {
+            const groupedPatient = patient as IGroupedPatient;
+            // Count each treatment type the patient has
+            groupedPatient.treatmentTypes.forEach((type) => {
+              acc[type] = (acc[type] || 0) + 1;
+            });
+          } else {
+            // Regular patient with single treatment type
+            const regularPatient = patient as PatientWithType;
+            acc[regularPatient.originalType] =
+              (acc[regularPatient.originalType] || 0) + 1;
+          }
           return acc;
         }, {} as Record<IAttendanceType, number>),
       [patients]
@@ -77,14 +95,20 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = React.memo(
             <div className="flex items-center gap-2 text-xs text-gray-500">
               {typeCounts.lightBath > 0 && (
                 <span className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-yellow-400 rounded"></div>
-                  BL ({typeCounts.lightBath})
+                  <div className="w-3 h-3 bg-yellow-400 rounded"></div>(
+                  {typeCounts.lightBath})
                 </span>
               )}
               {typeCounts.rod > 0 && (
                 <span className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                  BS ({typeCounts.rod})
+                  <div className="w-3 h-3 bg-blue-500 rounded"></div>(
+                  {typeCounts.rod})
+                </span>
+              )}
+              {typeCounts.combined > 0 && (
+                <span className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-green-500 rounded"></div>(
+                  {typeCounts.combined})
                 </span>
               )}
             </div>
@@ -98,25 +122,48 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = React.memo(
           onDrop={handleDrop}
         >
           <div className="space-y-2">
-            {sortedPatients.map((patient, index) => (
-              <AttendanceCard
-                key={`${patient.originalType}-${
-                  patient.attendanceId || patient.name
-                }-${index}`}
-                patient={patient}
-                type={patient.originalType}
-                status={status}
-                dragged={dragged}
-                handleDragStart={(type, idx, status) =>
-                  handleDragStart(type, idx, status, patient.patientId)
-                }
-                handleDragEnd={handleDragEnd}
-                onDelete={onDelete}
-                index={index}
-                isNextToBeAttended={status === "checkedIn" && index === 0}
-                isDayFinalized={isDayFinalized}
-              />
-            ))}
+            {sortedPatients.map((patient, index) => {
+              const treatmentInfo = patient.patientId
+                ? treatmentDataMap?.get(patient.patientId)
+                : undefined;
+
+              // Determine the original type to use for the card
+              const originalType =
+                "originalType" in patient
+                  ? (patient as PatientWithType).originalType
+                  : "lightBath"; // Default fallback for grouped patients
+
+              return (
+                <AttendanceCard
+                  key={`${originalType}-${
+                    patient.attendanceId || patient.name
+                  }-${index}`}
+                  patient={patient}
+                  type={originalType}
+                  status={status}
+                  dragged={dragged}
+                  handleDragStart={(type, idx, status) =>
+                    handleDragStart(type, idx, status, patient.patientId)
+                  }
+                  handleDragEnd={handleDragEnd}
+                  onDelete={onDelete}
+                  index={index}
+                  isNextToBeAttended={status === "checkedIn" && index === 0}
+                  isDayFinalized={isDayFinalized}
+                  treatmentInfo={treatmentInfo}
+                  onTreatmentInfoClick={
+                    treatmentInfo && onTreatmentInfoClick && patient.patientId
+                      ? () => onTreatmentInfoClick(patient.patientId!)
+                      : undefined
+                  }
+                  groupedPatient={
+                    "combinedType" in patient
+                      ? (patient as IGroupedPatient)
+                      : undefined
+                  }
+                />
+              );
+            })}
 
             {sortedPatients.length === 0 && (
               <div className="text-gray-400 text-center py-8 text-sm italic">

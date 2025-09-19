@@ -32,10 +32,10 @@ export interface Attendance {
   status: AttendanceProgression;
   scheduledDate: Date;
   scheduledTime: string; // HH:mm format
-  checkedInAt?: Date;
-  startedAt?: Date;
-  completedAt?: Date;
-  cancelledAt?: Date;
+  checkedInTime?: string; // HH:mm:ss
+  startedTime?: string; // HH:mm:ss
+  completedTime?: string; // HH:mm:ss
+  cancelledDate?: Date; // Only set when cancelled
   absenceJustified?: boolean;
   absenceNotes?: string; // Notes explaining reason for absence
   notes?: string;
@@ -106,10 +106,10 @@ export interface UpdateAttendanceRequest {
   status?: AttendanceProgression;
   scheduledDate?: Date;
   scheduledTime?: string;
-  checkedInAt?: Date;
-  startedAt?: Date;
-  completedAt?: Date;
-  cancelledAt?: Date;
+  checkedInTime?: string; // HH:mm:ss
+  startedTime?: string; // HH:mm:ss
+  completedTime?: string; // HH:mm:ss
+  cancelledDate?: Date; // Optional since only cancellations set this
   absenceJustified?: boolean;
   absenceNotes?: string; // Notes explaining reason for absence
   notes?: string;

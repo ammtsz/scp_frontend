@@ -48,9 +48,12 @@ export const updateAttendanceStatus = async (
       case 'scheduled':
         result = await updateAttendance(attendanceId.toString(), {
           status: AttendanceStatus.SCHEDULED,
-          checked_in_at: undefined,
-          started_at: undefined,
-          completed_at: undefined
+          checked_in_date: undefined,
+          checked_in_time: undefined,
+          started_date: undefined,
+          started_time: undefined,
+          completed_date: undefined,
+          completed_time: undefined
         });
         break;
       default:

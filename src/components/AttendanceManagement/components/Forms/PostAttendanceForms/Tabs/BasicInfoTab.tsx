@@ -25,9 +25,9 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
   onFormDataChange,
   onDateChange,
 }) => {
-  // Format date for input field (YYYY-MM-DD)
-  const formatDateForInput = (date: Date) => {
-    return date.toISOString().split("T")[0];
+  // Format date for input field (YYYY-MM-DD) - already a string
+  const formatDateForInput = (date: string) => {
+    return date; // Date is already in YYYY-MM-DD format
   };
 
   // Get treatment status label

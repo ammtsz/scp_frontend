@@ -40,6 +40,16 @@ export const getTreatmentSessionsByPatient = async (patientId: string): Promise<
   }
 };
 
+export const getTreatmentSessionsByDate = async (date: string): Promise<ApiResponse<TreatmentSessionResponseDto[]>> => {
+  try {
+    const { data } = await api.get(`/treatment-sessions/date/${date}`);
+    return { success: true, value: data };
+  } catch (error) {
+    const message = getErrorMessage((error as AxiosError).status);
+    return { success: false, error: message };
+  }
+};
+
 export const createTreatmentSession = async (sessionData: CreateTreatmentSessionRequest): Promise<ApiResponse<TreatmentSessionResponseDto>> => {
   try {
     const { data } = await api.post('/treatment-sessions', sessionData);

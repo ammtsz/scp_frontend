@@ -96,8 +96,6 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
         treatment_status: TreatmentStatus.IN_TREATMENT, // Change status from "N" (new) to "T" (in treatment)
       };
 
-      console.log("Updating patient with data:", updateData);
-
       const updateResult = await updatePatient(patient.id, updateData);
 
       if (!updateResult.success) {
@@ -113,7 +111,6 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
       // Check if we have an existing attendance to check in, or need to create a new one
       if (attendanceId) {
         // Check in the existing attendance
-        console.log("Checking in existing attendance:", attendanceId);
         const checkInResult = await checkInAttendance(attendanceId.toString());
         if (!checkInResult.success) {
           setError(

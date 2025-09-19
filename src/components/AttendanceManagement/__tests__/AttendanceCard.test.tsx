@@ -69,7 +69,7 @@ describe("AttendanceCard Component", () => {
     priority: "1" as IPriority,
     attendanceId: 123,
     patientId: 456,
-    checkedInTime: new Date("2025-01-15T09:00:00Z"),
+    checkedInTime: "09:00:00",
     onGoingTime: null,
     completedTime: null,
   };
@@ -364,9 +364,9 @@ describe("AttendanceCard Component", () => {
       const patientWithTimes: IAttendanceStatusDetail = {
         name: "Test Patient",
         priority: "1" as IPriority,
-        checkedInTime: new Date("2025-01-15T09:00:00Z"),
-        onGoingTime: new Date("2025-01-15T09:30:00Z"),
-        completedTime: new Date("2025-01-15T10:00:00Z"),
+        checkedInTime: "09:00:00",
+        onGoingTime: "09:30:00",
+        completedTime: "10:00:00",
       };
 
       render(<AttendanceCard {...defaultProps} patient={patientWithTimes} />);

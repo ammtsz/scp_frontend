@@ -35,10 +35,10 @@ describe('Attendances API', () => {
     status: AttendanceStatus.SCHEDULED,
     scheduled_date: '2024-01-01',
     scheduled_time: '10:00',
-    checked_in_at: undefined,
-    started_at: undefined,
-    completed_at: undefined,
-    cancelled_at: undefined,
+    checked_in_time: undefined,
+    started_time: undefined,
+    completed_time: undefined,
+    cancelled_date: undefined,
     notes: 'Regular consultation',
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
@@ -247,13 +247,13 @@ describe('Attendances API', () => {
       it('should check in attendance', async () => {
         const expectedUpdateData = {
           status: AttendanceStatus.CHECKED_IN,
-          checked_in_at: '2024-01-01T12:00:00.000Z'
+          checked_in_time: '12:00:00'
         };
         const mockResponse = { 
           data: { 
             ...mockAttendance, 
             status: AttendanceStatus.CHECKED_IN,
-            checked_in_at: '2024-01-01T12:00:00.000Z'
+            checked_in_time: '12:00:00'
           } 
         };
         mockApi.patch.mockResolvedValue(mockResponse);
@@ -266,7 +266,7 @@ describe('Attendances API', () => {
           value: {
             ...mockAttendance,
             status: AttendanceStatus.CHECKED_IN,
-            checked_in_at: '2024-01-01T12:00:00.000Z'
+            checked_in_time: '12:00:00'
           }
         });
       });
@@ -276,13 +276,13 @@ describe('Attendances API', () => {
       it('should start attendance', async () => {
         const expectedUpdateData = {
           status: AttendanceStatus.IN_PROGRESS,
-          started_at: '2024-01-01T12:00:00.000Z'
+          started_time: '12:00:00'
         };
         const mockResponse = { 
           data: { 
             ...mockAttendance, 
             status: AttendanceStatus.IN_PROGRESS,
-            started_at: '2024-01-01T12:00:00.000Z'
+            started_time: '12:00:00'
           } 
         };
         mockApi.patch.mockResolvedValue(mockResponse);
@@ -295,7 +295,7 @@ describe('Attendances API', () => {
           value: {
             ...mockAttendance,
             status: AttendanceStatus.IN_PROGRESS,
-            started_at: '2024-01-01T12:00:00.000Z'
+            started_time: '12:00:00'
           }
         });
       });
@@ -305,13 +305,13 @@ describe('Attendances API', () => {
       it('should complete attendance', async () => {
         const expectedUpdateData = {
           status: AttendanceStatus.COMPLETED,
-          completed_at: '2024-01-01T12:00:00.000Z'
+          completed_time: '12:00:00'
         };
         const mockResponse = { 
           data: { 
             ...mockAttendance, 
             status: AttendanceStatus.COMPLETED,
-            completed_at: '2024-01-01T12:00:00.000Z'
+            completed_time: '12:00:00'
           } 
         };
         mockApi.patch.mockResolvedValue(mockResponse);
@@ -324,7 +324,7 @@ describe('Attendances API', () => {
           value: {
             ...mockAttendance,
             status: AttendanceStatus.COMPLETED,
-            completed_at: '2024-01-01T12:00:00.000Z'
+            completed_time: '12:00:00'
           }
         });
       });
@@ -334,13 +334,13 @@ describe('Attendances API', () => {
       it('should cancel attendance', async () => {
         const expectedUpdateData = {
           status: AttendanceStatus.CANCELLED,
-          cancelled_at: '2024-01-01T12:00:00.000Z'
+          cancelled_date: '2024-01-01'
         };
         const mockResponse = { 
           data: { 
             ...mockAttendance, 
             status: AttendanceStatus.CANCELLED,
-            cancelled_at: '2024-01-01T12:00:00.000Z'
+            cancelled_date: '2024-01-01'
           } 
         };
         mockApi.patch.mockResolvedValue(mockResponse);
@@ -353,7 +353,7 @@ describe('Attendances API', () => {
           value: {
             ...mockAttendance,
             status: AttendanceStatus.CANCELLED,
-            cancelled_at: '2024-01-01T12:00:00.000Z'
+            cancelled_date: '2024-01-01'
           }
         });
       });

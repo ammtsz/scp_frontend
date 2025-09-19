@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { IPriority, IPatients } from "../../types/globals";
+import React, { useState } from "react";
+import { IPriority, IPatients, IAttendanceType } from "../../types/globals";
 import { useAttendanceData } from "./hooks/useAttendanceData";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useModalManagement } from "./hooks/useModalManagement";
@@ -9,12 +9,56 @@ import { useAttendanceWorkflow } from "./hooks/useAttendanceWorkflow";
 import { useNewPatientCheckIn } from "./hooks/useNewPatientCheckIn";
 import { useTreatmentWorkflow } from "./hooks/useTreatmentWorkflow";
 import { useExternalCheckIn } from "./hooks/useExternalCheckIn";
+import { useTreatmentIndicators } from "@/hooks/useTreatmentIndicators";
 import { useAttendances } from "../../contexts/AttendancesContext";
+import { getTreatmentSessionsByPatient } from "@/api/treatment-sessions";
+import type { TreatmentSessionResponseDto } from "@/api/types";
 import {
   getIncompleteAttendances,
   getCompletedAttendances,
   getScheduledAbsences,
 } from "./utils/attendanceDataUtils";
+
+// Treatment session type for the modal (matches the interface in PostTreatmentModal)
+interface TreatmentSession {
+  id: number;
+  treatmentType: "light_bath" | "rod";
+  bodyLocations: string[];
+  startDate: string;
+  plannedSessions: number;
+  completedSessions: number;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
+  color?: string;
+  durationMinutes?: number;
+}
+
+// Transformer function to convert API response to modal interface
+const transformTreatmentSession = (
+  apiSession: TreatmentSessionResponseDto
+): TreatmentSession => {
+  // Map API status to modal status
+  const statusMap: Record<
+    string,
+    "scheduled" | "in_progress" | "completed" | "cancelled"
+  > = {
+    active: "in_progress",
+    completed: "completed",
+    suspended: "cancelled",
+    cancelled: "cancelled",
+  };
+
+  return {
+    id: apiSession.id,
+    treatmentType: apiSession.treatment_type,
+    bodyLocations: apiSession.body_locations || [],
+    startDate: apiSession.start_date,
+    plannedSessions: apiSession.planned_sessions,
+    completedSessions: apiSession.completed_sessions,
+    status: statusMap[apiSession.status] || "scheduled",
+    color: apiSession.color,
+    durationMinutes: apiSession.duration_minutes,
+  };
+};
 
 // Components
 import { LoadingState, ErrorState } from "./components/StateComponents";
@@ -22,6 +66,7 @@ import { AttendanceHeader } from "./components/AttendanceHeader";
 import { AttendanceSections } from "./components/AttendanceSections";
 import { TreatmentWorkflowButtons } from "./components/TreatmentWorkflowButtons";
 import { AttendanceModals } from "./components/Modals/AttendanceModals";
+import PostTreatmentModal from "./components/Modals/PostTreatmentModal";
 
 const AttendanceManagement: React.FC<{
   unscheduledCheckIn?: {
@@ -32,6 +77,25 @@ const AttendanceManagement: React.FC<{
   } | null;
   onCheckInProcessed?: () => void;
 }> = ({ unscheduledCheckIn, onCheckInProcessed }) => {
+  // Treatment completion modal state
+  const [treatmentCompletionModal, setPostTreatmentModal] = useState<{
+    open: boolean;
+    attendanceId?: number;
+    patientId?: number;
+    patientName?: string;
+    attendanceType?: IAttendanceType;
+    onComplete?: (success: boolean) => void;
+  }>({
+    open: false,
+  });
+
+  // Treatment sessions state for the modal
+  const [treatmentSessions, setTreatmentSessions] = useState<
+    TreatmentSession[]
+  >([]);
+  const [loadingTreatmentSessions, setLoadingTreatmentSessions] =
+    useState(false);
+
   // Data management hook
   const {
     attendancesByDate,
@@ -44,6 +108,15 @@ const AttendanceManagement: React.FC<{
 
   // AttendancesContext for additional functionality
   const { setSelectedDate } = useAttendances();
+
+  // Treatment indicators hook
+  const { treatmentsByPatient } = useTreatmentIndicators(selectedDate);
+
+  // Handle treatment info click - placeholder for future treatment modal
+  const handleTreatmentInfoClick = (patientId: number) => {
+    // TODO: Open detailed treatment information modal for patient ID: ${patientId}
+    console.debug(`Treatment info requested for patient ${patientId}`);
+  };
 
   // New patient check-in hook
   const {
@@ -81,13 +154,65 @@ const AttendanceManagement: React.FC<{
       previousAttendances: [], // Default empty array
     };
 
-    console.log(
-      "New patient detected for check-in:",
-      patientForCheckIn,
-      "with attendanceId:",
-      attendanceId
-    );
     openNewPatientCheckIn(patientForCheckIn, attendanceId);
+  };
+
+  // Handle treatment completion modal
+  const handleTreatmentCompletionOpen = async (attendanceDetails: {
+    attendanceId: number;
+    patientId: number;
+    patientName: string;
+    attendanceType: IAttendanceType;
+    onComplete: (success: boolean) => void;
+  }) => {
+    setPostTreatmentModal({
+      open: true,
+      ...attendanceDetails,
+    });
+
+    // Fetch treatment sessions for this patient
+    setLoadingTreatmentSessions(true);
+    try {
+      const result = await getTreatmentSessionsByPatient(
+        attendanceDetails.patientId.toString()
+      );
+      if (result.success && result.value) {
+        // Transform API sessions to modal format
+        const transformedSessions = result.value.map(transformTreatmentSession);
+        setTreatmentSessions(transformedSessions);
+      } else {
+        console.error("Failed to fetch treatment sessions:", result.error);
+        setTreatmentSessions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching treatment sessions:", error);
+      setTreatmentSessions([]);
+    } finally {
+      setLoadingTreatmentSessions(false);
+    }
+  };
+
+  const handleTreatmentCompletionClose = () => {
+    setPostTreatmentModal({
+      open: false,
+    });
+    setTreatmentSessions([]);
+  };
+
+  const handleTreatmentCompletionSubmit = async (
+    completedLocations: Record<number, string[]>,
+    notes: string
+  ) => {
+    // TODO: Implement actual treatment completion logic here
+    // This should update the treatment sessions with completed locations and notes
+    console.log("Treatment completion:", { completedLocations, notes });
+
+    // Call the original onComplete callback
+    treatmentCompletionModal.onComplete?.(true);
+    handleTreatmentCompletionClose();
+
+    // Refresh data to reflect changes
+    refreshData();
   };
 
   // Modal management hook
@@ -119,6 +244,7 @@ const AttendanceManagement: React.FC<{
   } = useDragAndDrop({
     onNewPatientDetected: handleNewPatientDetected,
     onTreatmentFormOpen: openTreatmentFormModal,
+    onTreatmentCompletionOpen: handleTreatmentCompletionOpen,
   });
 
   // Workflow management hook
@@ -185,6 +311,8 @@ const AttendanceManagement: React.FC<{
         onDelete={isDayFinalized ? async () => {} : handleDelete}
         toggleCollapsed={toggleCollapsed}
         isDayFinalized={isDayFinalized}
+        treatmentsByPatient={treatmentsByPatient}
+        onTreatmentInfoClick={handleTreatmentInfoClick}
       />
 
       <TreatmentWorkflowButtons
@@ -212,14 +340,6 @@ const AttendanceManagement: React.FC<{
         selectedAttendanceForTreatment={selectedAttendanceForTreatment}
         onTreatmentFormSubmit={handleTreatmentFormSubmit}
         onTreatmentFormCancel={handleTreatmentFormCancel}
-        onTreatmentSessionsCreated={(sessionIds) => {
-          console.log(
-            `✅ Treatment sessions created: ${sessionIds.join(
-              ", "
-            )} - Refreshing attendance data`
-          );
-          refreshData();
-        }}
         endOfDayModalOpen={endOfDayModalOpen}
         onEndOfDayClose={closeEndOfDayModal}
         onHandleCompletion={handleAttendanceCompletion}
@@ -230,6 +350,26 @@ const AttendanceManagement: React.FC<{
         completedAttendances={getCompletedAttendances(attendancesByDate)}
         selectedDate={selectedDate}
       />
+
+      {/* Treatment Completion Modal */}
+      {treatmentCompletionModal.open && treatmentCompletionModal.patientId && (
+        <PostTreatmentModal
+          isOpen={treatmentCompletionModal.open}
+          onClose={handleTreatmentCompletionClose}
+          onComplete={handleTreatmentCompletionSubmit}
+          patientId={treatmentCompletionModal.patientId}
+          patientName={treatmentCompletionModal.patientName!}
+          treatmentInfo={
+            treatmentsByPatient.get(treatmentCompletionModal.patientId) || {
+              hasLightBath: false,
+              hasRod: false,
+              bodyLocations: [],
+              treatmentType: "none",
+            }
+          }
+          treatmentSessions={treatmentSessions}
+        />
+      )}
     </div>
   );
 };

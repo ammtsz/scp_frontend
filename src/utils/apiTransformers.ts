@@ -264,9 +264,10 @@ interface IAttendanceRecord {
   scheduledTime: string;
   priority: IPriority;
   notes: string;
-  checkedInAt: string | null;
-  startedAt: string | null;
-  completedAt: string | null;
+  checkedInTime?: string; // HH:mm:ss time only
+  startedTime?: string; // HH:mm:ss time only  
+  completedTime?: string; // HH:mm:ss time only
+  cancelledDate?: string; // YYYY-MM-DD date only (for cancellations)
 }
 
 // Transform a single attendance from API to local format
@@ -285,9 +286,10 @@ export const transformAttendanceFromApi = (apiAttendance: AttendanceResponseDto)
     scheduledTime: apiAttendance.scheduled_time,
     priority: transformPriority(patientPriority),
     notes: apiAttendance.notes || '',
-    checkedInAt: apiAttendance.checked_in_at ? new Date(apiAttendance.checked_in_at).toISOString() : null,
-    startedAt: apiAttendance.started_at ? new Date(apiAttendance.started_at).toISOString() : null,
-    completedAt: apiAttendance.completed_at ? new Date(apiAttendance.completed_at).toISOString() : null,
+    checkedInTime: apiAttendance.checked_in_time,
+    startedTime: apiAttendance.started_time,
+    completedTime: apiAttendance.completed_time,
+    cancelledDate: apiAttendance.cancelled_date,
   };
 };
 
@@ -299,9 +301,9 @@ export const transformAttendanceStatusFromApi = (apiAttendance: AttendanceRespon
   return {
     name: patientName,
     priority: transformPriority(patientPriority),
-    checkedInTime: apiAttendance.checked_in_at ? new Date(apiAttendance.checked_in_at) : null,
-    onGoingTime: apiAttendance.started_at ? new Date(apiAttendance.started_at) : null,
-    completedTime: apiAttendance.completed_at ? new Date(apiAttendance.completed_at) : null,
+    checkedInTime: apiAttendance.checked_in_time,
+    onGoingTime: apiAttendance.started_time,
+    completedTime: apiAttendance.completed_time,
     attendanceId: apiAttendance.id,
     patientId: apiAttendance.patient_id,
   };

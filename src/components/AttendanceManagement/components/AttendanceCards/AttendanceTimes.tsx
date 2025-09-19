@@ -3,9 +3,9 @@ import { IAttendanceProgression } from "@/types/globals";
 
 interface AttendanceTimesProps {
   status: IAttendanceProgression;
-  checkedInTime?: Date | null;
-  onGoingTime?: Date | null;
-  completedTime?: Date | null;
+  checkedInTime?: string | null;
+  onGoingTime?: string | null;
+  completedTime?: string | null;
 }
 
 const AttendanceTimes: React.FC<AttendanceTimesProps> = ({
@@ -13,12 +13,9 @@ const AttendanceTimes: React.FC<AttendanceTimesProps> = ({
   checkedInTime,
   onGoingTime,
 }) => {
-  const formatTime = (time: Date | null | undefined) => {
+  const formatTime = (time: string | null | undefined) => {
     if (!time) return "";
-    return new Date(time).toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return time.slice(0, 5); // Extract HH:mm from HH:mm:ss
   };
 
   const shouldShowCheckedIn = status !== "scheduled" && checkedInTime;

@@ -18,11 +18,12 @@ export const getStatusStyles = (status: IAttendanceProgression) => {
   );
 };
 
-export const getTypeBasedStyles = (attendanceType: IAttendanceType) => {
+export const getTypeBasedStyles = (attendanceType: IAttendanceType | "combined") => {
   const typeStyles = {
     rod: "shadow-[0_2px_6px_0_rgba(59,130,246,0.5)] border-l-4 border-l-blue-400",
     lightBath: "shadow-[0_2px_6px_0_rgba(251,191,36,0.5)] border-l-4 border-l-yellow-400",
     spiritual: "shadow-[0_2px_6px_0_rgba(107,114,128,0.5)] border-l-4 border-l-gray-400",
+    combined: "shadow-[0_2px_6px_0_rgba(34,197,94,0.5)] border-l-4 border-l-green-400",
   };
   return typeStyles[attendanceType] || typeStyles.spiritual;
 };
@@ -40,6 +41,10 @@ export const getTypeIndicatorConfig = (attendanceType: IAttendanceType) => {
     spiritual: {
       className: "text-gray-600",
       label: "Consulta Espiritual",
+    },
+    combined: {
+      className: "text-green-600",
+      label: "Combinado",
     },
   };
   
@@ -87,4 +92,25 @@ export const getPriorityLabel = (priority: string) => {
 export const getTooltipContent = (patientName: string, priority: string) => {
   const priorityLabel = getPriorityLabel(priority);
   return `${patientName} - Prioridade: ${priorityLabel}`;
+};
+
+export const getTreatmentBorderClass = (treatmentType: 'lightbath' | 'rod' | 'combined' | 'none') => {
+  const borderClasses = {
+    lightbath: "border-l-4 border-l-yellow-400",
+    rod: "border-l-4 border-l-blue-400", 
+    combined: "border-l-4 border-l-green-400",
+    none: "border-l-4 border-l-gray-400"
+  };
+  return borderClasses[treatmentType] || borderClasses.none;
+};
+
+export const getTreatmentIndicatorText = (treatmentInfo: { hasLightBath: boolean; hasRod: boolean; lightBathColor?: string }) => {
+  if (treatmentInfo.hasLightBath && treatmentInfo.hasRod) {
+    return 'Banho de Luz + Bastão';
+  } else if (treatmentInfo.hasLightBath) {
+    return 'Banho de Luz';
+  } else if (treatmentInfo.hasRod) {
+    return 'Bastão';
+  }
+  return '';
 };

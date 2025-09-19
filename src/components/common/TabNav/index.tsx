@@ -7,6 +7,7 @@ const tabs = [
   { href: "/attendance", label: "Atendimentos" },
   { href: "/agenda", label: "Agenda" },
   { href: "/patients", label: "Pacientes" },
+  { href: "/treatment-tracking", label: "Tratamentos" },
 ];
 
 export default function TabNav() {
