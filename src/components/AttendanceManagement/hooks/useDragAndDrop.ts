@@ -246,6 +246,7 @@ export const useDragAndDrop = ({
         }
       }
 
+      // TODO: update to rod and combined types or remove feature
       // Check if patient is scheduled in both consultation types
       const isInBothTypes =
         findPatient("spiritual", "scheduled", dragged.patientId) &&
