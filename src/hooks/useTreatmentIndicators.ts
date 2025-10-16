@@ -56,7 +56,7 @@ export function useTreatmentIndicators(date: string): UseTreatmentIndicatorsRetu
           const lightBathSession = sessions.find((s: TreatmentSessionResponseDto) => s.treatment_type === 'light_bath');
           
           // Collect all body locations from all sessions
-          const allBodyLocations = sessions.flatMap((s: TreatmentSessionResponseDto) => s.body_locations || []);
+          const allBodyLocations = sessions.flatMap((s: TreatmentSessionResponseDto) => s.body_location ? [s.body_location] : []);
           const uniqueBodyLocations = [...new Set(allBodyLocations)];
           
           // Determine treatment type

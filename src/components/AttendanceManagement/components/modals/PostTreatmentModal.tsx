@@ -24,12 +24,31 @@ interface PostTreatmentModalProps {
   patientName: string;
   treatmentInfo: TreatmentInfo;
   treatmentSessions: TreatmentSession[];
+  isLoadingSessions?: boolean;
 }
 
-interface SessionProgress {
-  sessionId: number;
-  completedLocations: string[];
-  notes: string;
+// New interface for individual treatment cards (one per body location)
+interface TreatmentCard {
+  id: string; // Unique identifier for the card
+  treatmentType: "light_bath" | "rod";
+  bodyLocation: string;
+  sessions: TreatmentSession[];
+  color?: string;
+  durationMinutes?: number;
+  totalPlannedSessions: number;
+  totalCompletedSessions: number;
+}
+
+// New interface for individual treatment cards (one per body location)
+interface TreatmentCard {
+  id: string; // Unique identifier for the card
+  treatmentType: "light_bath" | "rod";
+  bodyLocation: string;
+  sessions: TreatmentSession[];
+  color?: string;
+  durationMinutes?: number;
+  totalPlannedSessions: number;
+  totalCompletedSessions: number;
 }
 
 const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
@@ -37,83 +56,136 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
   onClose,
   onComplete,
   patientName,
-  treatmentInfo,
   treatmentSessions,
+  isLoadingSessions = false,
 }) => {
-  const [sessionProgress, setSessionProgress] = useState<
-    Record<number, SessionProgress>
-  >({});
+  const [completedTreatments, setCompletedTreatments] = useState<
+    Set<string> // Now using "treatmentType_bodyLocation" as key
+  >(new Set());
   const [generalNotes, setGeneralNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // Initialize session progress state
+  // Reset state when modal opens
   useEffect(() => {
-    if (isOpen && treatmentSessions.length > 0) {
-      const initialProgress: Record<number, SessionProgress> = {};
-      treatmentSessions.forEach((session) => {
-        initialProgress[session.id] = {
-          sessionId: session.id,
-          completedLocations: [],
-          notes: "",
-        };
-      });
-      setSessionProgress(initialProgress);
-      setGeneralNotes(""); // Reset general notes when opening
+    if (isOpen) {
+      setCompletedTreatments(new Set());
+      setGeneralNotes("");
+      setSubmitError(null);
+      setSubmitSuccess(false);
     }
-  }, [isOpen, treatmentSessions]);
+  }, [isOpen]);
 
-  const toggleLocationCompletion = (sessionId: number, location: string) => {
-    setSessionProgress((prev) => {
-      const sessionData = prev[sessionId];
-      const isCompleted = sessionData.completedLocations.includes(location);
+  // Create individual cards for each body location
+  const treatmentCards = React.useMemo(() => {
+    const cards: TreatmentCard[] = [];
 
-      return {
-        ...prev,
-        [sessionId]: {
-          ...sessionData,
-          completedLocations: isCompleted
-            ? sessionData.completedLocations.filter((loc) => loc !== location)
-            : [...sessionData.completedLocations, location],
-        },
-      };
+    treatmentSessions.forEach((session) => {
+      // Create a card for each body location in this session
+      session.bodyLocations.forEach((bodyLocation: string) => {
+        const cardId = `${session.treatmentType}_${bodyLocation}`;
+
+        // Check if we already have a card for this treatment type + body location
+        let existingCard = cards.find((card) => card.id === cardId);
+
+        if (!existingCard) {
+          existingCard = {
+            id: cardId,
+            treatmentType: session.treatmentType,
+            bodyLocation: bodyLocation,
+            sessions: [],
+            color: session.color,
+            durationMinutes: session.durationMinutes,
+            totalPlannedSessions: 0,
+            totalCompletedSessions: 0,
+          };
+          cards.push(existingCard);
+        }
+
+        // Add this session to the card
+        existingCard.sessions.push(session);
+        existingCard.totalPlannedSessions += session.plannedSessions;
+        existingCard.totalCompletedSessions += session.completedSessions;
+      });
+    });
+
+    return cards;
+  }, [treatmentSessions]);
+
+  const toggleTreatmentCompletion = (cardId: string) => {
+    setCompletedTreatments((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(cardId)) {
+        newSet.delete(cardId);
+      } else {
+        newSet.add(cardId);
+      }
+      return newSet;
     });
   };
 
-  const updateSessionNotes = (sessionId: number, notes: string) => {
-    setSessionProgress((prev) => ({
-      ...prev,
-      [sessionId]: {
-        ...prev[sessionId],
-        notes,
-      },
-    }));
+  const canSubmit = () => {
+    return completedTreatments.size > 0;
   };
 
   const handleSubmit = async () => {
+    if (!canSubmit()) {
+      setSubmitError(
+        "Marque pelo menos um tratamento como realizado nesta sessão."
+      );
+      return;
+    }
+
     setIsSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(false);
+
     try {
-      // Extract completed locations by session
+      // Create the data structure expected by the parent component
       const completedLocationsBySession: Record<number, string[]> = {};
-      Object.entries(sessionProgress).forEach(([sessionId, progress]) => {
-        if (progress.completedLocations.length > 0) {
-          completedLocationsBySession[parseInt(sessionId)] =
-            progress.completedLocations;
+
+      // For each completed treatment card, mark the sessions with that specific body location
+      completedTreatments.forEach((cardId) => {
+        const card = treatmentCards.find((c) => c.id === cardId);
+        if (card) {
+          card.sessions.forEach((session) => {
+            if (!completedLocationsBySession[session.id]) {
+              completedLocationsBySession[session.id] = [];
+            }
+            // Only add this specific body location for this session
+            if (
+              !completedLocationsBySession[session.id].includes(
+                card.bodyLocation
+              )
+            ) {
+              completedLocationsBySession[session.id].push(card.bodyLocation);
+            }
+          });
         }
       });
 
       await onComplete(completedLocationsBySession, generalNotes);
-      handleClose();
+      setSubmitSuccess(true);
+
+      // Auto-close after successful submission
+      setTimeout(() => {
+        handleClose();
+      }, 1000);
     } catch (error) {
       console.error("Error completing treatment:", error);
+      setSubmitError("Erro ao completar o tratamento. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
-    setSessionProgress({});
+    setCompletedTreatments(new Set());
     setGeneralNotes("");
     setIsSubmitting(false);
+    setSubmitError(null);
+    setSubmitSuccess(false);
     onClose();
   };
 
@@ -121,34 +193,18 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
     return type === "light_bath" ? "Banho de Luz" : "Bastão";
   };
 
-  const getTreatmentTypeColor = (type: "light_bath" | "rod") => {
-    return type === "light_bath"
-      ? "bg-yellow-100 border-yellow-300"
-      : "bg-blue-100 border-blue-300";
+  const getTreatmentBorderColor = (type: "light_bath" | "rod") => {
+    return type === "light_bath" ? "border-l-yellow-400" : "border-l-blue-400";
   };
 
-  const getProgressPercentage = (session: TreatmentSession) => {
+  const getTreatmentIconColor = (type: "light_bath" | "rod") => {
+    return type === "light_bath" ? "text-yellow-600" : "text-blue-600";
+  };
+
+  const getProgressPercentage = (card: TreatmentCard) => {
+    if (card.totalPlannedSessions === 0) return 0;
     return Math.round(
-      (session.completedSessions / session.plannedSessions) * 100
-    );
-  };
-
-  const isSessionComplete = (sessionId: number) => {
-    const session = treatmentSessions.find((s) => s.id === sessionId);
-    const progress = sessionProgress[sessionId];
-
-    if (!session || !progress) return false;
-
-    // Check if all body locations for this session have been completed
-    return session.bodyLocations.every((location) =>
-      progress.completedLocations.includes(location)
-    );
-  };
-
-  const canSubmit = () => {
-    // At least one session should have some completed locations
-    return Object.values(sessionProgress).some(
-      (progress) => progress.completedLocations.length > 0
+      (card.totalCompletedSessions / card.totalPlannedSessions) * 100
     );
   };
 
@@ -156,200 +212,218 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-white text-black px-6 py-4 border-b border-gray-50">
+        <div className="bg-gray-50 px-6 py-4 border-b">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold">
-                Finalizar {treatmentSessions.length > 0 ? "sessões" : "sessão"}{" "}
-                de {patientName}
+              <h2 className="text-xl font-bold text-gray-900">
+                Registrar Sessão de Tratamento
               </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Paciente: {patientName}
+              </p>
             </div>
             <button
               onClick={handleClose}
-              className="text-gray-700 hover:text-gray-900 text-2xl"
+              className="text-gray-400 hover:text-gray-600 text-2xl font-light"
               disabled={isSubmitting}
             >
               ×
             </button>
           </div>
         </div>
-        <div>{treatmentInfo.treatmentType}</div>
+
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          {/* Treatment Overview */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Resumo do Tratamento</h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center gap-4 text-sm">
-                <span className="font-medium">Tipos:</span>
-                {treatmentInfo.hasLightBath && (
-                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">
-                    Banho de Luz
-                  </span>
-                )}
-                {treatmentInfo.hasRod && (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                    Bastão
-                  </span>
-                )}
-              </div>
+          {isLoadingSessions ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-gray-500">Carregando tratamentos...</div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Instructions */}
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-medium text-blue-900 mb-2">
+                  Como usar esta tela:
+                </h3>
+                <p className="text-sm text-blue-800">
+                  Marque os tratamentos que foram realizados nesta sessão. Cada
+                  tratamento mostra o progresso atual e você pode clicar no
+                  botão para indicar que foi feito hoje.
+                </p>
+              </div>
 
-          {/* Treatment Sessions */}
-          <div className="space-y-6">
-            {treatmentSessions.map((session) => {
-              const progress = sessionProgress[session.id];
-              const progressPercentage = getProgressPercentage(session);
-              const sessionComplete = isSessionComplete(session.id);
+              {/* Treatment Cards */}
+              <div className="space-y-4">
+                {treatmentCards.map((card) => {
+                  const isCompleted = completedTreatments.has(card.id);
+                  const progressPercentage = getProgressPercentage(card);
 
-              return (
-                <div
-                  key={session.id}
-                  className={`border rounded-lg p-4 ${getTreatmentTypeColor(
-                    session.treatmentType
-                  )}`}
-                >
-                  {/* Session Header */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h4 className="font-semibold text-lg">
-                        {getTreatmentTypeLabel(session.treatmentType)}
-                      </h4>
-                      {session.treatmentType === "light_bath" &&
-                        session.color && (
-                          <p className="text-sm text-gray-600">
-                            Cor: {session.color} | Duração:{" "}
-                            {session.durationMinutes} min
-                          </p>
-                        )}
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium">
-                        Progresso: {session.completedSessions}/
-                        {session.plannedSessions} sessões
-                      </div>
-                      <div className="w-32 bg-gray-200 rounded-full h-2 mt-1">
-                        <div
-                          className="bg-green-500 h-2 rounded-full transition-all"
-                          style={{ width: `${progressPercentage}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {progressPercentage}% completo
-                      </div>
-                    </div>
-                  </div>
+                  return (
+                    <div
+                      key={card.id}
+                      className={`bg-white border-l-4 ${getTreatmentBorderColor(
+                        card.treatmentType
+                      )} border-r border-t border-b border-gray-200 rounded-r-lg shadow-sm transition-all duration-200 ${
+                        isCompleted
+                          ? "ring-2 ring-green-300 bg-green-50"
+                          : "hover:shadow-md"
+                      }`}
+                    >
+                      <div className="p-5">
+                        {/* Treatment Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span
+                                className={`text-lg ${getTreatmentIconColor(
+                                  card.treatmentType
+                                )}`}
+                              >
+                                {card.treatmentType === "light_bath"
+                                  ? "💡"
+                                  : "🔸"}
+                              </span>
+                              <h3 className="font-semibold text-lg text-gray-900">
+                                {getTreatmentTypeLabel(card.treatmentType)}
+                              </h3>
+                            </div>
 
-                  {/* Body Locations Checklist */}
-                  <div className="mb-4">
-                    <h5 className="font-medium mb-2">
-                      Locais para Tratamento:
-                    </h5>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {session.bodyLocations.map((location) => {
-                        const isCompleted =
-                          progress?.completedLocations.includes(location) ||
-                          false;
-                        return (
-                          <label
-                            key={location}
-                            className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
-                              isCompleted
-                                ? "bg-green-100 border-green-300 text-green-800"
-                                : "bg-white border-gray-300 text-gray-700"
-                            } border`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isCompleted}
-                              onChange={() =>
-                                toggleLocationCompletion(session.id, location)
-                              }
-                              className="mr-2"
+                            {/* Treatment Details */}
+                            <div className="space-y-1 text-sm text-gray-600">
+                              <div>
+                                <span className="font-medium">Local:</span>{" "}
+                                {card.bodyLocation}
+                              </div>
+                              {card.color && (
+                                <div>
+                                  <span className="font-medium">Cor:</span>{" "}
+                                  {card.color}
+                                </div>
+                              )}
+                              {card.durationMinutes && (
+                                <div>
+                                  <span className="font-medium">Duração:</span>{" "}
+                                  {card.durationMinutes} min
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Progress Circle */}
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-gray-900">
+                              {card.totalCompletedSessions}/
+                              {card.totalPlannedSessions}
+                            </div>
+                            <div className="text-xs text-gray-500">sessões</div>
+                            <div className="text-xs text-gray-500">
+                              {progressPercentage}% completo
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="mb-4">
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                card.treatmentType === "light_bath"
+                                  ? "bg-yellow-400"
+                                  : "bg-blue-400"
+                              }`}
+                              style={{ width: `${progressPercentage}%` }}
                             />
-                            <span className="text-sm">{location}</span>
-                            {isCompleted && (
-                              <span className="ml-auto text-green-600">✓</span>
-                            )}
-                          </label>
-                        );
-                      })}
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <button
+                          type="button"
+                          onClick={() => toggleTreatmentCompletion(card.id)}
+                          disabled={isSubmitting}
+                          className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
+                            isCompleted
+                              ? "bg-green-600 text-white hover:bg-green-700"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+                          } disabled:opacity-50`}
+                        >
+                          {isCompleted ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <span>✓</span>
+                              Realizado nesta sessão
+                            </span>
+                          ) : (
+                            "Marcar como realizado nesta sessão"
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  );
+                })}
+              </div>
 
-                  {/* Session Notes */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Observações da Sessão:
-                    </label>
-                    <textarea
-                      value={progress?.notes || ""}
-                      onChange={(e) =>
-                        updateSessionNotes(session.id, e.target.value)
-                      }
-                      placeholder="Adicione observações sobre esta sessão..."
-                      className="w-full p-2 border border-gray-300 rounded text-sm"
-                      rows={2}
-                    />
-                  </div>
-
-                  {/* Session Status Indicator */}
-                  {sessionComplete && (
-                    <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded text-green-800 text-sm font-medium">
-                      ✓ Sessão completa - todos os locais foram tratados
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* General Notes */}
-          <div className="mt-6">
-            <label className="block text-sm font-medium mb-2">
-              Observações Gerais do Atendimento:
-            </label>
-            <textarea
-              value={generalNotes}
-              onChange={(e) => setGeneralNotes(e.target.value)}
-              placeholder="Adicione observações gerais sobre o atendimento..."
-              className="w-full p-3 border border-gray-300 rounded"
-              rows={3}
-            />
-          </div>
+              {/* General Notes */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Observações Gerais (Opcional):
+                </label>
+                <textarea
+                  value={generalNotes}
+                  onChange={(e) => setGeneralNotes(e.target.value)}
+                  placeholder="Adicione observações sobre a sessão de tratamento..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows={3}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            {canSubmit() ? (
-              <span className="text-green-600 font-medium">
-                ✓ Pronto para completar
-              </span>
-            ) : (
-              <span>
-                Marque pelo menos um local como tratado para continuar
-              </span>
-            )}
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!canSubmit() || isSubmitting}
-              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Completando..." : "Completar Tratamento"}
-            </button>
+        <div className="bg-gray-50 px-6 py-4 border-t">
+          {/* Error and Success Messages */}
+          {submitError && (
+            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+              <span className="font-medium">Erro:</span> {submitError}
+            </div>
+          )}
+          {submitSuccess && (
+            <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
+              <span className="font-medium">Sucesso:</span> Sessão registrada
+              com sucesso!
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              {canSubmit() ? (
+                <span className="text-green-600 font-medium bg-green-100 px-3 py-1 rounded-full">
+                  ✓ Pronto para registrar
+                </span>
+              ) : (
+                <span className="text-orange-600 font-medium bg-orange-100 px-3 py-1 rounded-full">
+                  ⚠️ Marque pelo menos um tratamento
+                </span>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!canSubmit() || isSubmitting}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? "Registrando..." : "Registrar Sessão"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

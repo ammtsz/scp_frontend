@@ -11,7 +11,10 @@ import { useTreatmentWorkflow } from "./hooks/useTreatmentWorkflow";
 import { useExternalCheckIn } from "./hooks/useExternalCheckIn";
 import { useTreatmentIndicators } from "@/hooks/useTreatmentIndicators";
 import { useAttendances } from "../../contexts/AttendancesContext";
-import { getTreatmentSessionsByPatient } from "@/api/treatment-sessions";
+import {
+  getTreatmentSessionsByPatient,
+  updateTreatmentSession,
+} from "@/api/treatment-sessions";
 import type { TreatmentSessionResponseDto } from "@/api/types";
 import {
   getIncompleteAttendances,
@@ -47,10 +50,10 @@ const transformTreatmentSession = (
     cancelled: "cancelled",
   };
 
-  return {
+  const transformed = {
     id: apiSession.id,
     treatmentType: apiSession.treatment_type,
-    bodyLocations: apiSession.body_locations || [],
+    bodyLocations: [apiSession.body_location], // Convert single body_location to array
     startDate: apiSession.start_date,
     plannedSessions: apiSession.planned_sessions,
     completedSessions: apiSession.completed_sessions,
@@ -58,6 +61,8 @@ const transformTreatmentSession = (
     color: apiSession.color,
     durationMinutes: apiSession.duration_minutes,
   };
+
+  return transformed;
 };
 
 // Components
@@ -203,16 +208,87 @@ const AttendanceManagement: React.FC<{
     completedLocations: Record<number, string[]>,
     notes: string
   ) => {
-    // TODO: Implement actual treatment completion logic here
-    // This should update the treatment sessions with completed locations and notes
-    console.log("Treatment completion:", { completedLocations, notes });
+    if (!treatmentCompletionModal.patientId) {
+      console.error("No patient ID available for treatment completion");
+      treatmentCompletionModal.onComplete?.(false);
+      return;
+    }
 
-    // Call the original onComplete callback
-    treatmentCompletionModal.onComplete?.(true);
-    handleTreatmentCompletionClose();
+    try {
+      // Complete each treatment session that has completed locations
+      const completionPromises = Object.entries(completedLocations).map(
+        async ([sessionIdStr, locations]) => {
+          const sessionId = parseInt(sessionIdStr);
 
-    // Refresh data to reflect changes
-    refreshData();
+          if (locations.length === 0) {
+            return { success: true, sessionId }; // Skip sessions with no completed locations
+          }
+
+          // Find the session to get more details if needed
+          const session = treatmentSessions.find((s) => s.id === sessionId);
+          if (!session) {
+            console.warn(`Session ${sessionId} not found`);
+            return { success: false, sessionId, error: "Session not found" };
+          }
+
+          // Increment the completed sessions count
+          const updateData = {
+            completed_sessions: session.completedSessions + 1,
+            notes: notes || undefined,
+          };
+
+          // Call the API to update the treatment session
+          const result = await updateTreatmentSession(
+            sessionId.toString(),
+            updateData
+          );
+
+          if (result.success) {
+            console.log(
+              `Successfully completed session ${sessionId}:`,
+              result.value
+            );
+            return { success: true, sessionId, data: result.value };
+          } else {
+            console.error(
+              `Failed to complete session ${sessionId}:`,
+              result.error
+            );
+            return { success: false, sessionId, error: result.error };
+          }
+        }
+      );
+
+      // Wait for all completion requests to finish
+      const results = await Promise.all(completionPromises);
+
+      // Check if all completions were successful
+      const failedCompletions = results.filter((r) => !r.success);
+
+      if (failedCompletions.length > 0) {
+        console.error("Some treatment completions failed:", failedCompletions);
+        // Still call onComplete(true) if at least some sessions were completed successfully
+        const successCount = results.filter((r) => r.success).length;
+        if (successCount > 0) {
+          console.log(
+            `${successCount} treatment sessions completed successfully`
+          );
+          treatmentCompletionModal.onComplete?.(true);
+        } else {
+          treatmentCompletionModal.onComplete?.(false);
+        }
+      } else {
+        console.log("All treatment sessions completed successfully");
+        treatmentCompletionModal.onComplete?.(true);
+      }
+    } catch (error) {
+      console.error("Error completing treatment sessions:", error);
+      treatmentCompletionModal.onComplete?.(false);
+    } finally {
+      handleTreatmentCompletionClose();
+      // Refresh data to reflect changes
+      refreshData();
+    }
   };
 
   // Modal management hook
@@ -368,6 +444,7 @@ const AttendanceManagement: React.FC<{
             }
           }
           treatmentSessions={treatmentSessions}
+          isLoadingSessions={loadingTreatmentSessions}
         />
       )}
     </div>

@@ -3,7 +3,7 @@ import { useAttendances } from "@/contexts/AttendancesContext";
 import { usePatients } from "@/contexts/PatientsContext";
 import { updateAttendanceStatus } from "@/api/attendanceSync";
 import { sortPatientsByPriority } from "@/utils/businessRules";
-import { getTreatmentSessionsByPatient } from "@/api/treatment-sessions";
+
 import type {
   IAttendanceProgression,
   IAttendanceType,
@@ -81,30 +81,43 @@ export const useDragAndDrop = ({
       if (status === "onGoing") updates.onGoingTime = new Date().toTimeString().split(' ')[0];
       if (status === "completed") {
         updates.completedTime = new Date().toTimeString().split(' ')[0];
-        // Trigger treatment form modal when attendance is completed
+        
+        // Route to correct modal based on attendance type
         const fullPatient = patients.find((p) => p.name === patient.name);
         if (fullPatient && patient.attendanceId && patient.patientId) {
-          // Get the attendance type from the dragged item or determine from data
-          const attendanceType = dragged?.type || "spiritual";
+          const attendanceType = dragged?.type;
           
-          // Determine if this is a first attendance based on patient status
-          const isFirstAttendance = fullPatient.status === "N";
-          
-          onTreatmentFormOpen?.({
-            id: patient.attendanceId,
-            patientId: patient.patientId,
-            patientName: patient.name,
-            attendanceType,
-            currentTreatmentStatus: "N",
-            currentStartDate: undefined,
-            currentReturnWeeks: undefined,
-            isFirstAttendance,
-          });
+          if (attendanceType === "spiritual") {
+            // Spiritual consultations should open PostAttendanceModal for recommendations
+            const isFirstAttendance = fullPatient.status === "N";
+            onTreatmentFormOpen?.({
+              id: patient.attendanceId,
+              patientId: patient.patientId,
+              patientName: patient.name,
+              attendanceType,
+              currentTreatmentStatus: "N",
+              currentStartDate: undefined,
+              currentReturnWeeks: undefined,
+              isFirstAttendance,
+            });
+          } else if (attendanceType === "lightBath" || attendanceType === "rod") {
+            // Light Bath and Rod treatments should open PostTreatmentModal for session completion
+            onTreatmentCompletionOpen?.({
+              attendanceId: patient.attendanceId,
+              patientId: patient.patientId,
+              patientName: patient.name,
+              attendanceType,
+              onComplete: (success: boolean) => {
+                // Handle completion callback if needed
+                console.log(`Treatment completion ${success ? 'successful' : 'failed'}:`, patient.name);
+              }
+            });
+          }
         }
       }
       return { ...patient, ...updates };
     },
-    [patients, dragged, onTreatmentFormOpen]
+    [patients, dragged, onTreatmentFormOpen, onTreatmentCompletionOpen]
   );
 
   // Get patients for a specific type and status
@@ -269,45 +282,9 @@ export const useDragAndDrop = ({
         return;
       }
 
-      // For same type moves (not involving multi-type scenarios), check if moving to completed with treatments
+      // For same type moves (not involving multi-type scenarios)
       if (dragged.type === toType && dragged.status !== toStatus) {
-        // Check if moving to completed status and if the patient has active treatment sessions
-        if (toStatus === "completed" && patient.patientId && patient.attendanceId && onTreatmentCompletionOpen) {
-          // Check for active treatment sessions for this patient
-          getTreatmentSessionsByPatient(patient.patientId.toString())
-            .then((result) => {
-              if (result.success && result.value && result.value.length > 0) {
-                // Patient has active treatment sessions - open treatment completion modal
-                onTreatmentCompletionOpen({
-                  attendanceId: patient.attendanceId!,
-                  patientId: patient.patientId!,
-                  patientName: patient.name,
-                  attendanceType: dragged.type,
-                  onComplete: (success: boolean) => {
-                    if (success) {
-                      // Modal handled the completion, now perform the move
-                      performMove(toType, toStatus);
-                    }
-                    setDragged(null);
-                  },
-                });
-                return;
-              } else {
-                // No active treatment sessions - perform regular move
-                performMove(toType, toStatus);
-                setDragged(null);
-              }
-            })
-            .catch((error) => {
-              console.warn("Failed to check treatment sessions:", error);
-              // Fallback to regular move if API fails
-              performMove(toType, toStatus);
-              setDragged(null);
-            });
-          return;
-        }
-
-        // Regular move for other status changes
+        // Perform the move - modal logic is handled in updatePatientTimestamps
         performMove(toType, toStatus);
         setDragged(null);
         return;
@@ -322,7 +299,6 @@ export const useDragAndDrop = ({
       findPatient,
       patients,
       onNewPatientDetected,
-      onTreatmentCompletionOpen,
       performMove,
     ]
   );

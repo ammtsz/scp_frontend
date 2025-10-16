@@ -229,7 +229,7 @@ export interface TreatmentSessionResponseDto {
   attendance_id: number;
   patient_id: number;
   treatment_type: 'light_bath' | 'rod';
-  body_locations: string[];
+  body_location: string; // Fixed: Backend actually sends this as singular
   start_date: string; // ISO date string
   planned_sessions: number;
   completed_sessions: number;
@@ -258,9 +258,8 @@ export interface CreateTreatmentSessionRequest {
 }
 
 export interface UpdateTreatmentSessionRequest {
-  total_sessions_recommended?: number;
+  completed_sessions?: number;
   end_date?: string; // ISO date string
-  frequency?: TreatmentSessionFrequency;
   notes?: string;
 }
 
