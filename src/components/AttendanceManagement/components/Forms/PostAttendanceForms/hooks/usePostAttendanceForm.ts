@@ -6,7 +6,7 @@ import type {
   CreateTreatmentSessionRequest,
   PatientResponseDto,
 } from "@/api/types";
-import type { TreatmentRecommendation } from "../types";
+import type { TreatmentRecommendation, LightBathLocationTreatment, RodLocationTreatment } from "../types";
 import type { CreatedTreatmentSession } from "../components/TreatmentSessionConfirmation";
 import type { TreatmentSessionError } from "../components/TreatmentSessionErrors";
 
@@ -66,6 +66,43 @@ export function usePostAttendanceForm({
   // Get current date as string for default values (memoized to prevent dependency changes)
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
+  // Helper function to validate treatment data before sending to backend
+  const validateTreatmentData = useCallback((
+    treatment: LightBathLocationTreatment | RodLocationTreatment,
+    treatmentType: 'light_bath' | 'rod'
+  ): string[] => {
+    const errors: string[] = [];
+    
+    if (treatmentType === 'light_bath') {
+      const lightBathTreatment = treatment as LightBathLocationTreatment;
+      
+      // Validate duration (1-10 units)
+      if (!lightBathTreatment.duration || lightBathTreatment.duration < 1 || lightBathTreatment.duration > 10) {
+        errors.push(`Duração deve ser entre 1 e 10 unidades (7 a 70 minutos). Valor atual: ${lightBathTreatment.duration}`);
+      }
+      
+      // Validate color
+      if (!lightBathTreatment.color || lightBathTreatment.color.trim() === '') {
+        errors.push('Cor é obrigatória para tratamentos de banho de luz.');
+      }
+    }
+    
+    // Validate common fields
+    if (!treatment.quantity || treatment.quantity < 1 || treatment.quantity > 50) {
+      errors.push(`Quantidade de sessões deve ser entre 1 e 50. Valor atual: ${treatment.quantity}`);
+    }
+    
+    if (!treatment.startDate || treatment.startDate.trim() === '') {
+      errors.push('Data de início é obrigatória.');
+    }
+    
+    if (!treatment.locations || treatment.locations.length === 0) {
+      errors.push('Pelo menos um local do corpo deve ser selecionado.');
+    }
+    
+    return errors;
+  }, []);
+
   // Helper function to parse session creation errors into the format expected by TreatmentSessionErrors
   const parseSessionCreationErrors = useCallback((
     error: unknown,
@@ -100,12 +137,20 @@ export function usePostAttendanceForm({
         if (recommendations.lightBath?.treatments && recommendations.lightBath.treatments.length > 0) {
           const lightBathErrors: string[] = [];
           
-          // Look for light bath related errors in the message
-          if (errorMessage.toLowerCase().includes('banho de luz') || 
+          // Check for specific validation errors first
+          if (errorMessage.includes('duration_minutes must not be greater than 10')) {
+            lightBathErrors.push('Duração deve ser entre 1 e 10 unidades (7 a 70 minutos). Verifique os valores informados.');
+          } else if (errorMessage.includes('color should not be empty') || errorMessage.includes('color must be a string')) {
+            lightBathErrors.push('Cor é obrigatória para tratamentos de banho de luz.');
+          } else if (errorMessage.includes('Attendance with ID') && errorMessage.includes('not found')) {
+            lightBathErrors.push('Erro de dados: atendimento não encontrado. Tente novamente.');
+          } else if (errorMessage.toLowerCase().includes('banho de luz') || 
               errorMessage.toLowerCase().includes('light_bath')) {
             lightBathErrors.push(errorMessage);
           } else if (errorMessage.includes('422') || errorMessage.includes('Validation failed')) {
             lightBathErrors.push('Erro de validação ao criar sessões de banho de luz. Verifique os dados informados.');
+          } else if (errorMessage.includes('400') || errorMessage.includes('Bad Request')) {
+            lightBathErrors.push('Dados inválidos para banho de luz. Verifique duração (1-10 unidades), cor e demais campos.');
           }
           
           if (lightBathErrors.length > 0) {
@@ -120,12 +165,16 @@ export function usePostAttendanceForm({
         if (recommendations.rod?.treatments && recommendations.rod.treatments.length > 0) {
           const rodErrors: string[] = [];
           
-          // Look for rod related errors in the message
-          if (errorMessage.toLowerCase().includes('bastão') || 
+          // Check for specific validation errors first
+          if (errorMessage.includes('Attendance with ID') && errorMessage.includes('not found')) {
+            rodErrors.push('Erro de dados: atendimento não encontrado. Tente novamente.');
+          } else if (errorMessage.toLowerCase().includes('bastão') || 
               errorMessage.toLowerCase().includes('rod')) {
             rodErrors.push(errorMessage);
           } else if (errorMessage.includes('422') || errorMessage.includes('Validation failed')) {
             rodErrors.push('Erro de validação ao criar sessões de tratamento com vara. Verifique os dados informados.');
+          } else if (errorMessage.includes('400') || errorMessage.includes('Bad Request')) {
+            rodErrors.push('Dados inválidos para tratamento com vara. Verifique os campos obrigatórios.');
           }
           
           if (rodErrors.length > 0) {
@@ -191,6 +240,13 @@ export function usePostAttendanceForm({
           recommendations.lightBath.treatments.length > 0
         ) {
           for (const treatment of recommendations.lightBath.treatments) {
+            // Validate treatment data before processing
+            const validationErrors = validateTreatmentData(treatment, 'light_bath');
+            if (validationErrors.length > 0) {
+              lightBathErrors.push(...validationErrors);
+              continue; // Skip this treatment if validation fails
+            }
+            
             // Create a session for each location in the treatment
             for (const location of treatment.locations) {
               try {
@@ -236,14 +292,28 @@ export function usePostAttendanceForm({
                   // NOTE: Attendances are automatically created by the backend
                   // when treatment sessions are created (see TreatmentSessionService.createSessionRecordsForTreatment)
                 } else {
+                  // Enhanced error message with more details
+                  const errorMsg = sessionResponse.error || 'Erro desconhecido';
                   lightBathErrors.push(
-                    `Erro ao criar sessão de banho de luz para ${location}: ${sessionResponse.error}`
+                    `Erro ao criar sessão de banho de luz para ${location}: ${errorMsg}`
                   );
+                  console.error('Light bath session creation failed:', {
+                    location,
+                    treatment,
+                    error: sessionResponse.error
+                  });
                 }
               } catch (error) {
+                // Enhanced error handling with more context
+                const errorMsg = error instanceof Error ? error.message : String(error);
                 lightBathErrors.push(
-                  `Erro inesperado ao criar sessão de banho de luz para ${location}: ${error instanceof Error ? error.message : String(error)}`
+                  `Erro inesperado ao criar sessão de banho de luz para ${location}: ${errorMsg}`
                 );
+                console.error('Light bath session creation exception:', {
+                  location,
+                  treatment,
+                  error
+                });
               }
             }
           }
@@ -255,6 +325,13 @@ export function usePostAttendanceForm({
           recommendations.rod.treatments.length > 0
         ) {
           for (const treatment of recommendations.rod.treatments) {
+            // Validate treatment data before processing
+            const validationErrors = validateTreatmentData(treatment, 'rod');
+            if (validationErrors.length > 0) {
+              rodErrors.push(...validationErrors);
+              continue; // Skip this treatment if validation fails
+            }
+            
             // Create a session for each location in the treatment
             for (const location of treatment.locations) {
               try {
@@ -294,14 +371,28 @@ export function usePostAttendanceForm({
                   // NOTE: Attendances are automatically created by the backend
                   // when treatment sessions are created (see TreatmentSessionService.createSessionRecordsForTreatment)
                 } else {
+                  // Enhanced error message with more details
+                  const errorMsg = sessionResponse.error || 'Erro desconhecido';
                   rodErrors.push(
-                    `Erro ao criar sessão com bastão para ${location}: ${sessionResponse.error}`
+                    `Erro ao criar sessão com bastão para ${location}: ${errorMsg}`
                   );
+                  console.error('Rod session creation failed:', {
+                    location,
+                    treatment,
+                    error: sessionResponse.error
+                  });
                 }
               } catch (error) {
+                // Enhanced error handling with more context
+                const errorMsg = error instanceof Error ? error.message : String(error);
                 rodErrors.push(
-                  `Erro inesperado ao criar sessão com bastão para ${location}: ${error instanceof Error ? error.message : String(error)}`
+                  `Erro inesperado ao criar sessão com bastão para ${location}: ${errorMsg}`
                 );
+                console.error('Rod session creation exception:', {
+                  location,
+                  treatment,
+                  error
+                });
               }
             }
           }
@@ -327,7 +418,7 @@ export function usePostAttendanceForm({
         throw error;
       }
     },
-    [patientId, attendanceId]
+    [patientId, attendanceId, validateTreatmentData]
   );
 
   // Fetch patient data when component mounts

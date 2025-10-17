@@ -134,79 +134,147 @@ if (status === "completed") {
 
 **Current Problems**:
 
-- Treatment session creation is non-functional for these types
-- Backend integration missing or broken
-- Form submission and validation issues
+- Treatment session creation workflow needs completion
+- Backend API integration requires thorough testing
+- Form submission and end-to-end workflow needs validation
+
+**Current Status**: 🔄 **PARTIALLY COMPLETED (October 17, 2025)**
+
+**✅ Completed Tasks**:
+
+- ✅ Enhanced client-side validation for duration (1-10 units) and color requirements
+- ✅ Improved error parsing with user-friendly Portuguese messages
+- ✅ Added `validateTreatmentData` function for client-side validation
+- ✅ Enhanced `parseSessionCreationErrors` for better error handling
+- ✅ Fixed React useCallback dependencies to prevent stale closures
+- ✅ Verified backend API validation works correctly (duration_minutes ≤ 10)
+
+**🔄 Remaining Tasks**:
+
+1. **Backend API Comprehensive Audit** (4 hours) - **STILL NEEDED**
+
+   - Test complete `/api/treatment-sessions` workflow end-to-end
+   - Verify Light Bath session creation with all parameters (location, color, duration, quantity)
+   - Verify Rod session creation with all parameters (location, quantity)
+   - Test error scenarios and edge cases (invalid IDs, missing data, etc.)
+   - Document any remaining API issues or missing endpoints
+
+2. **Frontend Integration Completion** (12 hours) - **STILL NEEDED**
+
+   - Complete treatment form components integration with backend
+   - Test full form submission workflow from PostAttendanceModal
+   - Verify session creation success/failure handling in UI
+   - Implement proper loading states and user feedback
+   - Test session creation from spiritual consultation workflow
+
+3. **End-to-End Testing & Validation** (8 hours) - **STILL NEEDED**
+   - Complete spiritual consultation → treatment recommendation → session creation workflow
+   - Test form validation scenarios with real backend responses
+   - Verify created sessions appear correctly in treatment tracking
+   - Test error handling and recovery scenarios
+   - Manual testing of complete user journey
+
+#### **Day 8-10: Combined Treatment Card Drag Separation Bug** 🆕
+
+**Estimated**: 3 days | **Priority**: HIGH
+
+**Current Problem**:
+
+When a patient has both Light Bath and Rod treatments scheduled, the system correctly renders a single **green card** (combined treatments). However, when dragging this green card to the next column, it incorrectly **separates** into two individual cards:
+
+- **Blue card** (Rod) remains in the previous column
+- **Yellow card** (Light Bath) appears in the new/dragged column
+
+**Expected Behavior**:
+
+- **Green card should always stay green** - representing the combination of both treatments
+- **Both treatments should move together** when dragging the combined card
+- **Never separate** into individual treatment cards once combined
+- **Status consistency** - both treatments should always have the same status
 
 **Implementation Steps**:
 
-1. **Backend API Audit** (4 hours)
+1. **Investigate Current Drag Logic** (6 hours)
 
-   - Test `/api/light-bath-sessions` endpoints
-   - Test `/api/rod-sessions` endpoints
-   - Document current API behavior and failures
+   - Analyze how combined cards are identified and rendered
+   - Review drag-and-drop logic in `useDragAndDrop` hook
+   - Identify where the separation logic occurs during status updates
 
-2. **Frontend Integration Fix** (12 hours)
+2. **Fix Combined Card Drag Behavior** (12 hours)
 
-   - Update treatment form components
-   - Fix API integration and error handling
-   - Implement proper form validation
-   - Add user feedback and loading states
+   - Detect when dragging a combined treatment card
+   - Update **both** treatment statuses atomically during drag operations
+   - Ensure card rendering logic maintains green color after status changes
+   - Implement proper backend sync (separate API calls, atomic behavior)
 
-3. **Testing** (8 hours)
-   - End-to-end session creation testing
-   - Form validation scenarios
-   - API integration and error handling tests
+3. **Handle Edge Cases** (6 hours)
 
-### **🔧 WEEK 2: STABILIZATION & FOUNDATION (Days 8-14)**
+   - Manual completion/cancellation of individual treatments within combined card
+   - PostTreatmentModal handling for combined treatments (show both treatment types)
+   - Adding new treatments to patients with existing combined cards
 
-#### **Day 8-10: Test Suite Restoration**
+4. **Testing** (6 hours)
+   - Test drag operations with combined cards
+   - Verify status consistency across both treatments
+   - Test edge case scenarios and modal integration
 
-**Estimated**: 3 days | **Priority**: CRITICAL FOR STABILITY
+**Acceptance Criteria**:
+
+- [ ] Combined (green) cards never separate during drag operations
+- [ ] Both treatments maintain identical status after drag
+- [ ] PostTreatmentModal shows indication when one treatment wasn't completed
+- [ ] Backend receives updates for both treatments (can be separate API calls)
+- [ ] Visual consistency maintained throughout drag-and-drop workflow
+
+### **🔧 WEEK 2: STABILIZATION & FOUNDATION (Days 11-14)**
+
+#### **Day 11-12: Test Suite Restoration**
+
+**Estimated**: 2 days | **Priority**: CRITICAL FOR STABILITY
 
 **Current State**: 86 failing tests (out of 280+ total)
 **Target**: Restore 100% test pass rate
 
 **Strategy**:
 
-1. **Categorize Failures** (4 hours)
+1. **Categorize Failures** (3 hours)
 
    - Group tests by failure type (imports, mocks, API changes)
    - Identify tests related to recent changes
    - Prioritize by impact on core functionality
 
-2. **Fix Critical Test Categories** (16 hours)
+2. **Fix Critical Test Categories** (12 hours)
 
    - Modal and workflow tests (affected by our changes)
    - API integration tests (affected by backend changes)
    - Component tests (affected by prop changes)
 
-3. **Validation** (4 hours)
+3. **Validation** (3 hours)
    - Run full test suite
    - Verify coverage remains above 45%
    - Document any remaining test issues
 
-#### **Day 11-14: Timezone Foundation**
+#### **Day 13-14: Timezone Foundation**
 
-**Estimated**: 4 days | **Priority**: MEDIUM (Future Foundation)
+**Estimated**: 2 days | **Priority**: MEDIUM (Future Foundation)
 
 **Goal**: Lay groundwork for hybrid timezone approach without breaking existing functionality
 
 **Implementation Steps**:
 
-1. **Database Schema Preparation** (8 hours)
+1. **Database Schema Preparation** (4 hours)
 
    - Add optional `timezone` fields to relevant tables
    - Create migration scripts with backward compatibility
    - Test on development environment
 
-2. **Frontend Timezone Utilities** (8 hours)
+2. **Frontend Timezone Utilities** (4 hours)
 
    - Browser timezone detection
    - Timezone conversion utilities
    - Date formatting helpers
 
-3. **Initial Integration** (8 hours)
+3. **Initial Integration** (4 hours)
    - Add timezone context provider
    - Update key components to accept timezone data
    - Maintain full backward compatibility
@@ -237,7 +305,8 @@ if (status === "completed") {
 
 - [ ] PostTreatmentModal fully functional for Light Bath and Rod treatments
 - [ ] End of Day workflow restored to full functionality
-- [ ] Treatment session creation working for all attendance types
+- [ ] Treatment session creation **fully completed** for all attendance types (validation ✅, API integration & testing still needed)
+- [ ] Combined treatment card drag separation bug resolved
 - [ ] Zero critical bugs blocking daily operations
 
 ### **Week 2 Success Criteria**
@@ -260,11 +329,13 @@ if (status === "completed") {
 
 ### **High-Risk Items**
 
-1. **PostTreatmentModal Integration**: New modal needs careful integration with existing workflow
+1. **Combined Card Drag Separation Bug**: Affects core drag-and-drop functionality used daily
+   - **Mitigation**: Careful analysis of existing logic, incremental fixes, thorough testing
+2. **PostTreatmentModal Integration**: New modal needs careful integration with existing workflow
    - **Mitigation**: Thorough testing, progressive implementation
-2. **Test Suite Failures**: Large number of failing tests indicates systemic issues
+3. **Test Suite Failures**: Large number of failing tests indicates systemic issues
    - **Mitigation**: Categorize and fix incrementally, maintain working functionality
-3. **End of Day Workflow**: Critical for daily operations
+4. **End of Day Workflow**: Critical for daily operations
    - **Mitigation**: Test thoroughly in development, have rollback plan
 
 ### **Medium-Risk Items**
