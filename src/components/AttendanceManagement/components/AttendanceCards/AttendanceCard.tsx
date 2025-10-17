@@ -13,13 +13,7 @@ import {
 } from "../../styles/cardStyles";
 import AttendanceTimes from "./AttendanceTimes";
 import TreatmentSessionProgress from "../../../TreatmentSessionProgress";
-import TreatmentIndicator from "./TreatmentIndicator";
-import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
 import type { IGroupedPatient } from "../../utils/patientGrouping";
-import {
-  getCombinedTreatmentStyles,
-  getCombinedTreatmentLabel,
-} from "../../utils/patientGrouping";
 
 interface AttendanceCardProps {
   patient: IAttendanceStatusDetail;
@@ -36,8 +30,6 @@ interface AttendanceCardProps {
   index: number;
   isNextToBeAttended?: boolean;
   isDayFinalized?: boolean;
-  treatmentInfo?: TreatmentInfo;
-  onTreatmentInfoClick?: () => void;
   groupedPatient?: IGroupedPatient;
 }
 
@@ -53,16 +45,16 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
     index,
     isNextToBeAttended = false,
     isDayFinalized = false,
-    treatmentInfo,
-    onTreatmentInfoClick,
     groupedPatient,
   }) => {
     const typeConfig = getTypeIndicatorConfig(type);
 
     const isBeingDragged =
-      dragged?.type === type &&
       dragged?.patientId === patient.patientId &&
-      dragged?.status === status;
+      dragged?.status === status &&
+      (dragged?.type === type ||
+        (dragged?.isCombinedTreatment &&
+          dragged?.treatmentTypes?.includes(type)));
 
     // Determine styling based on whether this is a grouped patient with combined treatments
     const cardStyles = getTypeBasedStyles(

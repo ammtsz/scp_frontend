@@ -70,7 +70,7 @@ describe("TreatmentSessionErrors", () => {
     expect(screen.getByText("2 erros")).toBeInTheDocument();
 
     // Check for rod treatment section by text content
-    expect(screen.getByText("Vara")).toBeInTheDocument();
+    expect(screen.getByText("Bastão")).toBeInTheDocument();
     expect(screen.getByText("1 erro")).toBeInTheDocument();
   });
 

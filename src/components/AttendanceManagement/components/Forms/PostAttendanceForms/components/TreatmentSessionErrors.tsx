@@ -34,7 +34,7 @@ const TreatmentSessionErrors: React.FC<TreatmentSessionErrorsProps> = ({
   };
 
   const getTreatmentName = (type: "light_bath" | "rod"): string => {
-    return type === "light_bath" ? "Banho de Luz" : "Vara";
+    return type === "light_bath" ? "Banho de Luz" : "Bastão";
   };
 
   const totalErrors = errors.reduce(

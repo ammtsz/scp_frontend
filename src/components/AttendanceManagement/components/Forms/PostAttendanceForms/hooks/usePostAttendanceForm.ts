@@ -172,9 +172,9 @@ export function usePostAttendanceForm({
               errorMessage.toLowerCase().includes('rod')) {
             rodErrors.push(errorMessage);
           } else if (errorMessage.includes('422') || errorMessage.includes('Validation failed')) {
-            rodErrors.push('Erro de validação ao criar sessões de tratamento com vara. Verifique os dados informados.');
+            rodErrors.push('Erro de validação ao criar sessões de tratamento com bastão. Verifique os dados informados.');
           } else if (errorMessage.includes('400') || errorMessage.includes('Bad Request')) {
-            rodErrors.push('Dados inválidos para tratamento com vara. Verifique os campos obrigatórios.');
+            rodErrors.push('Dados inválidos para tratamento com bastão. Verifique os campos obrigatórios.');
           }
           
           if (rodErrors.length > 0) {
@@ -196,7 +196,7 @@ export function usePostAttendanceForm({
           } else if (recommendations.rod?.treatments && recommendations.rod.treatments.length > 0) {
             errors.push({
               treatment_type: 'rod',
-              errors: [errorMessage || 'Erro inesperado ao criar sessões de tratamento com vara.']
+              errors: [errorMessage || 'Erro inesperado ao criar sessões de tratamento com bastão.']
             });
           }
         }
@@ -214,7 +214,7 @@ export function usePostAttendanceForm({
       if (recommendations.rod?.treatments && recommendations.rod.treatments.length > 0) {
         errors.push({
           treatment_type: 'rod',
-          errors: ['Erro inesperado ao criar sessões de tratamento com vara.']
+          errors: ['Erro inesperado ao criar sessões de tratamento com bastão.']
         });
       }
     }

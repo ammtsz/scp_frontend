@@ -168,7 +168,25 @@ export const useDragAndDrop = ({
         );
         return;
       }
-      setDragged({ type, status, idx, patientId: patient.patientId });
+
+      // Check if this patient has treatments in both lightBath and rod (combined treatment)
+      const lightBathPatient = findPatient("lightBath", status, patient.patientId);
+      const rodPatient = findPatient("rod", status, patient.patientId);
+      const isCombinedTreatment = !!(lightBathPatient && rodPatient);
+      
+      let treatmentTypes: IAttendanceType[] = [type];
+      if (isCombinedTreatment) {
+        treatmentTypes = ["lightBath", "rod"];
+      }
+
+      setDragged({ 
+        type, 
+        status, 
+        idx, 
+        patientId: patient.patientId,
+        isCombinedTreatment,
+        treatmentTypes
+      });
     },
     [findPatient, getPatients]
   );
@@ -182,43 +200,54 @@ export const useDragAndDrop = ({
     async (toType: IAttendanceType, toStatus: IAttendanceProgression) => {
       if (!dragged || !attendancesByDate || !setAttendancesByDate) return;
 
-      // Find patient using helper function
-      const patient = findPatient(dragged.type, dragged.status, dragged.patientId);
-      if (!patient) return; // Patient not found
-
-      // Sync with backend if attendanceId is available
-      if (patient.attendanceId) {
-        const result = await updateAttendanceStatus(patient.attendanceId, toStatus);
-        if (!result.success) {
-          console.warn("Backend sync failed, continuing with local update");
-        }
-      }
+      // For combined treatments, we need to move both treatment types atomically
+      const treatmentTypesToMove = dragged.isCombinedTreatment && dragged.treatmentTypes 
+        ? dragged.treatmentTypes 
+        : [dragged.type];
 
       // Create immutable update by spreading arrays
       let newAttendancesByDate = { ...attendancesByDate };
 
-      // Update source type (remove patient)
-      newAttendancesByDate = {
-        ...newAttendancesByDate,
-        [dragged.type]: {
-          ...newAttendancesByDate[dragged.type],
-          [dragged.status]: newAttendancesByDate[dragged.type][
-            dragged.status
-          ].filter((p) => p.patientId !== dragged.patientId),
-        },
-      };
+      // Process each treatment type that needs to be moved
+      for (const treatmentType of treatmentTypesToMove) {
+        // Find patient for this specific treatment type
+        const patient = findPatient(treatmentType, dragged.status, dragged.patientId);
+        if (!patient) continue; // Skip if patient not found for this treatment type
 
-      // Update destination type (add patient)
-      newAttendancesByDate = {
-        ...newAttendancesByDate,
-        [toType]: {
-          ...newAttendancesByDate[toType],
-          [toStatus]: [
-            ...newAttendancesByDate[toType][toStatus],
-            updatePatientTimestamps(patient, toStatus),
-          ],
-        },
-      };
+        // Sync with backend if attendanceId is available
+        if (patient.attendanceId) {
+          const result = await updateAttendanceStatus(patient.attendanceId, toStatus);
+          if (!result.success) {
+            console.warn(`Backend sync failed for ${treatmentType}, continuing with local update`);
+          }
+        }
+
+        // Update source type (remove patient)
+        newAttendancesByDate = {
+          ...newAttendancesByDate,
+          [treatmentType]: {
+            ...newAttendancesByDate[treatmentType],
+            [dragged.status]: newAttendancesByDate[treatmentType][
+              dragged.status
+            ].filter((p) => p.patientId !== dragged.patientId),
+          },
+        };
+
+        // For combined treatments, we need to use the correct destination type for each treatment
+        const destinationType = dragged.isCombinedTreatment ? treatmentType : toType;
+
+        // Update destination type (add patient)
+        newAttendancesByDate = {
+          ...newAttendancesByDate,
+          [destinationType]: {
+            ...newAttendancesByDate[destinationType],
+            [toStatus]: [
+              ...newAttendancesByDate[destinationType][toStatus],
+              updatePatientTimestamps(patient, toStatus),
+            ],
+          },
+        };
+      }
 
       // Update state with new object
       setAttendancesByDate(newAttendancesByDate);
@@ -240,10 +269,20 @@ export const useDragAndDrop = ({
       const patient = findPatient(dragged.type, dragged.status, dragged.patientId);
       if (!patient) return; // Patient not found
 
-      // Prevent moves between different consultation types
-      if (dragged.type !== toType) {
-        setDragged(null);
-        return;
+      // For combined treatments, allow dropping on either lightBath or rod sections
+      // but prevent moves to spiritual section
+      if (dragged.isCombinedTreatment) {
+        if (toType === "spiritual") {
+          setDragged(null);
+          return;
+        }
+        // Combined treatments can be dropped on lightBath or rod sections
+      } else {
+        // Prevent moves between different consultation types for single treatments
+        if (dragged.type !== toType) {
+          setDragged(null);
+          return;
+        }
       }
 
       // Check if this is a new patient (status 'N') being moved to 'checkedIn'
@@ -282,15 +321,19 @@ export const useDragAndDrop = ({
         return;
       }
 
-      // For same type moves (not involving multi-type scenarios)
-      if (dragged.type === toType && dragged.status !== toStatus) {
+      // For combined treatments or same-type moves (not involving multi-type scenarios)
+      const isValidMove = dragged.isCombinedTreatment 
+        ? (toType === "lightBath" || toType === "rod") && dragged.status !== toStatus
+        : dragged.type === toType && dragged.status !== toStatus;
+
+      if (isValidMove) {
         // Perform the move - modal logic is handled in updatePatientTimestamps
         performMove(toType, toStatus);
         setDragged(null);
         return;
       }
 
-      // Same type and same status - no action needed
+      // Same type and same status, or invalid move - no action needed
       setDragged(null);
     },
     [

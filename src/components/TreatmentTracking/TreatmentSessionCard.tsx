@@ -58,7 +58,7 @@ export function TreatmentSessionCard({
       case "light_bath":
         return "Banho de Luz";
       case "rod":
-        return "Vara";
+        return "Bastão";
       default:
         return type;
     }
