@@ -1,19 +1,9 @@
 import React from "react";
+import { LIGHT_BATH_COLORS } from "@/utils/treatmentColors";
 import type {
   LightBathLocationTreatment,
   RodLocationTreatment,
 } from "../../types";
-
-// Light bath colors available for treatment
-const LIGHT_BATH_COLORS = [
-  "azul",
-  "verde",
-  "amarelo",
-  "vermelho",
-  "violeta",
-  "branco",
-  "laranja",
-] as const;
 
 interface BodyLocationTreatmentCardProps {
   locations: string[];

@@ -8,24 +8,6 @@ import {
 import { IAttendanceProgression } from '@/types/globals';
 
 /**
- * Maps frontend attendance status to backend status
- */
-export const mapFrontendStatusToBackend = (frontendStatus: IAttendanceProgression): AttendanceStatus => {
-  switch (frontendStatus) {
-    case 'scheduled':
-      return AttendanceStatus.SCHEDULED;
-    case 'checkedIn':
-      return AttendanceStatus.CHECKED_IN;
-    case 'onGoing':
-      return AttendanceStatus.IN_PROGRESS;
-    case 'completed':
-      return AttendanceStatus.COMPLETED;
-    default:
-      return AttendanceStatus.SCHEDULED;
-  }
-};
-
-/**
  * Updates attendance status in the backend with appropriate timestamp
  */
 export const updateAttendanceStatus = async (
