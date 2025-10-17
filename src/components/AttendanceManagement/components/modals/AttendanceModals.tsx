@@ -8,7 +8,7 @@ import type {
   SpiritualTreatmentData,
   TreatmentStatus,
 } from "../Forms/PostAttendanceForms";
-import type { IAttendanceStatusDetail, IPatient } from "@/types/globals";
+import type { IPatient } from "@/types/globals";
 import { IAttendanceStatusDetailWithType } from "../../utils/attendanceDataUtils";
 
 interface AttendanceModalsProps {
@@ -56,16 +56,15 @@ interface AttendanceModalsProps {
   onEndOfDayClose: () => void;
   onHandleCompletion: (attendanceId: number) => Promise<void>;
   onReschedule: (attendanceId: number) => Promise<void>;
-  onEndOfDayFinalize: (data: {
-    incompleteAttendances: IAttendanceStatusDetail[];
-    scheduledAbsences: IAttendanceStatusDetail[];
+  onEndOfDayFinalize: (
     absenceJustifications: Array<{
       patientId: number;
       patientName: string;
+      attendanceType: string;
       justified: boolean;
-      notes: string;
-    }>;
-  }) => Promise<void>;
+      justification?: string;
+    }>
+  ) => Promise<void>;
   incompleteAttendances: IAttendanceStatusDetailWithType[];
   scheduledAbsences: IAttendanceStatusDetailWithType[];
   completedAttendances: IAttendanceStatusDetailWithType[];
@@ -163,26 +162,15 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
         isOpen={endOfDayModalOpen}
         onClose={onEndOfDayClose}
         onSubmitEndOfDay={async (absenceJustifications) => {
-          await onEndOfDayFinalize({
-            incompleteAttendances,
-            scheduledAbsences,
-            absenceJustifications: absenceJustifications.map((item) => {
-              // Find the corresponding scheduled absence to get the attendance ID
-              const scheduledAbsence = scheduledAbsences.find(
-                (absence) =>
-                  absence.patientId === item.patientId &&
-                  absence.attendanceType === item.attendanceType
-              );
-
-              return {
-                attendanceId: scheduledAbsence?.attendanceId || 0,
-                patientId: item.patientId,
-                patientName: item.patientName,
-                justified: item.justified ?? false,
-                notes: item.justification ?? "",
-              };
-            }),
-          });
+          await onEndOfDayFinalize(
+            absenceJustifications.map((item) => ({
+              patientId: item.patientId,
+              patientName: item.patientName,
+              attendanceType: item.attendanceType,
+              justified: item.justified ?? false,
+              justification: item.justification,
+            }))
+          );
         }}
         incompleteAttendances={incompleteAttendances}
         scheduledAbsences={scheduledAbsences}
