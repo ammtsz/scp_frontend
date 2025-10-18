@@ -65,7 +65,7 @@ describe("AbsenceJustificationStep", () => {
       />
     );
 
-    expect(screen.getByText("Pacientes faltosos")).toBeInTheDocument();
+    expect(screen.getByText("Faltas")).toBeInTheDocument();
     expect(screen.getByText(/Há 1 paciente/)).toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe("AbsenceJustificationStep", () => {
       />
     );
 
-    const justifiedRadio = screen.getByLabelText("Falta Justificada");
+    const justifiedRadio = screen.getByLabelText("Falta justificada");
     fireEvent.click(justifiedRadio);
 
     expect(defaultProps.onJustificationChange).toHaveBeenCalledWith(
@@ -123,7 +123,7 @@ describe("AbsenceJustificationStep", () => {
       />
     );
 
-    const unjustifiedRadio = screen.getByLabelText("Falta Injustificada");
+    const unjustifiedRadio = screen.getByLabelText("Falta não justificada");
     fireEvent.click(unjustifiedRadio);
 
     expect(defaultProps.onJustificationChange).toHaveBeenCalledWith(
@@ -195,8 +195,9 @@ describe("AbsenceJustificationStep", () => {
 
   it("disables Next button when not all absences are justified", () => {
     const scheduledAbsences = [createMockScheduledAbsence({ patientId: 123 })];
-    const absenceJustifications = [
-      createMockJustification({ patientId: 123, justified: false }),
+    // Justification with undefined justified should disable the button
+    const absenceJustifications: AbsenceJustification[] = [
+      createMockJustification({ patientId: 123, justified: undefined }),
     ];
 
     render(

@@ -142,6 +142,12 @@ export const transformAttendanceWithPatientByDate = (
       checkedIn: [],
       onGoing: [],
       completed: []
+    },
+    combined: {
+      scheduled: [],
+      checkedIn: [],
+      onGoing: [],
+      completed: []
     }
   };
 

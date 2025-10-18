@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -8,6 +8,8 @@ import {
   AttendanceType,
   AttendanceStatus,
   AttendanceResponseDto,
+  PatientPriority,
+  TreatmentStatus,
 } from "@/api/types";
 
 // Mock the attendances API
@@ -78,6 +80,18 @@ const TestConsumer = () => {
               completed: [],
             },
             lightBath: {
+              scheduled: [],
+              checkedIn: [],
+              onGoing: [],
+              completed: [],
+            },
+            rod: {
+              scheduled: [],
+              checkedIn: [],
+              onGoing: [],
+              completed: [],
+            },
+            combined: {
               scheduled: [],
               checkedIn: [],
               onGoing: [],
@@ -552,7 +566,7 @@ describe("AttendancesContext", () => {
       // Mock API responses
       mockedAttendancesAPI.getNextAttendanceDate.mockResolvedValue({
         success: true,
-        value: "2025-01-15",
+        value: { next_date: "2025-01-15" },
       });
 
       mockedAttendancesAPI.markAttendanceAsMissed.mockResolvedValue({
@@ -574,16 +588,21 @@ describe("AttendancesContext", () => {
             patient_id: 1,
             type: AttendanceType.SPIRITUAL,
             status: AttendanceStatus.SCHEDULED,
+            scheduled_date: "2025-01-15",
             scheduled_time: "08:00",
-            checked_in_time: null,
-            started_time: null,
-            completed_time: null,
-            priority: 1,
+            checked_in_time: undefined,
+            started_time: undefined,
+            completed_time: undefined,
+            created_at: "2025-01-15T00:00:00Z",
+            updated_at: "2025-01-15T00:00:00Z",
             patient: {
               id: 1,
               name: "João Silva",
               birth_date: "1990-01-01",
-              mother_name: "Maria Silva",
+              priority: PatientPriority.EMERGENCY,
+              treatment_status: TreatmentStatus.IN_TREATMENT,
+              start_date: "2025-01-01",
+              missing_appointments_streak: 0,
               created_at: "2025-01-01T00:00:00Z",
               updated_at: "2025-01-01T00:00:00Z",
             },
@@ -595,14 +614,19 @@ describe("AttendancesContext", () => {
             status: AttendanceStatus.CHECKED_IN,
             scheduled_time: "09:00",
             checked_in_time: "08:55",
-            started_time: null,
-            completed_time: null,
-            priority: 2,
+            started_time: undefined,
+            completed_time: undefined,
+            scheduled_date: "2025-01-15",
+            created_at: "2025-01-01T00:00:00Z",
+            updated_at: "2025-01-01T00:00:00Z",
             patient: {
               id: 2,
               name: "Maria Santos",
               birth_date: "1985-05-15",
-              mother_name: "Ana Santos",
+              priority: PatientPriority.INTERMEDIATE,
+              treatment_status: TreatmentStatus.IN_TREATMENT,
+              start_date: "2025-01-01",
+              missing_appointments_streak: 0,
               created_at: "2025-01-01T00:00:00Z",
               updated_at: "2025-01-01T00:00:00Z",
             },
@@ -617,11 +641,13 @@ describe("AttendancesContext", () => {
           patient_id: 1,
           type: AttendanceType.SPIRITUAL,
           status: AttendanceStatus.CANCELLED,
+          scheduled_date: "2025-01-15",
           scheduled_time: "08:00",
-          checked_in_time: null,
-          started_time: null,
-          completed_time: null,
-          priority: 1,
+          checked_in_time: undefined,
+          started_time: undefined,
+          completed_time: undefined,
+          created_at: "2025-01-15T08:00:00Z",
+          updated_at: "2025-01-15T08:00:00Z",
         },
       });
 
@@ -689,10 +715,10 @@ describe("AttendancesContext", () => {
     });
 
     it("should handle finalize end of day errors gracefully", async () => {
-      // Mock API responses
+      // Simplified approach: test that finalizeEndOfDay correctly handles errors by checking the return value and console logs
       mockedAttendancesAPI.getNextAttendanceDate.mockResolvedValue({
         success: true,
-        value: "2025-01-15",
+        value: { next_date: "2025-01-15" },
       });
 
       mockedAttendancesAPI.getAttendancesByDate.mockResolvedValue({
@@ -705,14 +731,19 @@ describe("AttendancesContext", () => {
             status: AttendanceStatus.CHECKED_IN, // This will trigger the error path
             scheduled_time: "08:00",
             checked_in_time: "08:05",
-            started_time: null,
-            completed_time: null,
-            priority: 1,
+            started_time: undefined,
+            completed_time: undefined,
+            scheduled_date: "2025-01-15",
+            created_at: "2025-01-15T08:00:00Z",
+            updated_at: "2025-01-15T08:00:00Z",
             patient: {
               id: 1,
               name: "João Silva",
+              priority: PatientPriority.EMERGENCY,
+              treatment_status: TreatmentStatus.IN_TREATMENT,
               birth_date: "1990-01-01",
-              mother_name: "Maria Silva",
+              start_date: "2025-01-01",
+              missing_appointments_streak: 0,
               created_at: "2025-01-01T00:00:00Z",
               updated_at: "2025-01-01T00:00:00Z",
             },
@@ -725,17 +756,30 @@ describe("AttendancesContext", () => {
         new Error("API Error")
       );
 
+      // Create a test component that directly tests the finalizeEndOfDay function
       const TestConsumerWithFinalize = () => {
         const context = useAttendances();
+        const [result, setResult] = useState<object | null>(null);
+        const [errorOccurred, setErrorOccurred] = useState(false);
 
         if (!context) return <div>No context</div>;
 
         return (
           <div>
-            <div data-testid="error">{context.error || "no-error"}</div>
+            <div data-testid="result">{JSON.stringify(result)}</div>
+            <div data-testid="error-occurred">
+              {errorOccurred ? "error-caught" : "no-error-caught"}
+            </div>
             <button
               data-testid="finalize-end-of-day-btn"
-              onClick={() => context.finalizeEndOfDay()}
+              onClick={async () => {
+                try {
+                  const res = await context.finalizeEndOfDay();
+                  setResult(res);
+                } catch {
+                  setErrorOccurred(true);
+                }
+              }}
             >
               Finalize End of Day
             </button>
@@ -743,25 +787,46 @@ describe("AttendancesContext", () => {
         );
       };
 
+      // Spy on console.error to capture the error messages
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
       render(
         <AttendancesProvider>
           <TestConsumerWithFinalize />
         </AttendancesProvider>
       );
 
+      // Wait for initialization
       await waitFor(() => {
-        expect(screen.getByTestId("error")).toHaveTextContent("no-error");
+        expect(screen.getByTestId("result")).toHaveTextContent("null");
       });
 
       // Execute finalize end of day with error
       fireEvent.click(screen.getByTestId("finalize-end-of-day-btn"));
 
+      // Wait for the operation to complete and check that errors were logged
       await waitFor(() => {
-        // Should handle the error gracefully
-        expect(screen.getByTestId("error")).toHaveTextContent(
-          "Erro ao finalizar dia: alguns atendimentos podem não ter sido atualizados"
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "Error handling incomplete attendances:",
+          expect.any(Error)
+        );
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "Error finalizing end of day:",
+          expect.any(Error)
         );
       });
+
+      // The function should still return a result (doesn't throw to caller)
+      await waitFor(() => {
+        expect(screen.getByTestId("error-occurred")).toHaveTextContent(
+          "no-error-caught"
+        );
+        expect(screen.getByTestId("result")).not.toHaveTextContent("null");
+      });
+
+      consoleSpy.mockRestore();
     });
   });
 });

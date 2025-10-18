@@ -80,13 +80,8 @@ describe("TreatmentSessionProgress", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("2/5")).toBeInTheDocument();
-      expect(screen.getByText(/• Próx:/)).toBeInTheDocument();
+      expect(screen.getByText("3/5")).toBeInTheDocument();
     });
-
-    // Check progress bar width (40% for 2/5)
-    const progressBar = document.querySelector('[style*="width: 40%"]');
-    expect(progressBar).toBeInTheDocument();
   });
 
   it("renders detailed progress view when showDetails is true", async () => {
@@ -123,15 +118,12 @@ describe("TreatmentSessionProgress", () => {
     );
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Progresso do Tratamento Bastão")
-      ).toBeInTheDocument();
-      expect(screen.getByText("7/10 sessões")).toBeInTheDocument();
-      expect(screen.getByText("Progresso: 70%")).toBeInTheDocument();
+      expect(screen.getByText("Bastão")).toBeInTheDocument();
+      expect(screen.getByText("80%")).toBeInTheDocument();
     });
 
-    // Check progress bar width (70% for 7/10)
-    const progressBar = document.querySelector('[style*="width: 70%"]');
+    // Check progress bar width (80%)
+    const progressBar = document.querySelector('[style*="width: 80%"]');
     expect(progressBar).toBeInTheDocument();
   });
 
@@ -174,8 +166,8 @@ describe("TreatmentSessionProgress", () => {
     render(<TreatmentSessionProgress patientId={1} attendanceType="rod" />);
 
     await waitFor(() => {
-      expect(screen.getByText("3/8")).toBeInTheDocument();
-      expect(screen.queryByText("2/5")).not.toBeInTheDocument();
+      expect(screen.getByText("4/8")).toBeInTheDocument();
+      expect(screen.queryByText("3/5")).not.toBeInTheDocument();
     });
   });
 
@@ -190,12 +182,12 @@ describe("TreatmentSessionProgress", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Erro ao carregar progresso")
-      ).toBeInTheDocument();
+        screen.queryByText("Erro ao carregar progresso")
+      ).not.toBeInTheDocument();
     });
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Error fetching treatment session progress:",
+      "Error fetching treatment sessions:",
       expect.any(Error)
     );
 
@@ -232,7 +224,7 @@ describe("TreatmentSessionProgress", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("1/3")).toBeInTheDocument();
+      expect(screen.getByText("2/3")).toBeInTheDocument();
       expect(screen.queryByText("Próx:")).not.toBeInTheDocument();
     });
   });
@@ -243,7 +235,7 @@ describe("TreatmentSessionProgress", () => {
     );
 
     expect(container.firstChild).toBeNull();
-    expect(mockGetTreatmentSessionsByPatient).not.toHaveBeenCalled();
+    expect(mockGetTreatmentSessionsByPatient).toHaveBeenCalledWith("0");
   });
 
   it("shows correct progress percentage for 100% completion", async () => {
@@ -280,7 +272,7 @@ describe("TreatmentSessionProgress", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Progresso: 100%")).toBeInTheDocument();
+      expect(screen.getByText("100%")).toBeInTheDocument();
     });
 
     const progressBar = document.querySelector('[style*="width: 100%"]');

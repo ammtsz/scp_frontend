@@ -6,9 +6,9 @@ import { IAttendanceProgression } from "@/types/globals";
 
 describe("AttendanceTimes Component", () => {
   const mockTimes = {
-    checkedInTime: new Date("2025-01-15T09:00:00"),
-    onGoingTime: new Date("2025-01-15T09:30:00"),
-    completedTime: new Date("2025-01-15T10:00:00"),
+    checkedInTime: "09:00:00",
+    onGoingTime: "09:30:00",
+    completedTime: "10:00:00",
   };
 
   describe("Time Formatting", () => {
@@ -217,9 +217,9 @@ describe("AttendanceTimes Component", () => {
     const testCases: {
       status: IAttendanceProgression;
       times: {
-        checkedInTime?: Date | null;
-        onGoingTime?: Date | null;
-        completedTime?: Date | null;
+        checkedInTime?: string | null;
+        onGoingTime?: string | null;
+        completedTime?: string | null;
       };
       expectedCount: number;
       description: string;
@@ -306,7 +306,7 @@ describe("AttendanceTimes Component", () => {
 
   describe("Edge Cases", () => {
     it("should handle very early times", () => {
-      const earlyTime = new Date("2025-01-15T00:01:00");
+      const earlyTime = "00:01:00";
 
       render(<AttendanceTimes status="checkedIn" checkedInTime={earlyTime} />);
 
@@ -315,7 +315,7 @@ describe("AttendanceTimes Component", () => {
     });
 
     it("should handle late times", () => {
-      const lateTime = new Date("2025-01-15T23:59:00");
+      const lateTime = "23:59:00";
 
       render(<AttendanceTimes status="checkedIn" checkedInTime={lateTime} />);
 
@@ -324,7 +324,7 @@ describe("AttendanceTimes Component", () => {
     });
 
     it("should handle same times for different statuses", () => {
-      const sameTime = new Date("2025-01-15T12:00:00");
+      const sameTime = "12:00:00";
 
       render(
         <AttendanceTimes

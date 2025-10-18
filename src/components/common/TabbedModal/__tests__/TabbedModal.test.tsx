@@ -74,14 +74,14 @@ describe("TabbedModal", () => {
     expect(screen.getByText("Test content")).toBeInTheDocument();
   });
 
-  it("renders all tabs with correct labels and icons", () => {
+  it("renders all tabs with correct labels and validation icons", () => {
     render(<TabbedModal {...defaultProps} />);
 
-    expect(screen.getByText("📋")).toBeInTheDocument();
+    expect(screen.getByText("✅")).toBeInTheDocument();
     expect(screen.getByText("Tab 1")).toBeInTheDocument();
-    expect(screen.getByText("🍎")).toBeInTheDocument();
+    expect(screen.getByText("⚠️")).toBeInTheDocument();
     expect(screen.getByText("Tab 2")).toBeInTheDocument();
-    expect(screen.getByText("💡")).toBeInTheDocument();
+    expect(screen.getByText("❌")).toBeInTheDocument();
     expect(screen.getByText("Tab 3")).toBeInTheDocument();
   });
 

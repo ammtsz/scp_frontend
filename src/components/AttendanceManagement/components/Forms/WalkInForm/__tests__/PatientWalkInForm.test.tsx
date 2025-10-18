@@ -4,6 +4,13 @@ import userEvent from "@testing-library/user-event";
 import PatientWalkInForm from "../PatientWalkInForm";
 import { createAttendance, getAttendancesByDate } from "@/api/attendances";
 import { transformAttendanceTypeToApi } from "@/utils/apiTransformers";
+import {
+  AttendanceType,
+  AttendanceStatus,
+  PatientPriority,
+  TreatmentStatus,
+} from "@/api/types";
+import { IAttendanceType } from "@/types/globals";
 
 // Mock the contexts
 jest.mock("@/contexts/PatientsContext", () => ({
@@ -52,22 +59,35 @@ const mockOnRegisterNewAttendance = jest.fn();
 const mockExistingAttendances = [
   {
     id: 1,
-    attendanceType: "spiritual",
+    type: AttendanceType.SPIRITUAL,
+    patient_id: 1,
+    status: AttendanceStatus.CHECKED_IN,
+    scheduled_date: "2025-01-15",
+    scheduled_time: "10:00",
+    checked_in_time: "10:00:00",
+    notes: "Test attendance",
+    created_at: "2025-01-15T10:00:00Z",
+    updated_at: "2025-01-15T10:00:00Z",
     patient: {
       id: 1,
       name: "João Silva",
+      phone: "11999999999",
+      priority: PatientPriority.NORMAL,
+      treatment_status: TreatmentStatus.IN_TREATMENT,
+      start_date: "2025-01-01",
+      missing_appointments_streak: 0,
+      created_at: "2025-01-01T00:00:00Z",
+      updated_at: "2025-01-01T00:00:00Z",
     },
-    status: "checked_in",
-    checkedInTime: "10:00:00",
-    createdAt: "2025-01-15T10:00:00Z",
-    updatedAt: "2025-01-15T10:00:00Z",
   },
 ];
 
 describe("PatientWalkInForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockTransformAttendanceTypeToApi.mockImplementation((type: string) => type);
+    mockTransformAttendanceTypeToApi.mockImplementation(
+      (type: IAttendanceType) => type as AttendanceType
+    );
   });
 
   it("renders the form correctly", () => {
@@ -77,8 +97,10 @@ describe("PatientWalkInForm", () => {
       />
     );
 
-    expect(screen.getByLabelText(/Nome do Paciente/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Telefone/)).toBeInTheDocument();
+    expect(screen.getByText("Nome do Paciente")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Buscar paciente pelo nome...")
+    ).toBeInTheDocument();
     expect(screen.getByText("Consulta Espiritual")).toBeInTheDocument();
     expect(screen.getByText("Banho de Luz")).toBeInTheDocument();
   });
@@ -88,7 +110,10 @@ describe("PatientWalkInForm", () => {
       const user = userEvent.setup();
 
       // Mock the API calls
-      mockGetAttendancesByDate.mockResolvedValue(mockExistingAttendances);
+      mockGetAttendancesByDate.mockResolvedValue({
+        success: true,
+        value: mockExistingAttendances,
+      });
 
       render(
         <PatientWalkInForm
@@ -97,7 +122,9 @@ describe("PatientWalkInForm", () => {
       );
 
       // Fill in the form with existing patient name
-      const nameInput = screen.getByLabelText(/Nome do Paciente/);
+      const nameInput = screen.getByPlaceholderText(
+        "Buscar paciente pelo nome..."
+      );
       await user.type(nameInput, "João Silva");
 
       // Wait for patient suggestion and click it
@@ -123,7 +150,7 @@ describe("PatientWalkInForm", () => {
       await waitFor(() => {
         expect(
           screen.getByText(
-            /Este paciente já possui um atendimento de.*agendado para este dia/
+            "Agendamento duplicado! O paciente João Silva já possui atendimento(s) agendado(s) para hoje nos seguintes tipos: Consulta Espiritual."
           )
         ).toBeInTheDocument();
       });
@@ -136,15 +163,24 @@ describe("PatientWalkInForm", () => {
       const user = userEvent.setup();
 
       // Mock the API calls - existing attendance is spiritual, new one is lightBath
-      mockGetAttendancesByDate.mockResolvedValue(mockExistingAttendances);
+      mockGetAttendancesByDate.mockResolvedValue({
+        success: true,
+        value: mockExistingAttendances,
+      });
       mockCreateAttendance.mockResolvedValue({
-        id: 2,
-        attendanceType: "lightBath",
-        patientId: 1,
-        status: "checked_in",
-        checkedInTime: "11:00:00",
-        createdAt: "2025-01-15T11:00:00Z",
-        updatedAt: "2025-01-15T11:00:00Z",
+        success: true,
+        value: {
+          id: 2,
+          type: AttendanceType.LIGHT_BATH,
+          patient_id: 1,
+          status: AttendanceStatus.CHECKED_IN,
+          scheduled_date: "2025-01-15",
+          scheduled_time: "11:00",
+          checked_in_time: "11:00:00",
+          notes: "Test attendance",
+          created_at: "2025-01-15T11:00:00Z",
+          updated_at: "2025-01-15T11:00:00Z",
+        },
       });
 
       render(
@@ -154,7 +190,9 @@ describe("PatientWalkInForm", () => {
       );
 
       // Fill in the form with existing patient name
-      const nameInput = screen.getByLabelText(/Nome do Paciente/);
+      const nameInput = screen.getByPlaceholderText(
+        "Buscar paciente pelo nome..."
+      );
       await user.type(nameInput, "João Silva");
 
       // Wait for patient suggestion and click it
@@ -194,6 +232,10 @@ describe("PatientWalkInForm", () => {
 
       // Mock API error
       mockGetAttendancesByDate.mockRejectedValue(new Error("API Error"));
+      mockCreateAttendance.mockResolvedValue({
+        success: false,
+        error: "Creation failed",
+      });
 
       render(
         <PatientWalkInForm
@@ -202,7 +244,9 @@ describe("PatientWalkInForm", () => {
       );
 
       // Fill in the form
-      const nameInput = screen.getByLabelText(/Nome do Paciente/);
+      const nameInput = screen.getByPlaceholderText(
+        "Buscar paciente pelo nome..."
+      );
       await user.type(nameInput, "João Silva");
 
       // Wait for patient suggestion and click it
@@ -223,14 +267,17 @@ describe("PatientWalkInForm", () => {
       });
       await user.click(submitButton);
 
-      // Should show error message about checking duplicates
+      // Should show error message when attendance creation fails
       await waitFor(() => {
         expect(
-          screen.getByText(/Erro ao verificar atendimentos existentes/)
+          screen.getByText(
+            "Erro ao criar 1 atendimento(s). Algumas podem ter sido criadas com sucesso."
+          )
         ).toBeInTheDocument();
       });
 
-      expect(mockCreateAttendance).not.toHaveBeenCalled();
+      // CreateAttendance should be called (duplicate check failed, so it proceeds)
+      expect(mockCreateAttendance).toHaveBeenCalled();
     });
   });
 });

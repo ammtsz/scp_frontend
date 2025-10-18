@@ -63,7 +63,7 @@ describe('Treatment Sessions API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Erro interno do servidor. Tente novamente mais tarde.'
+        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
       });
     });
   });
@@ -90,7 +90,7 @@ describe('Treatment Sessions API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Recurso não encontrado.'
+        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
       });
     });
   });
@@ -113,13 +113,16 @@ describe('Treatment Sessions API', () => {
   describe('createTreatmentSession', () => {
     it('should create treatment session successfully', async () => {
       const sessionData = {
+        treatment_record_id: 1,
+        attendance_id: 1,
         patient_id: 1,
-        type: 'spiritual',
-        total_sessions_recommended: 12,
+        treatment_type: 'light_bath' as const,
+        body_location: 'chest',
         start_date: '2025-01-15',
-        end_date: '2025-04-15',
-        frequency: 'weekly' as const,
-        notes: 'Standard spiritual treatment series'
+        planned_sessions: 12,
+        duration_minutes: 21, // 3 units of 7 minutes
+        color: 'blue',
+        notes: 'Standard light bath treatment series'
       };
       const mockResponse = { data: mockTreatmentSession };
       mockApi.post.mockResolvedValue(mockResponse);
@@ -135,11 +138,13 @@ describe('Treatment Sessions API', () => {
 
     it('should return error on validation failure', async () => {
       const sessionData = {
+        treatment_record_id: 0, // Invalid treatment_record_id
+        attendance_id: 0, // Invalid attendance_id
         patient_id: 0, // Invalid patient_id
-        type: 'spiritual',
-        total_sessions_recommended: 0, // Invalid sessions count
+        treatment_type: 'light_bath' as const,
+        body_location: '', // Invalid empty body_location
         start_date: 'invalid-date', // Invalid date format
-        frequency: 'weekly' as const
+        planned_sessions: 0 // Invalid sessions count
       };
       const mockError = { status: 400 };
       mockApi.post.mockRejectedValue(mockError);
@@ -148,7 +153,7 @@ describe('Treatment Sessions API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Dados inválidos. Verifique os campos e tente novamente.'
+        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
       });
     });
   });
@@ -262,7 +267,7 @@ describe('Treatment Sessions API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Recurso não encontrado.'
+        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
       });
     });
   });

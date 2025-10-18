@@ -20,7 +20,7 @@ jest.mock("react-feather", () => ({
 }));
 
 // Mock the AttendanceTimes component
-jest.mock("../components/cards/AttendanceTimes", () => {
+jest.mock("../components/AttendanceCards/AttendanceTimes", () => {
   return function MockAttendanceTimes({
     status,
     checkedInTime,
@@ -28,23 +28,22 @@ jest.mock("../components/cards/AttendanceTimes", () => {
     completedTime,
   }: {
     status: IAttendanceProgression;
-    checkedInTime?: Date;
-    onGoingTime?: Date;
-    completedTime?: Date;
+    checkedInTime?: string | null;
+    onGoingTime?: string | null;
+    completedTime?: string | null;
   }) {
     return (
       <div data-testid="attendance-times">
-        Times: {status} -
-        {checkedInTime && ` CheckedIn: ${checkedInTime.toISOString()}`}
-        {onGoingTime && ` OnGoing: ${onGoingTime.toISOString()}`}
-        {completedTime && ` Completed: ${completedTime.toISOString()}`}
+        Times: {status} -{checkedInTime && ` CheckedIn: ${checkedInTime}`}
+        {onGoingTime && ` OnGoing: ${onGoingTime}`}
+        {completedTime && ` Completed: ${completedTime}`}
       </div>
     );
   };
 });
 
 // Mock the TreatmentSessionProgress component
-jest.mock("../components/TreatmentSessionProgress", () => {
+jest.mock("../../TreatmentSessionProgress", () => {
   return function MockTreatmentSessionProgress({
     patientId,
     attendanceType,
@@ -163,7 +162,7 @@ describe("AttendanceCard Component", () => {
         type: "spiritual",
         status: "checkedIn",
         idx: 0,
-        name: "Test Patient",
+        patientId: 456,
       };
 
       render(<AttendanceCard {...defaultProps} dragged={draggedItem} />);
@@ -177,7 +176,7 @@ describe("AttendanceCard Component", () => {
         type: "lightBath", // Different type
         status: "checkedIn",
         idx: 0,
-        name: "Test Patient",
+        patientId: 456,
       };
 
       render(<AttendanceCard {...defaultProps} dragged={draggedItem} />);
@@ -257,7 +256,7 @@ describe("AttendanceCard Component", () => {
           type: "spiritual" as IAttendanceType,
           status: "checkedIn" as IAttendanceProgression,
           idx: 0,
-          name: "Test Patient",
+          patientId: 456,
         },
         cardProps: {
           type: "spiritual" as IAttendanceType,
@@ -272,7 +271,7 @@ describe("AttendanceCard Component", () => {
           type: "lightBath" as IAttendanceType,
           status: "checkedIn" as IAttendanceProgression,
           idx: 0,
-          name: "Test Patient",
+          patientId: 1,
         },
         cardProps: {
           type: "spiritual" as IAttendanceType,
@@ -287,7 +286,7 @@ describe("AttendanceCard Component", () => {
           type: "spiritual" as IAttendanceType,
           status: "scheduled" as IAttendanceProgression,
           idx: 0,
-          name: "Test Patient",
+          patientId: 1,
         },
         cardProps: {
           type: "spiritual" as IAttendanceType,
@@ -302,7 +301,7 @@ describe("AttendanceCard Component", () => {
           type: "spiritual" as IAttendanceType,
           status: "checkedIn" as IAttendanceProgression,
           idx: 1,
-          name: "Test Patient",
+          patientId: 1,
         },
         cardProps: {
           type: "spiritual" as IAttendanceType,
@@ -362,6 +361,7 @@ describe("AttendanceCard Component", () => {
 
     it("should pass correct times to AttendanceTimes component", () => {
       const patientWithTimes: IAttendanceStatusDetail = {
+        patientId: 1,
         name: "Test Patient",
         priority: "1" as IPriority,
         checkedInTime: "09:00:00",
@@ -372,15 +372,9 @@ describe("AttendanceCard Component", () => {
       render(<AttendanceCard {...defaultProps} patient={patientWithTimes} />);
 
       const attendanceTimes = screen.getByTestId("attendance-times");
-      expect(attendanceTimes).toHaveTextContent(
-        "CheckedIn: 2025-01-15T09:00:00.000Z"
-      );
-      expect(attendanceTimes).toHaveTextContent(
-        "OnGoing: 2025-01-15T09:30:00.000Z"
-      );
-      expect(attendanceTimes).toHaveTextContent(
-        "Completed: 2025-01-15T10:00:00.000Z"
-      );
+      expect(attendanceTimes).toHaveTextContent("CheckedIn: 09:00:00");
+      expect(attendanceTimes).toHaveTextContent("OnGoing: 09:30:00");
+      expect(attendanceTimes).toHaveTextContent("Completed: 10:00:00");
     });
   });
 
@@ -423,6 +417,7 @@ describe("AttendanceCard Component", () => {
   describe("Edge Cases", () => {
     it("should handle null times gracefully", () => {
       const patientWithNullTimes: IAttendanceStatusDetail = {
+        patientId: 1,
         name: "Test Patient",
         priority: "1" as IPriority,
         checkedInTime: null,

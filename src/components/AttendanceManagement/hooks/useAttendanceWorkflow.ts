@@ -10,7 +10,7 @@ export const useAttendanceWorkflow = () => {
   // Collapsed state for attendance sections
   const [collapsed, setCollapsed] = useState<{
     [key in IAttendanceType]: boolean;
-  }>({ spiritual: false, lightBath: false, rod: false });
+  }>({ spiritual: false, lightBath: false, rod: false, combined: false });
 
   // Day finalization state
   const [isDayFinalized, setIsDayFinalized] = useState(false);

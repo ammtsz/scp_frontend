@@ -5,6 +5,12 @@ import NewPatientCheckInForm from "../NewPatientCheckInForm";
 import { IPatient } from "@/types/globals";
 import * as attendancesApi from "@/api/attendances";
 import * as patientsApi from "@/api/patients";
+import {
+  PatientPriority,
+  TreatmentStatus,
+  AttendanceType,
+  AttendanceStatus,
+} from "@/api/types";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { PatientsProvider } from "@/contexts/PatientsContext";
 
@@ -50,14 +56,13 @@ const mockPatient: IPatient = {
   nextAttendanceDates: [],
   currentRecommendations: {
     date: new Date(),
-    meditation: false,
-    reading: false,
-    prayer: false,
-    service: false,
-    work: false,
-    faith: false,
-    needsReassessment: false,
-    otherRecommendation: "",
+    food: "",
+    water: "",
+    ointment: "",
+    lightBath: false,
+    rod: false,
+    spiritualTreatment: false,
+    returnWeeks: 0,
   },
   previousAttendances: [],
 };
@@ -81,9 +86,46 @@ const renderComponent = (props = {}) => {
 describe("NewPatientCheckInForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUpdatePatient.mockResolvedValue({ success: true, value: {} });
-    mockCreateAttendance.mockResolvedValue({ success: true, value: { id: 1 } });
-    mockCheckInAttendance.mockResolvedValue({ success: true, value: {} });
+    mockUpdatePatient.mockResolvedValue({
+      success: true,
+      value: {
+        id: 1,
+        name: "João Silva",
+        priority: PatientPriority.INTERMEDIATE,
+        treatment_status: TreatmentStatus.DISCHARGED,
+        start_date: "2025-01-15",
+        missing_appointments_streak: 0,
+        created_at: "2025-01-15T00:00:00Z",
+        updated_at: "2025-01-15T00:00:00Z",
+      },
+    });
+    mockCreateAttendance.mockResolvedValue({
+      success: true,
+      value: {
+        id: 1,
+        patient_id: 1,
+        type: AttendanceType.SPIRITUAL,
+        status: AttendanceStatus.SCHEDULED,
+        scheduled_date: "2025-01-15",
+        scheduled_time: "09:00",
+        created_at: "2025-01-15T00:00:00Z",
+        updated_at: "2025-01-15T00:00:00Z",
+      },
+    });
+    mockCheckInAttendance.mockResolvedValue({
+      success: true,
+      value: {
+        id: 1,
+        patient_id: 1,
+        type: AttendanceType.SPIRITUAL,
+        status: AttendanceStatus.CHECKED_IN,
+        scheduled_date: "2025-01-15",
+        scheduled_time: "09:00",
+        checked_in_time: "09:00:00",
+        created_at: "2025-01-15T00:00:00Z",
+        updated_at: "2025-01-15T00:00:00Z",
+      },
+    });
   });
 
   it("renders form fields with patient data", () => {
@@ -92,7 +134,10 @@ describe("NewPatientCheckInForm", () => {
     expect(screen.getByDisplayValue("João Silva")).toBeInTheDocument();
     expect(screen.getByDisplayValue("(11) 99999-9999")).toBeInTheDocument();
     expect(screen.getByDisplayValue("1990-01-01")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("2")).toBeInTheDocument();
+
+    // Check priority select by getting the element and checking its value
+    const prioritySelect = screen.getByRole("combobox");
+    expect(prioritySelect).toHaveValue("2");
   });
 
   it("validates required fields", async () => {
@@ -199,7 +244,23 @@ describe("NewPatientCheckInForm", () => {
     mockUpdatePatient.mockImplementation(
       () =>
         new Promise((resolve) =>
-          setTimeout(() => resolve({ success: true, value: {} }), 100)
+          setTimeout(
+            () =>
+              resolve({
+                success: true,
+                value: {
+                  id: 1,
+                  name: "João Silva",
+                  priority: PatientPriority.INTERMEDIATE,
+                  treatment_status: TreatmentStatus.DISCHARGED,
+                  start_date: "2025-01-15",
+                  missing_appointments_streak: 0,
+                  created_at: "2025-01-15T00:00:00Z",
+                  updated_at: "2025-01-15T00:00:00Z",
+                },
+              }),
+            100
+          )
         )
     );
 

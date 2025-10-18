@@ -18,7 +18,7 @@ jest.mock("@/api/patients", () => ({
 }));
 
 // Mock ConfirmModal since it's external
-jest.mock("@/components/ConfirmModal/index", () => {
+jest.mock("@/components/common/ConfirmModal/index", () => {
   return function MockConfirmModal({
     open,
     message,
@@ -56,7 +56,7 @@ import {
   AttendanceStatus,
   PatientPriority,
   TreatmentStatus,
-} from "@/api";
+} from "@/api/types";
 
 const mockGetAttendancesByDate = getAttendancesByDate as jest.MockedFunction<
   typeof getAttendancesByDate
@@ -124,6 +124,7 @@ describe("AttendanceManagement Integration Tests", () => {
           priority: PatientPriority.EMERGENCY,
           treatment_status: TreatmentStatus.IN_TREATMENT,
           start_date: "2025-01-01",
+          missing_appointments_streak: 0,
           created_at: "2025-01-01T08:00:00.000Z",
           updated_at: "2025-01-01T08:00:00.000Z",
         },
@@ -133,6 +134,7 @@ describe("AttendanceManagement Integration Tests", () => {
           priority: PatientPriority.INTERMEDIATE,
           treatment_status: TreatmentStatus.IN_TREATMENT,
           start_date: "2025-01-02",
+          missing_appointments_streak: 0,
           created_at: "2025-01-02T08:00:00.000Z",
           updated_at: "2025-01-02T08:00:00.000Z",
         },
@@ -185,7 +187,7 @@ describe("AttendanceManagement Integration Tests", () => {
 
       // Check that sections are rendered
       expect(screen.getByText("▼ Consultas Espirituais")).toBeInTheDocument();
-      expect(screen.getByText("▼ Banhos de Luz + Bastão")).toBeInTheDocument();
+      expect(screen.getByText("▼ Banhos de Luz e Bastão")).toBeInTheDocument();
     });
 
     it("should render real AttendanceColumn components", async () => {
@@ -269,7 +271,7 @@ describe("AttendanceManagement Integration Tests", () => {
 
       // Check sections
       const spiritualSection = screen.getByText("▼ Consultas Espirituais");
-      const lightBathSection = screen.getByText("▼ Banhos de Luz + Bastão");
+      const lightBathSection = screen.getByText("▼ Banhos de Luz e Bastão");
       expect(spiritualSection).toBeInTheDocument();
       expect(lightBathSection).toBeInTheDocument();
     });

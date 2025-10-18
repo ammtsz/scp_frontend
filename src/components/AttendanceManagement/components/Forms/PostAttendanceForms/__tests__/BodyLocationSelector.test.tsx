@@ -13,11 +13,13 @@ describe("BodyLocationSelector", () => {
   it("renders with default state", () => {
     render(<BodyLocationSelector onLocationsSubmit={mockOnLocationsSubmit} />);
 
-    expect(screen.getByText("Selecione um ou mais locais")).toBeInTheDocument();
+    expect(
+      screen.getByText("Adicione um ou mais locais para o tratamento:")
+    ).toBeInTheDocument();
     expect(
       screen.getByText("Selecione os locais do corpo")
     ).toBeInTheDocument();
-    expect(screen.queryByText("Adicionar Tratamento")).not.toBeInTheDocument();
+    expect(screen.queryByText("Confirmar locais")).not.toBeInTheDocument();
   });
 
   it("opens dropdown when clicked", () => {
@@ -49,7 +51,7 @@ describe("BodyLocationSelector", () => {
     fireEvent.click(cabecaCheckbox!);
 
     // Add Treatment button should appear
-    expect(screen.getByText("Adicionar Tratamento")).toBeInTheDocument();
+    expect(screen.getByText("Confirmar locais")).toBeInTheDocument();
   });
 
   it("submits multiple locations when Add Treatment is clicked", () => {
@@ -75,7 +77,7 @@ describe("BodyLocationSelector", () => {
     fireEvent.click(bracoCheckbox!);
 
     // Click Add Treatment button
-    const addButton = screen.getByText("Adicionar Tratamento");
+    const addButton = screen.getByText("Confirmar locais");
     fireEvent.click(addButton);
 
     // Should submit all selected locations at once
@@ -101,14 +103,14 @@ describe("BodyLocationSelector", () => {
     fireEvent.click(cabecaCheckbox!);
 
     // Click Add Treatment button
-    const addButton = screen.getByText("Adicionar Tratamento");
+    const addButton = screen.getByText("Confirmar locais");
     fireEvent.click(addButton);
 
     // Should reset to default state
     expect(
       screen.getByText("Selecione os locais do corpo")
     ).toBeInTheDocument();
-    expect(screen.queryByText("Adicionar Tratamento")).not.toBeInTheDocument();
+    expect(screen.queryByText("Confirmar locais")).not.toBeInTheDocument();
     expect(screen.queryByText("Locais Selecionados:")).not.toBeInTheDocument();
   });
 
@@ -153,7 +155,7 @@ describe("BodyLocationSelector", () => {
     fireEvent.change(customInput, { target: { value: "tornozelo medial" } });
 
     // Click Add Treatment button
-    const addButton = screen.getByText("Adicionar Tratamento");
+    const addButton = screen.getByText("Confirmar locais");
     fireEvent.click(addButton);
 
     expect(mockOnLocationsSubmit).toHaveBeenCalledWith(["tornozelo medial"]);
@@ -188,7 +190,7 @@ describe("BodyLocationSelector", () => {
     fireEvent.change(customInput, { target: { value: "tornozelo medial" } });
 
     // Click Add Treatment button
-    const addButton = screen.getByText("Adicionar Tratamento");
+    const addButton = screen.getByText("Confirmar locais");
     fireEvent.click(addButton);
 
     expect(mockOnLocationsSubmit).toHaveBeenCalledWith([
@@ -251,7 +253,7 @@ describe("BodyLocationSelector", () => {
 
     // Should remove the location from selected locations
     expect(screen.queryByText("Locais Selecionados:")).not.toBeInTheDocument();
-    expect(screen.queryByText("Adicionar Tratamento")).not.toBeInTheDocument();
+    expect(screen.queryByText("Confirmar locais")).not.toBeInTheDocument();
   });
 
   it("displays truncated text for many selections", () => {
@@ -477,7 +479,7 @@ describe("BodyLocationSelector", () => {
       fireEvent.click(cabecaCheckbox!);
 
       // Submit
-      const submitButton = screen.getByText("Adicionar Tratamento");
+      const submitButton = screen.getByText("Confirmar locais");
       fireEvent.click(submitButton);
 
       // Open dropdown again

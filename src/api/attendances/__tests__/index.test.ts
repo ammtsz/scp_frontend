@@ -23,6 +23,9 @@ jest.mock('@/api/lib/axios', () => ({
 import api from '@/api/lib/axios';
 const mockApi = api as jest.Mocked<typeof api>;
 
+// Mock Date to return consistent time for time-sensitive tests
+jest.useFakeTimers().setSystemTime(new Date('2024-01-01 12:00:00'));
+
 describe('Attendances API', () => {
   beforeEach(() => {
     jest.clearAllMocks();

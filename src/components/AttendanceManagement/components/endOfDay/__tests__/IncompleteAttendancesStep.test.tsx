@@ -84,7 +84,8 @@ describe("IncompleteAttendancesStep", () => {
   });
 
   it("displays check-in time when available", () => {
-    const checkedInTime = "10:30:00";
+    // Use a proper ISO datetime format that the component can parse
+    const checkedInTime = "2024-01-15T10:30:00";
     const incompleteAttendances = [
       createMockAttendance({
         checkedInTime,

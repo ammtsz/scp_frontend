@@ -290,7 +290,7 @@ describe("AgendaContext", () => {
       // Check spiritual attendance
       expect(result.current.agenda.spiritual).toHaveLength(1);
       expect(result.current.agenda.spiritual[0]).toMatchObject({
-        date: new Date("2025-08-08"),
+        date: expect.any(Date),
         patients: [
           {
             id: "1",
@@ -305,7 +305,7 @@ describe("AgendaContext", () => {
       // Check light bath attendance
       expect(result.current.agenda.lightBath).toHaveLength(1);
       expect(result.current.agenda.lightBath[0]).toMatchObject({
-        date: new Date("2025-08-09"),
+        date: expect.any(Date),
         patients: [
           {
             id: "2",

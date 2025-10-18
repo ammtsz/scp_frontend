@@ -11,7 +11,7 @@ import {
 import { IDraggedItem } from "../types";
 
 // Mock the AttendanceCard component
-jest.mock("../components/cards/AttendanceCard", () => {
+jest.mock("../components/AttendanceCards/AttendanceCard", () => {
   return function MockAttendanceCard({
     patient,
     index,
@@ -57,7 +57,7 @@ describe("AttendanceColumn Component", () => {
     {
       name: "João Silva",
       priority: "1" as IPriority,
-      checkedInTime: new Date("2025-01-15T09:00:00Z"),
+      checkedInTime: "09:00:00",
       onGoingTime: null,
       completedTime: null,
       originalType: "spiritual" as IAttendanceType,
@@ -65,7 +65,7 @@ describe("AttendanceColumn Component", () => {
     {
       name: "Maria Santos",
       priority: "2" as IPriority,
-      checkedInTime: new Date("2025-01-15T10:00:00Z"),
+      checkedInTime: "10:00:00",
       onGoingTime: null,
       completedTime: null,
       originalType: "spiritual" as IAttendanceType,
@@ -197,7 +197,8 @@ describe("AttendanceColumn Component", () => {
       expect(mockHandleDragStart).toHaveBeenCalledWith(
         "spiritual",
         0,
-        "checkedIn"
+        "checkedIn",
+        undefined
       );
     });
 
@@ -220,7 +221,7 @@ describe("AttendanceColumn Component", () => {
         type: "spiritual",
         status: "checkedIn",
         idx: 0,
-        name: "Test Patient",
+        patientId: 1,
       };
 
       render(<AttendanceColumn {...defaultProps} dragged={draggedItem} />);
@@ -236,7 +237,7 @@ describe("AttendanceColumn Component", () => {
         type: "spiritual",
         status: "checkedIn",
         idx: 0,
-        name: "Test Patient",
+        patientId: 1,
       };
 
       render(<AttendanceColumn {...defaultProps} dragged={draggedItem} />);
@@ -282,7 +283,7 @@ describe("AttendanceColumn Component", () => {
         type: "spiritual",
         status: "scheduled", // Different status to trigger preventDefault
         idx: 0,
-        name: "Test Patient",
+        patientId: 1,
       };
 
       const { container } = render(
@@ -419,7 +420,7 @@ describe("AttendanceColumn Component", () => {
         type: "lightBath",
         status: "scheduled",
         idx: 0,
-        name: "Test Patient",
+        patientId: 1,
       };
 
       render(<AttendanceColumn {...defaultProps} dragged={draggedItem} />);
