@@ -1,5 +1,7 @@
 import React from "react";
-import type { IAttendanceStatusDetailWithType } from "../../../utils/attendanceDataUtils";
+import { IAttendanceStatusDetailWithType } from "../../../utils/attendanceDataUtils";
+import { useTimezone } from "@/contexts/TimezoneContext";
+import { formatLocaleTime } from "@/utils/timezoneFormatters";
 import { getAttendanceTypeLabel } from "@/utils/apiTransformers";
 
 interface IncompleteAttendancesStepProps {
@@ -17,6 +19,8 @@ const IncompleteAttendancesStep: React.FC<IncompleteAttendancesStepProps> = ({
   onReschedule,
   onNext,
 }) => {
+  const { userTimezone } = useTimezone();
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString + "T00:00:00");
     return date.toLocaleDateString("pt-BR");
@@ -108,11 +112,11 @@ const IncompleteAttendancesStep: React.FC<IncompleteAttendancesStepProps> = ({
                   {attendance.checkedInTime && (
                     <p className="text-xs text-gray-400">
                       Check-in:{" "}
-                      {new Date(attendance.checkedInTime).toLocaleTimeString(
-                        "pt-BR",
+                      {formatLocaleTime(
+                        attendance.checkedInTime,
+                        userTimezone,
                         {
-                          hour: "2-digit",
-                          minute: "2-digit",
+                          showTimezone: userTimezone !== "America/Sao_Paulo",
                         }
                       )}
                     </p>

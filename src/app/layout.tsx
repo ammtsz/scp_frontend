@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import TabNav from "@/components/common/TabNav";
+import { TopNavigation } from "@/components/layout/TopNavigation";
+import { TimezoneProvider } from "@/contexts/TimezoneContext";
 import { PatientsProvider } from "@/contexts/PatientsContext";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { AgendaProvider } from "@/contexts/AgendaContext";
@@ -28,18 +30,21 @@ export default function RootLayout({
       <body
         className={`${inter.variable} antialiased bg-[color:var(--background)] text-[color:var(--foreground)]`}
       >
-        <PatientsProvider>
-          <AttendancesProvider>
-            <AgendaProvider>
-              <TreatmentRecordsProvider>
-                <TabNav />
-                <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
-                  {children}
-                </main>
-              </TreatmentRecordsProvider>
-            </AgendaProvider>
-          </AttendancesProvider>
-        </PatientsProvider>
+        <TimezoneProvider>
+          <PatientsProvider>
+            <AttendancesProvider>
+              <AgendaProvider>
+                <TreatmentRecordsProvider>
+                  <TopNavigation />
+                  <TabNav />
+                  <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
+                    {children}
+                  </main>
+                </TreatmentRecordsProvider>
+              </AgendaProvider>
+            </AttendancesProvider>
+          </PatientsProvider>
+        </TimezoneProvider>
       </body>
     </html>
   );

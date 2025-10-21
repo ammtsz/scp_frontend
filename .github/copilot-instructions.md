@@ -81,6 +81,20 @@
 - **Integration**: Used by hooks for backend operations, maintaining separation between React logic and business logic
 - **Benefits**: Testable business logic, consistent API interaction patterns, reusable across components
 
+#### Timezone Integration Pattern
+- **TimezoneSelect Component**: Reusable timezone selector with intelligent browser detection and 12 supported timezones
+- **Location**: `/src/components/common/TimezoneSelect.tsx`
+- **Features**: 
+  - Intelligent browser timezone detection with user-friendly hints
+  - Portuguese labels for Brazilian healthcare context
+  - GMT offset display for clarity
+  - Automatic fallback to America/Sao_Paulo default
+  - Support for major Brazilian, US, European, and Asian timezones
+- **Backend Integration**: Full timezone validation and storage with IANA format support
+- **Form Integration**: Added to PatientFormFields and PatientWalkInForm with proper state management
+- **API Support**: Timezone field included in CreatePatientRequest, UpdatePatientRequest, and PatientResponseDto
+- **Usage Pattern**: Optional field with intelligent defaults, consistent across all patient forms
+
 #### Multiselect Components
 - **BodyLocationSelector**: Modern multiselect dropdown for body location selection with batch submission and search functionality
 - **Location**: `/src/components/AttendanceManagement/components/TreatmentForms/BodyLocationSelector.tsx`

@@ -130,6 +130,7 @@ export interface CreatePatientRequest {
   treatment_status?: TreatmentStatus;
   birth_date?: string; // ISO date string
   main_complaint?: string;
+  timezone?: string;
 }
 
 export interface UpdatePatientRequest {
@@ -138,6 +139,7 @@ export interface UpdatePatientRequest {
   priority?: PatientPriority;
   treatment_status?: TreatmentStatus;
   birth_date?: string; // ISO date string
+  timezone?: string;
   main_complaint?: string;
   discharge_date?: string; // ISO date string
 }

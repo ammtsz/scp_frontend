@@ -2,20 +2,34 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import TreatmentSessionProgress from "../../../TreatmentSessionProgress";
 import * as treatmentSessionsApi from "@/api/treatment-sessions";
-import * as treatmentSessionRecordsApi from "@/api/treatment-session-records";
+import type { TreatmentSessionResponseDto } from "@/api/types";
 
 // Mock the API functions
 jest.mock("@/api/treatment-sessions");
-jest.mock("@/api/treatment-session-records");
 
 const mockGetTreatmentSessionsByPatient =
   treatmentSessionsApi.getTreatmentSessionsByPatient as jest.MockedFunction<
     typeof treatmentSessionsApi.getTreatmentSessionsByPatient
   >;
-const mockGetTreatmentSessionRecordsByPatient =
-  treatmentSessionRecordsApi.getTreatmentSessionRecordsByPatient as jest.MockedFunction<
-    typeof treatmentSessionRecordsApi.getTreatmentSessionRecordsByPatient
-  >;
+
+// Helper function to create mock treatment session data
+const createMockTreatmentSession = (
+  overrides: Partial<TreatmentSessionResponseDto> = {}
+): TreatmentSessionResponseDto => ({
+  id: 1,
+  treatment_record_id: 1,
+  attendance_id: 100,
+  patient_id: 1,
+  treatment_type: "light_bath" as const,
+  body_location: "braço direito",
+  status: "in_progress",
+  planned_sessions: 5,
+  completed_sessions: 2,
+  start_date: "2024-01-01",
+  created_at: "2024-01-01T10:00:00Z",
+  updated_at: "2024-01-01T10:00:00Z",
+  ...overrides,
+});
 
 describe("TreatmentSessionProgress", () => {
   beforeEach(() => {
@@ -39,40 +53,17 @@ describe("TreatmentSessionProgress", () => {
 
   it("renders compact progress view with session count", async () => {
     const mockSessions = [
-      {
+      createMockTreatmentSession({
         id: 1,
-        patient_id: 1,
-        treatment_type: "light_bath" as const,
-        status: "in_progress" as const,
+        treatment_type: "light_bath",
         planned_sessions: 5,
         completed_sessions: 2,
-        start_date: "2024-01-01",
-        created_at: "2024-01-01T10:00:00Z",
-        updated_at: "2024-01-01T10:00:00Z",
-      },
-    ];
-
-    const mockRecords = [
-      {
-        id: 1,
-        treatment_session_id: 1,
-        attendance_id: 100,
-        scheduled_date: "2024-01-15",
-        status: "scheduled" as const,
-        notes: null,
-        created_at: "2024-01-01T10:00:00Z",
-        updated_at: "2024-01-01T10:00:00Z",
-      },
+      }),
     ];
 
     mockGetTreatmentSessionsByPatient.mockResolvedValue({
       success: true,
       value: mockSessions,
-    });
-
-    mockGetTreatmentSessionRecordsByPatient.mockResolvedValue({
-      success: true,
-      value: mockRecords,
     });
 
     render(
@@ -86,27 +77,17 @@ describe("TreatmentSessionProgress", () => {
 
   it("renders detailed progress view when showDetails is true", async () => {
     const mockSessions = [
-      {
+      createMockTreatmentSession({
         id: 1,
-        patient_id: 1,
-        treatment_type: "rod" as const,
-        status: "in_progress" as const,
+        treatment_type: "rod",
         planned_sessions: 10,
         completed_sessions: 7,
-        start_date: "2024-01-01",
-        created_at: "2024-01-01T10:00:00Z",
-        updated_at: "2024-01-01T10:00:00Z",
-      },
+      }),
     ];
 
     mockGetTreatmentSessionsByPatient.mockResolvedValue({
       success: true,
       value: mockSessions,
-    });
-
-    mockGetTreatmentSessionRecordsByPatient.mockResolvedValue({
-      success: true,
-      value: [],
     });
 
     render(
@@ -129,38 +110,23 @@ describe("TreatmentSessionProgress", () => {
 
   it("filters sessions by attendance type correctly", async () => {
     const mockSessions = [
-      {
+      createMockTreatmentSession({
         id: 1,
-        patient_id: 1,
-        treatment_type: "light_bath" as const,
-        status: "in_progress" as const,
+        treatment_type: "light_bath",
         planned_sessions: 5,
         completed_sessions: 2,
-        start_date: "2024-01-01",
-        created_at: "2024-01-01T10:00:00Z",
-        updated_at: "2024-01-01T10:00:00Z",
-      },
-      {
+      }),
+      createMockTreatmentSession({
         id: 2,
-        patient_id: 1,
-        treatment_type: "rod" as const,
-        status: "in_progress" as const,
+        treatment_type: "rod",
         planned_sessions: 8,
         completed_sessions: 3,
-        start_date: "2024-01-01",
-        created_at: "2024-01-01T10:00:00Z",
-        updated_at: "2024-01-01T10:00:00Z",
-      },
+      }),
     ];
 
     mockGetTreatmentSessionsByPatient.mockResolvedValue({
       success: true,
       value: mockSessions,
-    });
-
-    mockGetTreatmentSessionRecordsByPatient.mockResolvedValue({
-      success: true,
-      value: [],
     });
 
     render(<TreatmentSessionProgress patientId={1} attendanceType="rod" />);
@@ -196,27 +162,17 @@ describe("TreatmentSessionProgress", () => {
 
   it("handles sessions with no records correctly", async () => {
     const mockSessions = [
-      {
+      createMockTreatmentSession({
         id: 1,
-        patient_id: 1,
-        treatment_type: "light_bath" as const,
-        status: "in_progress" as const,
+        treatment_type: "light_bath",
         planned_sessions: 3,
         completed_sessions: 1,
-        start_date: "2024-01-01",
-        created_at: "2024-01-01T10:00:00Z",
-        updated_at: "2024-01-01T10:00:00Z",
-      },
+      }),
     ];
 
     mockGetTreatmentSessionsByPatient.mockResolvedValue({
       success: true,
       value: mockSessions,
-    });
-
-    mockGetTreatmentSessionRecordsByPatient.mockResolvedValue({
-      success: false,
-      error: "No records found",
     });
 
     render(
@@ -240,27 +196,17 @@ describe("TreatmentSessionProgress", () => {
 
   it("shows correct progress percentage for 100% completion", async () => {
     const mockSessions = [
-      {
+      createMockTreatmentSession({
         id: 1,
-        patient_id: 1,
-        treatment_type: "light_bath" as const,
-        status: "in_progress" as const,
+        treatment_type: "light_bath",
         planned_sessions: 4,
         completed_sessions: 4,
-        start_date: "2024-01-01",
-        created_at: "2024-01-01T10:00:00Z",
-        updated_at: "2024-01-01T10:00:00Z",
-      },
+      }),
     ];
 
     mockGetTreatmentSessionsByPatient.mockResolvedValue({
       success: true,
       value: mockSessions,
-    });
-
-    mockGetTreatmentSessionRecordsByPatient.mockResolvedValue({
-      success: true,
-      value: [],
     });
 
     render(

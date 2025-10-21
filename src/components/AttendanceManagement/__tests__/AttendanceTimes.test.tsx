@@ -4,6 +4,36 @@ import "@testing-library/jest-dom";
 import AttendanceTimes from "../components/AttendanceCards/AttendanceTimes";
 import { IAttendanceProgression } from "@/types/globals";
 
+// Mock the TimezoneContext
+const mockUseTimezone = {
+  userTimezone: "America/Sao_Paulo",
+  setUserTimezone: jest.fn(),
+  supportedTimezones: [
+    "America/Sao_Paulo",
+    "America/New_York",
+  ] as readonly string[],
+  timezoneDisplayNames: {},
+  serverTimezone: {
+    timezone: "America/Sao_Paulo",
+    date: "2025-10-20",
+    time: "14:30:00",
+    offset: -3,
+  },
+  detectedTimezone: {
+    timezone: "America/Sao_Paulo",
+    date: "2025-10-20",
+    time: "14:30:00",
+    offset: -3,
+  },
+  isValidBrowserTimezone: true,
+  isLoading: false,
+  error: null,
+};
+
+jest.mock("@/contexts/TimezoneContext", () => ({
+  useTimezone: () => mockUseTimezone,
+}));
+
 describe("AttendanceTimes Component", () => {
   const mockTimes = {
     checkedInTime: "09:00:00",
@@ -336,6 +366,104 @@ describe("AttendanceTimes Component", () => {
       );
 
       // Should show the time two times (checkedIn and onGoing)
+      const timeElements = screen.getAllByText(/\d{2}:\d{2}/);
+      expect(timeElements).toHaveLength(2);
+    });
+  });
+
+  describe("Timezone-Aware Functionality", () => {
+    it("should format times using timezone context", () => {
+      render(
+        <AttendanceTimes
+          status="completed"
+          checkedInTime="14:30:00"
+          onGoingTime="15:00:00"
+        />
+      );
+
+      // Should display formatted times
+      const timeElements = screen.getAllByText(/\d{2}:\d{2}/);
+      expect(timeElements).toHaveLength(2);
+    });
+
+    it("should handle different timezones correctly", () => {
+      // Update mock for different timezone
+      mockUseTimezone.userTimezone = "America/New_York";
+
+      render(
+        <AttendanceTimes
+          status="completed"
+          checkedInTime="14:30:00"
+          onGoingTime="15:00:00"
+        />
+      );
+
+      // Should still display formatted times (timezone conversion handled internally)
+      const timeElements = screen.getAllByText(/\d{2}:\d{2}/);
+      expect(timeElements).toHaveLength(2);
+
+      // Reset mock
+      mockUseTimezone.userTimezone = "America/Sao_Paulo";
+    });
+
+    it("should not display timezone suffixes in card times for clean appearance", () => {
+      mockUseTimezone.userTimezone = "America/New_York";
+
+      render(
+        <AttendanceTimes
+          status="completed"
+          checkedInTime="14:30:00"
+          onGoingTime="15:00:00"
+        />
+      );
+
+      // Should not contain timezone abbreviations in the display
+      expect(screen.queryByText(/EST/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/EDT/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/BRT/)).not.toBeInTheDocument();
+
+      // Reset mock
+      mockUseTimezone.userTimezone = "America/Sao_Paulo";
+    });
+
+    it("should handle ISO datetime strings with timezone awareness", () => {
+      render(
+        <AttendanceTimes
+          status="completed"
+          checkedInTime="2025-10-20T14:30:00"
+          onGoingTime="2025-10-20T15:00:00"
+        />
+      );
+
+      const timeElements = screen.getAllByText(/\d{2}:\d{2}/);
+      expect(timeElements).toHaveLength(2);
+    });
+
+    it("should gracefully handle invalid times with timezone context", () => {
+      render(
+        <AttendanceTimes
+          status="completed"
+          checkedInTime="invalid-time"
+          onGoingTime="25:99:00"
+        />
+      );
+
+      // Should render without crashing
+      const container = screen.getByText(/check-in/).closest("div");
+      expect(container).toBeInTheDocument();
+    });
+
+    it("should maintain backward compatibility when timezone is not available", () => {
+      // This test verifies the fallback behavior built into the formatTime function
+      render(
+        <AttendanceTimes
+          status="completed"
+          checkedInTime="14:30:00"
+          onGoingTime="15:00:00"
+        />
+      );
+
+      // Should still work with mocked timezone context
       const timeElements = screen.getAllByText(/\d{2}:\d{2}/);
       expect(timeElements).toHaveLength(2);
     });

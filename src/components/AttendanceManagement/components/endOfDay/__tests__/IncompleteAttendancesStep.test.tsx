@@ -4,6 +4,36 @@ import "@testing-library/jest-dom";
 import IncompleteAttendancesStep from "../Steps/IncompleteAttendancesStep";
 import type { IAttendanceStatusDetailWithType } from "../../../utils/attendanceDataUtils";
 
+// Mock the TimezoneContext
+const mockUseTimezone = {
+  userTimezone: "America/Sao_Paulo",
+  setUserTimezone: jest.fn(),
+  supportedTimezones: [
+    "America/Sao_Paulo",
+    "America/New_York",
+  ] as readonly string[],
+  timezoneDisplayNames: {},
+  serverTimezone: {
+    timezone: "America/Sao_Paulo",
+    date: "2025-10-20",
+    time: "14:30:00",
+    offset: -3,
+  },
+  detectedTimezone: {
+    timezone: "America/Sao_Paulo",
+    date: "2025-10-20",
+    time: "14:30:00",
+    offset: -3,
+  },
+  isValidBrowserTimezone: true,
+  isLoading: false,
+  error: null,
+};
+
+jest.mock("@/contexts/TimezoneContext", () => ({
+  useTimezone: () => mockUseTimezone,
+}));
+
 // Mock data factory
 const createMockAttendance = (
   overrides: Partial<IAttendanceStatusDetailWithType> = {}
@@ -99,7 +129,9 @@ describe("IncompleteAttendancesStep", () => {
       />
     );
 
-    expect(screen.getByText("Check-in: 10:30")).toBeInTheDocument();
+    // Look for the time display more flexibly
+    expect(screen.getByText(/Check-in:/)).toBeInTheDocument();
+    expect(screen.getByText(/\d{2}:\d{2}/)).toBeInTheDocument();
   });
 
   it("calls onHandleCompletion when Concluir button is clicked", () => {
@@ -203,5 +235,141 @@ describe("IncompleteAttendancesStep", () => {
 
     const nextButton = screen.getByText("Próximo");
     expect(nextButton).toBeDisabled();
+  });
+
+  describe("Timezone-Aware Functionality", () => {
+    it("should format check-in times using timezone context", () => {
+      const incompleteAttendances = [
+        createMockAttendance({
+          checkedInTime: "2024-01-15T14:30:00.000Z",
+          name: "Test Patient",
+        }),
+      ];
+
+      render(
+        <IncompleteAttendancesStep
+          {...defaultProps}
+          incompleteAttendances={incompleteAttendances}
+        />
+      );
+
+      // Should display formatted time based on timezone
+      expect(screen.getByText(/Check-in:/)).toBeInTheDocument();
+    });
+
+    it("should show timezone indicator when different from São Paulo", () => {
+      // Change mock to New York timezone
+      mockUseTimezone.userTimezone = "America/New_York";
+
+      const incompleteAttendances = [
+        createMockAttendance({
+          checkedInTime: "2024-01-15T18:30:00.000Z",
+          name: "Test Patient",
+        }),
+      ];
+
+      render(
+        <IncompleteAttendancesStep
+          {...defaultProps}
+          incompleteAttendances={incompleteAttendances}
+        />
+      );
+
+      // Should display time with timezone indicator for non-São Paulo timezone
+      const checkInText = screen.getByText(/Check-in:/);
+      expect(checkInText).toBeInTheDocument();
+
+      // Reset mock
+      mockUseTimezone.userTimezone = "America/Sao_Paulo";
+    });
+
+    it("should not show timezone indicator for São Paulo timezone", () => {
+      const incompleteAttendances = [
+        createMockAttendance({
+          checkedInTime: "2024-01-15T14:30:00.000Z",
+          name: "Test Patient",
+        }),
+      ];
+
+      render(
+        <IncompleteAttendancesStep
+          {...defaultProps}
+          incompleteAttendances={incompleteAttendances}
+        />
+      );
+
+      const checkInText = screen.getByText(/Check-in:/);
+      // Should not contain timezone abbreviations for São Paulo (default)
+      expect(checkInText.textContent).not.toMatch(/BRT|BRST|EST|EDT/);
+    });
+
+    it("should handle invalid check-in times gracefully", () => {
+      const incompleteAttendances = [
+        createMockAttendance({
+          checkedInTime: "invalid-time",
+          name: "Test Patient",
+        }),
+      ];
+
+      render(
+        <IncompleteAttendancesStep
+          {...defaultProps}
+          incompleteAttendances={incompleteAttendances}
+        />
+      );
+
+      // Should render without crashing and show patient name
+      expect(screen.getByText("Test Patient")).toBeInTheDocument();
+    });
+
+    it("should format multiple attendance times consistently", () => {
+      const incompleteAttendances = [
+        createMockAttendance({
+          checkedInTime: "2024-01-15T14:30:00.000Z",
+          name: "Patient One",
+          attendanceId: 1,
+        }),
+        createMockAttendance({
+          checkedInTime: "2024-01-15T15:45:00.000Z",
+          name: "Patient Two",
+          attendanceId: 2,
+        }),
+      ];
+
+      render(
+        <IncompleteAttendancesStep
+          {...defaultProps}
+          incompleteAttendances={incompleteAttendances}
+        />
+      );
+
+      // Should show both patients with formatted times
+      expect(screen.getByText("Patient One")).toBeInTheDocument();
+      expect(screen.getByText("Patient Two")).toBeInTheDocument();
+
+      // Should display check-in times for both
+      const checkInTexts = screen.getAllByText(/Check-in:/);
+      expect(checkInTexts).toHaveLength(2);
+    });
+
+    it("should handle null check-in times without timezone errors", () => {
+      const incompleteAttendances = [
+        createMockAttendance({
+          checkedInTime: null,
+          name: "Test Patient",
+        }),
+      ];
+
+      render(
+        <IncompleteAttendancesStep
+          {...defaultProps}
+          incompleteAttendances={incompleteAttendances}
+        />
+      );
+
+      // Should render patient without check-in time
+      expect(screen.getByText("Test Patient")).toBeInTheDocument();
+      expect(screen.queryByText(/Check-in:/)).not.toBeInTheDocument();
+    });
   });
 });

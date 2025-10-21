@@ -20,6 +20,7 @@ export interface Patient {
   mainComplaint?: string;
   dischargeDate?: Date;
   startDate: Date;
+  timezone?: string; // Patient's timezone preference
   createdAt: Date;
   updatedAt: Date;
 }

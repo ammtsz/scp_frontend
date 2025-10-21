@@ -75,6 +75,7 @@ export interface IPatient extends IPatients {
   mainComplaint: string,
   startDate: Date,
   dischargeDate: Date | null,
+  timezone?: string,
   nextAttendanceDates: {
     date: Date,
     type: IAttendanceType
