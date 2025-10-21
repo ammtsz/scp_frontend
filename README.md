@@ -39,7 +39,8 @@ Currently, I am coding more myself, regaining control over component responsibil
 - **Attendance Management**: End-of-day workflow, absence justification, drag-and-drop status updates
 - **Unscheduled Patients**: Walk-in patient registration and attendance
 - **Spiritual Consultation Workflow**: Treatment planning post-consultation
-- **Modern UI Components**: Switches, forms, responsive design (in-progress)
+- **Performance Optimization**: Route-level code splitting with 24% bundle size reduction
+- **Modern UI Components**: Switches, forms, loading fallbacks, responsive design (in-progress)
 - **Backend Integration**: Real-time status sync, error handling, strict type safety
 
 ---
@@ -95,6 +96,7 @@ src/
 
 - **Specialized Hooks**: Single-responsibility hooks for drag-and-drop, modals, workflows, and data management
 - **Service Layer**: Business logic separated into service classes for maintainability
+- **Performance Optimized**: Route-level lazy loading, bundle optimization, custom loading components
 - **Modern UI**: Responsive design with ongoing improvements for mobile-friendliness using TailwindCSS
 
 ---

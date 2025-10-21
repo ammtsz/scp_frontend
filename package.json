@@ -50,11 +50,14 @@
       "**/?(*.)+(spec|test).ts?(x)"
     ],
     "transform": {
-      "^.+\\.(ts|tsx)$": ["ts-jest", {
-        "tsconfig": {
-          "jsx": "react-jsx"
+      "^.+\\.(ts|tsx)$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "jsx": "react-jsx"
+          }
         }
-      }]
+      ]
     },
     "moduleFileExtensions": [
       "ts",

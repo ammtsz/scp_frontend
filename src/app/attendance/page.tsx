@@ -1,9 +1,14 @@
 "use client";
 
-import AttendanceManagement from "@/components/AttendanceManagement";
+import React, { useState, Suspense, lazy } from "react";
 import { PatientWalkInPanel } from "@/components/AttendanceManagement/components/Forms/WalkInForm";
 import { IPriority } from "@/types/globals";
-import React, { useState } from "react";
+import LoadingFallback from "@/components/common/LoadingFallback";
+
+// Lazy load the heavy AttendanceManagement component
+const AttendanceManagement = lazy(
+  () => import("@/components/AttendanceManagement")
+);
 
 export default function AttendancePage() {
   const [unscheduledCheckIn, setUnscheduledCheckIn] = useState<{
@@ -36,10 +41,19 @@ export default function AttendancePage() {
           </p>
         </div>
         <div className="p-4">
-          <AttendanceManagement
-            unscheduledCheckIn={unscheduledCheckIn}
-            onCheckInProcessed={() => setUnscheduledCheckIn(null)}
-          />
+          <Suspense
+            fallback={
+              <LoadingFallback
+                message="Carregando quadro de atendimentos..."
+                size="large"
+              />
+            }
+          >
+            <AttendanceManagement
+              unscheduledCheckIn={unscheduledCheckIn}
+              onCheckInProcessed={() => setUnscheduledCheckIn(null)}
+            />
+          </Suspense>
         </div>
       </div>
     </div>

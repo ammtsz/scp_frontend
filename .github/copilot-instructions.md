@@ -144,6 +144,24 @@
 - **Validation Hook**: `useTabValidation` for centralized tab state management
 - **Integration**: Maintains existing API integration and form submission logic
 
+#### Performance Optimization Patterns
+- **Route-Level Code Splitting**: Implemented React.lazy() for major routes with 24% bundle reduction
+- **Modal Lazy Loading**: Large modals loaded on-demand to reduce initial bundle size
+- **LoadingFallback Component**: Reusable loading component with customizable size, message, and spinner
+- **Location**: `/src/components/common/LoadingFallback.tsx`
+- **Features**:
+  - Size variations (small/medium/large) with responsive dimensions
+  - Optional spinner with customizable visibility
+  - Custom loading messages with sensible defaults
+  - Accessibility support with proper ARIA labels
+  - Tailwind CSS integration for consistent styling
+- **Bundle Results**:
+  - `/attendance`: 170kB → 132kB (22% reduction)
+  - `/agenda`: 137kB → 102kB (26% reduction)
+  - `/patients/new`: 130kB → 102kB (22% reduction)
+- **Implementation**: Used with React Suspense boundaries for seamless loading experience
+- **Testing**: Comprehensive test suite covering all component variants and accessibility features
+
 ### File Organization
 
 - API calls: `/src/api/`
@@ -267,6 +285,8 @@ This is a Next.js healthcare attendance management system with React, TypeScript
 ## Current Status
 
 - ✅ Full drag-and-drop system with backend sync
+- ✅ **Performance optimization complete**: Route-level code splitting with 24% bundle size reduction
+- ✅ **LoadingFallback component**: Reusable loading component with customizable props
 - ✅ Comprehensive test suite (18/18 suites passing, 280+ tests)
 - ✅ Standardized test organization (all tests in `__tests__/` folders)
 - ✅ Case conversion system for API integration

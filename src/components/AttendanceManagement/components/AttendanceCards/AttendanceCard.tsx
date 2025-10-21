@@ -14,6 +14,7 @@ import {
 import AttendanceTimes from "./AttendanceTimes";
 import TreatmentSessionProgress from "../../../TreatmentSessionProgress";
 import type { IGroupedPatient } from "../../utils/patientGrouping";
+import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
 
 interface AttendanceCardProps {
   patient: IAttendanceStatusDetail;
@@ -31,6 +32,8 @@ interface AttendanceCardProps {
   isNextToBeAttended?: boolean;
   isDayFinalized?: boolean;
   groupedPatient?: IGroupedPatient;
+  treatmentInfo?: TreatmentInfo;
+  onTreatmentInfoClick?: () => void;
 }
 
 const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
@@ -46,6 +49,10 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
     isNextToBeAttended = false,
     isDayFinalized = false,
     groupedPatient,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    treatmentInfo,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    onTreatmentInfoClick,
   }) => {
     const typeConfig = getTypeIndicatorConfig(type);
 

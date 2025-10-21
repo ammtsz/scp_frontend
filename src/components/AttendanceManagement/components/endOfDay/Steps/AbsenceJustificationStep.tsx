@@ -1,6 +1,7 @@
 import React from "react";
 import type { AbsenceJustification, ScheduledAbsence } from "../types";
 import { getAttendanceTypeLabel } from "@/utils/apiTransformers";
+import type { IAttendanceType } from "@/types/globals";
 
 interface AbsenceJustificationStepProps {
   scheduledAbsences: ScheduledAbsence[];
@@ -120,7 +121,9 @@ const AbsenceJustificationStep: React.FC<AbsenceJustificationStepProps> = ({
                       Paciente ID: {absence.patientId}
                     </p>
                     <p className="text-xs text-blue-600 font-medium">
-                      {getAttendanceTypeLabel(absence.attendanceType)}
+                      {getAttendanceTypeLabel(
+                        absence.attendanceType as IAttendanceType
+                      )}
                     </p>
                   </div>
 
@@ -134,7 +137,7 @@ const AbsenceJustificationStep: React.FC<AbsenceJustificationStepProps> = ({
                           onChange={() =>
                             onJustificationChange(
                               absence.patientId,
-                              absence.attendanceType,
+                              absence.attendanceType as IAttendanceType,
                               true
                             )
                           }
@@ -152,7 +155,7 @@ const AbsenceJustificationStep: React.FC<AbsenceJustificationStepProps> = ({
                           onChange={() =>
                             onJustificationChange(
                               absence.patientId,
-                              absence.attendanceType,
+                              absence.attendanceType as IAttendanceType,
                               false
                             )
                           }
@@ -178,7 +181,7 @@ const AbsenceJustificationStep: React.FC<AbsenceJustificationStepProps> = ({
                           onChange={(e) =>
                             onJustificationChange(
                               absence.patientId,
-                              absence.attendanceType,
+                              absence.attendanceType as IAttendanceType,
                               true,
                               e.target.value
                             )

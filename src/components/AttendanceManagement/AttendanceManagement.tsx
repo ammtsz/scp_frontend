@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import { IPriority, IPatients, IAttendanceType } from "../../types/globals";
+import LoadingFallback from "@/components/common/LoadingFallback";
 import { useAttendanceData } from "./hooks/useAttendanceData";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useModalManagement } from "./hooks/useModalManagement";
@@ -70,8 +71,16 @@ import { LoadingState, ErrorState } from "./components/StateComponents";
 import { AttendanceHeader } from "./components/AttendanceHeader";
 import { AttendanceSections } from "./components/AttendanceSections";
 import { TreatmentWorkflowButtons } from "./components/TreatmentWorkflowButtons";
-import { AttendanceModals } from "./components/Modals/AttendanceModals";
-import PostTreatmentModal from "./components/Modals/PostTreatmentModal";
+
+// Lazy load heavy modal components
+const AttendanceModals = lazy(() =>
+  import("./components/Modals/AttendanceModals").then((module) => ({
+    default: module.AttendanceModals,
+  }))
+);
+const PostTreatmentModal = lazy(
+  () => import("./components/Modals/PostTreatmentModal")
+);
 
 const AttendanceManagement: React.FC<{
   unscheduledCheckIn?: {
@@ -397,55 +406,70 @@ const AttendanceManagement: React.FC<{
         isDayFinalized={isDayFinalized}
       />
       {/* TODO: replace all *Open with an array of isOpen and all modal names inside that array will be opened. Then try to do the same for all on* props in order to reduce the amount of props */}
-      <AttendanceModals
-        confirmOpen={confirmOpen}
-        multiSectionModalOpen={multiSectionModalOpen}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-        onMultiSectionConfirm={handleMultiSectionConfirm}
-        onMultiSectionCancel={handleMultiSectionCancel}
-        editPatientModalOpen={editPatientModalOpen}
-        patientToEdit={patientToEdit}
-        onEditPatientCancel={handleEditPatientCancel}
-        onEditPatientSuccess={handleEditPatientSuccess}
-        patientToCheckIn={patientToCheckIn}
-        attendanceId={attendanceId}
-        onCloseNewPatientCheckIn={closeNewPatientCheckIn}
-        onNewPatientSuccess={handleNewPatientSuccess}
-        treatmentFormOpen={treatmentFormOpen}
-        selectedAttendanceForTreatment={selectedAttendanceForTreatment}
-        onTreatmentFormSubmit={handleTreatmentFormSubmit}
-        onTreatmentFormCancel={handleTreatmentFormCancel}
-        endOfDayModalOpen={endOfDayModalOpen}
-        onEndOfDayClose={closeEndOfDayModal}
-        onHandleCompletion={handleAttendanceCompletion}
-        onReschedule={handleAttendanceReschedule}
-        onEndOfDayFinalize={handleEndOfDaySubmit}
-        incompleteAttendances={getIncompleteAttendances(attendancesByDate)}
-        scheduledAbsences={getScheduledAbsences(attendancesByDate)}
-        completedAttendances={getCompletedAttendances(attendancesByDate)}
-        selectedDate={selectedDate}
-      />
+      <Suspense
+        fallback={
+          <LoadingFallback message="Carregando modais..." size="small" />
+        }
+      >
+        <AttendanceModals
+          confirmOpen={confirmOpen}
+          multiSectionModalOpen={multiSectionModalOpen}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          onMultiSectionConfirm={handleMultiSectionConfirm}
+          onMultiSectionCancel={handleMultiSectionCancel}
+          editPatientModalOpen={editPatientModalOpen}
+          patientToEdit={patientToEdit}
+          onEditPatientCancel={handleEditPatientCancel}
+          onEditPatientSuccess={handleEditPatientSuccess}
+          patientToCheckIn={patientToCheckIn}
+          attendanceId={attendanceId}
+          onCloseNewPatientCheckIn={closeNewPatientCheckIn}
+          onNewPatientSuccess={handleNewPatientSuccess}
+          treatmentFormOpen={treatmentFormOpen}
+          selectedAttendanceForTreatment={selectedAttendanceForTreatment}
+          onTreatmentFormSubmit={handleTreatmentFormSubmit}
+          onTreatmentFormCancel={handleTreatmentFormCancel}
+          endOfDayModalOpen={endOfDayModalOpen}
+          onEndOfDayClose={closeEndOfDayModal}
+          onHandleCompletion={handleAttendanceCompletion}
+          onReschedule={handleAttendanceReschedule}
+          onEndOfDayFinalize={handleEndOfDaySubmit}
+          incompleteAttendances={getIncompleteAttendances(attendancesByDate)}
+          scheduledAbsences={getScheduledAbsences(attendancesByDate)}
+          completedAttendances={getCompletedAttendances(attendancesByDate)}
+          selectedDate={selectedDate}
+        />
+      </Suspense>
 
       {/* Treatment Completion Modal */}
       {treatmentCompletionModal.open && treatmentCompletionModal.patientId && (
-        <PostTreatmentModal
-          isOpen={treatmentCompletionModal.open}
-          onClose={handleTreatmentCompletionClose}
-          onComplete={handleTreatmentCompletionSubmit}
-          patientId={treatmentCompletionModal.patientId}
-          patientName={treatmentCompletionModal.patientName!}
-          treatmentInfo={
-            treatmentsByPatient.get(treatmentCompletionModal.patientId) || {
-              hasLightBath: false,
-              hasRod: false,
-              bodyLocations: [],
-              treatmentType: "none",
-            }
+        <Suspense
+          fallback={
+            <LoadingFallback
+              message="Carregando modal de tratamento..."
+              size="small"
+            />
           }
-          treatmentSessions={treatmentSessions}
-          isLoadingSessions={loadingTreatmentSessions}
-        />
+        >
+          <PostTreatmentModal
+            isOpen={treatmentCompletionModal.open}
+            onClose={handleTreatmentCompletionClose}
+            onComplete={handleTreatmentCompletionSubmit}
+            patientId={treatmentCompletionModal.patientId}
+            patientName={treatmentCompletionModal.patientName!}
+            treatmentInfo={
+              treatmentsByPatient.get(treatmentCompletionModal.patientId) || {
+                hasLightBath: false,
+                hasRod: false,
+                bodyLocations: [],
+                treatmentType: "none",
+              }
+            }
+            treatmentSessions={treatmentSessions}
+            isLoadingSessions={loadingTreatmentSessions}
+          />
+        </Suspense>
       )}
     </div>
   );

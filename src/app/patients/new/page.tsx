@@ -1,7 +1,11 @@
 "use client";
 
-import PatientForm from "@/components/PatientForm";
+import React, { Suspense, lazy } from "react";
 import Breadcrumb from "@/components/common/Breadcrumb";
+import LoadingFallback from "@/components/common/LoadingFallback";
+
+// Lazy load the PatientForm component
+const PatientForm = lazy(() => import("@/components/PatientForm"));
 
 export default function NewPatientPage() {
   const breadcrumbItems = [
@@ -13,7 +17,16 @@ export default function NewPatientPage() {
     <div className="flex flex-col gap-8 my-16">
       <div className="max-w-4xl mx-auto w-full px-4">
         <Breadcrumb items={breadcrumbItems} />
-        <PatientForm />
+        <Suspense
+          fallback={
+            <LoadingFallback
+              message="Carregando formulário de cadastro..."
+              size="medium"
+            />
+          }
+        >
+          <PatientForm />
+        </Suspense>
       </div>
     </div>
   );

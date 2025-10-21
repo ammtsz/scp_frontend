@@ -1,9 +1,22 @@
-import PatientList from "@/components/PatientList";
+"use client";
+
+import React, { Suspense, lazy } from "react";
+
+// Lazy load the PatientList component
+const PatientList = lazy(() => import("@/components/PatientList"));
 
 export default function PatientsPage() {
   return (
     <div className="flex flex-col gap-8 my-16">
-      <PatientList />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center p-8">
+            <div className="text-gray-500">Carregando pacientes...</div>
+          </div>
+        }
+      >
+        <PatientList />
+      </Suspense>
     </div>
   );
 }
