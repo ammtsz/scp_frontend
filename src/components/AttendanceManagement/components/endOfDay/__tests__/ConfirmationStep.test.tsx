@@ -15,6 +15,7 @@ const createMockJustification = (
 ): AbsenceJustification => ({
   patientId: 1,
   patientName: "John Doe",
+  attendanceType: "spiritual",
   justified: true,
   justification: "Medical appointment",
   ...overrides,

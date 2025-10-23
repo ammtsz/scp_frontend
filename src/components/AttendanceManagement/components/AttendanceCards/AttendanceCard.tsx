@@ -1,9 +1,9 @@
 import React from "react";
 import {
-  IAttendanceStatusDetail,
-  IAttendanceProgression,
-  IAttendanceType,
-} from "@/types/globals";
+  AttendanceStatusDetail,
+  AttendanceProgression,
+  AttendanceType,
+} from "@/types/types";
 import { IDraggedItem } from "../../types";
 import {
   getTypeBasedStyles,
@@ -17,14 +17,14 @@ import type { IGroupedPatient } from "../../utils/patientGrouping";
 import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
 
 interface AttendanceCardProps {
-  patient: IAttendanceStatusDetail;
-  type: IAttendanceType;
-  status: IAttendanceProgression;
+  patient: AttendanceStatusDetail;
+  type: AttendanceType;
+  status: AttendanceProgression;
   dragged: IDraggedItem | null;
   handleDragStart: (
-    type: IAttendanceType,
+    type: AttendanceType,
     index: number,
-    status: IAttendanceProgression
+    status: AttendanceProgression
   ) => void;
   handleDragEnd: () => void;
   onDelete: (attendanceId: number, patientName: string) => void;

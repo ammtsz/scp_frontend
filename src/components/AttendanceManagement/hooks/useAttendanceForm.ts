@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback } from "react";
-import { IPriority, IAttendanceType, IPatients } from "@/types/globals";
+import { Priority, AttendanceType, PatientBasic } from "@/types/types";
 import { useAttendances } from "@/contexts/AttendancesContext";
 import { usePatients } from "@/contexts/PatientsContext";
 import { AttendanceService, PatientService } from "../services";
@@ -19,7 +19,7 @@ export interface UseAttendanceFormProps {
     patientName: string,
     types: string[],
     isNew: boolean,
-    priority: IPriority,
+    priority: Priority,
     date?: string
   ) => void;
   autoCheckIn?: boolean;
@@ -38,8 +38,8 @@ export interface UseAttendanceFormReturn {
   setIsNewPatient: (value: boolean) => void;
   selectedTypes: string[];
   setSelectedTypes: (value: string[]) => void;
-  priority: IPriority;
-  setPriority: (value: IPriority) => void;
+  priority: Priority;
+  setPriority: (value: Priority) => void;
   notes: string;
   setNotes: (value: string) => void;
   
@@ -49,7 +49,7 @@ export interface UseAttendanceFormReturn {
   success: string | null;
   
   // Data
-  filteredPatients: IPatients[];
+  filteredPatients: PatientBasic[];
   
   // Actions
   resetForm: () => void;
@@ -75,7 +75,7 @@ export const useAttendanceForm = ({
   const [selectedPatient, setSelectedPatient] = useState<string>("");
   const [isNewPatient, setIsNewPatient] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [priority, setPriority] = useState<IPriority>("3");
+  const [priority, setPriority] = useState<Priority>("3");
   const [notes, setNotes] = useState<string>(defaultNotes);
   
   // Loading and error states
@@ -181,7 +181,7 @@ export const useAttendanceForm = ({
       const attendancePromises = selectedTypes.map(async (type) => {
         const createResult = await AttendanceService.createAttendance({
           patientId: parseInt(patientId),
-          attendanceType: type as IAttendanceType,
+          attendanceType: type as AttendanceType,
           scheduledDate: nextAvailableDate
         });
 

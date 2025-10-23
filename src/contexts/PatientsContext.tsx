@@ -9,11 +9,11 @@ import React, {
 } from "react";
 import { getPatients } from "@/api/patients";
 import { transformPatientsFromApi } from "@/utils/apiTransformers";
-import { IPatients } from "@/types/globals";
+import { PatientBasic } from "@/types/types";
 
 interface PatientsContextProps {
-  patients: IPatients[];
-  setPatients: React.Dispatch<React.SetStateAction<IPatients[]>>;
+  patients: PatientBasic[];
+  setPatients: React.Dispatch<React.SetStateAction<PatientBasic[]>>;
   loading: boolean;
   error: string | null;
   refreshPatients: () => Promise<void>;
@@ -24,7 +24,7 @@ const PatientsContext = createContext<PatientsContextProps | undefined>(
 );
 
 export const PatientsProvider = ({ children }: { children: ReactNode }) => {
-  const [patients, setPatients] = useState<IPatients[]>([]);
+  const [patients, setPatients] = useState<PatientBasic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

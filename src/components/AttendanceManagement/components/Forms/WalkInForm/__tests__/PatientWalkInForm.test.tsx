@@ -5,12 +5,12 @@ import PatientWalkInForm from "../PatientWalkInForm";
 import { createAttendance, getAttendancesByDate } from "@/api/attendances";
 import { transformAttendanceTypeToApi } from "@/utils/apiTransformers";
 import {
-  AttendanceType,
+  AttendanceType as ApiAttendanceType,
   AttendanceStatus,
   PatientPriority,
   TreatmentStatus,
 } from "@/api/types";
-import { IAttendanceType } from "@/types/globals";
+import { AttendanceType } from "@/types/types";
 
 // Mock the contexts
 jest.mock("@/contexts/PatientsContext", () => ({
@@ -59,7 +59,7 @@ const mockOnRegisterNewAttendance = jest.fn();
 const mockExistingAttendances = [
   {
     id: 1,
-    type: AttendanceType.SPIRITUAL,
+    type: ApiAttendanceType.SPIRITUAL,
     patient_id: 1,
     status: AttendanceStatus.CHECKED_IN,
     scheduled_date: "2025-01-15",
@@ -86,7 +86,18 @@ describe("PatientWalkInForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTransformAttendanceTypeToApi.mockImplementation(
-      (type: IAttendanceType) => type as AttendanceType
+      (type: AttendanceType) => {
+        switch (type) {
+          case "spiritual":
+            return ApiAttendanceType.SPIRITUAL;
+          case "lightBath":
+            return ApiAttendanceType.LIGHT_BATH;
+          case "rod":
+            return ApiAttendanceType.ROD;
+          default:
+            return ApiAttendanceType.SPIRITUAL;
+        }
+      }
     );
   });
 
@@ -171,7 +182,7 @@ describe("PatientWalkInForm", () => {
         success: true,
         value: {
           id: 2,
-          type: AttendanceType.LIGHT_BATH,
+          type: ApiAttendanceType.LIGHT_BATH,
           patient_id: 1,
           status: AttendanceStatus.CHECKED_IN,
           scheduled_date: "2025-01-15",

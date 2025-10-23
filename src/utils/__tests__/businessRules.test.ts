@@ -1,26 +1,33 @@
 import { sortPatientsByPriority, PRIORITY_LEVELS, PRIORITY_LABELS } from '../businessRules';
 
+// Test patient interface with name property
+interface TestPatient {
+  name: string;
+  priority: string;
+  checkedInTime?: string | null;
+}
+
 describe('businessRules', () => {
   describe('sortPatientsByPriority', () => {
     it('should sort patients by priority first (1 > 2 > 3)', () => {
-      const patients = [
-        { name: 'Patient C', priority: '3', checkedInTime: new Date('2025-01-15T09:00:00Z') },
-        { name: 'Patient A', priority: '1', checkedInTime: new Date('2025-01-15T10:00:00Z') },
-        { name: 'Patient B', priority: '2', checkedInTime: new Date('2025-01-15T08:00:00Z') },
+      const patients: TestPatient[] = [
+        { name: 'Patient C', priority: '3', checkedInTime: '2025-01-15T09:00:00Z' },
+        { name: 'Patient A', priority: '1', checkedInTime: '2025-01-15T10:00:00Z' },
+        { name: 'Patient B', priority: '2', checkedInTime: '2025-01-15T08:00:00Z' },
       ];
 
       const sorted = sortPatientsByPriority(patients);
 
       expect(sorted[0].name).toBe('Patient A'); // Priority 1
-      expect(sorted[1].name).toBe('Patient B'); // Priority 2  
+      expect(sorted[1].name).toBe('Patient B'); // Priority 2
       expect(sorted[2].name).toBe('Patient C'); // Priority 3
     });
 
     it('should use check-in time as tiebreaker for same priority', () => {
-      const patients = [
-        { name: 'Patient B', priority: '1', checkedInTime: new Date('2025-01-15T10:00:00Z') },
-        { name: 'Patient A', priority: '1', checkedInTime: new Date('2025-01-15T09:00:00Z') },
-        { name: 'Patient C', priority: '1', checkedInTime: new Date('2025-01-15T11:00:00Z') },
+      const patients: TestPatient[] = [
+        { name: 'Patient B', priority: '1', checkedInTime: '2025-01-15T10:00:00Z' },
+        { name: 'Patient A', priority: '1', checkedInTime: '2025-01-15T09:00:00Z' },
+        { name: 'Patient C', priority: '1', checkedInTime: '2025-01-15T11:00:00Z' },
       ];
 
       const sorted = sortPatientsByPriority(patients);
@@ -31,12 +38,12 @@ describe('businessRules', () => {
     });
 
     it('should handle mixed priority and time scenarios', () => {
-      const patients = [
-        { name: 'Priority 2 Late', priority: '2', checkedInTime: new Date('2025-01-15T11:00:00Z') },
-        { name: 'Priority 1 Late', priority: '1', checkedInTime: new Date('2025-01-15T10:30:00Z') },
-        { name: 'Priority 2 Early', priority: '2', checkedInTime: new Date('2025-01-15T09:00:00Z') },
-        { name: 'Priority 1 Early', priority: '1', checkedInTime: new Date('2025-01-15T09:30:00Z') },
-        { name: 'Priority 3', priority: '3', checkedInTime: new Date('2025-01-15T08:00:00Z') },
+      const patients: TestPatient[] = [
+        { name: 'Priority 2 Late', priority: '2', checkedInTime: '2025-01-15T11:00:00Z' },
+        { name: 'Priority 1 Late', priority: '1', checkedInTime: '2025-01-15T10:30:00Z' },
+        { name: 'Priority 2 Early', priority: '2', checkedInTime: '2025-01-15T09:00:00Z' },
+        { name: 'Priority 1 Early', priority: '1', checkedInTime: '2025-01-15T09:30:00Z' },
+        { name: 'Priority 3', priority: '3', checkedInTime: '2025-01-15T08:00:00Z' },
       ];
 
       const sorted = sortPatientsByPriority(patients);
@@ -49,9 +56,9 @@ describe('businessRules', () => {
     });
 
     it('should handle patients without check-in time', () => {
-      const patients = [
+      const patients: TestPatient[] = [
         { name: 'No Time', priority: '1', checkedInTime: null },
-        { name: 'With Time', priority: '1', checkedInTime: new Date('2025-01-15T09:00:00Z') },
+        { name: 'With Time', priority: '1', checkedInTime: '2025-01-15T09:00:00Z' },
         { name: 'No Time 2', priority: '1', checkedInTime: null },
       ];
 

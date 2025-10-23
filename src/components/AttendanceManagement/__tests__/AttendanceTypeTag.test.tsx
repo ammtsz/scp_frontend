@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import AttendanceTypeTag from "../components/AttendanceCards/AttendanceTypeTag";
-import { IAttendanceType } from "@/types/globals";
+import { AttendanceType } from "@/types/types";
 
 describe("AttendanceTypeTag", () => {
   describe("renders correctly for all attendance types", () => {
@@ -12,7 +12,7 @@ describe("AttendanceTypeTag", () => {
     ])(
       "renders %s type correctly",
       (type, expectedLabel, expectedBg, expectedText) => {
-        render(<AttendanceTypeTag type={type as IAttendanceType} />);
+        render(<AttendanceTypeTag type={type as AttendanceType} />);
 
         const tag = screen.getByText(expectedLabel);
         expect(tag).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe("AttendanceTypeTag", () => {
   describe("edge cases", () => {
     it("handles unknown attendance type gracefully", () => {
       // TypeScript would prevent this, but testing runtime behavior
-      render(<AttendanceTypeTag type={"unknown" as IAttendanceType} />);
+      render(<AttendanceTypeTag type={"unknown" as AttendanceType} />);
 
       const tag = screen.getByText("Desconhecido");
       expect(tag).toBeInTheDocument();

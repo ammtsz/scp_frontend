@@ -1,10 +1,10 @@
 import React from "react";
-import { IAttendanceProgression } from "@/types/globals";
+import { AttendanceProgression } from "@/types/types";
 import { useTimezone } from "@/contexts/TimezoneContext";
 import { formatTime } from "@/utils/timezoneFormatters";
 
 interface AttendanceTimesProps {
-  status: IAttendanceProgression;
+  status: AttendanceProgression;
   checkedInTime?: string | null;
   onGoingTime?: string | null;
   completedTime?: string | null;

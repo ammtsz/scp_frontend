@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  IPatient,
-  IRecommendations,
-  IPriority,
-  IStatus,
-} from "@/types/globals";
+  Patient,
+  Recommendations,
+  Priority,
+  Status,
+} from "@/types/types";
 import { createPatient } from "@/api/patients";
 import { createAttendance } from "@/api/attendances";
 import { formatPhoneNumber } from "@/utils/formHelpers";
@@ -14,7 +14,7 @@ import type { CreatePatientRequest, CreateAttendanceRequest, AttendanceType } fr
 import { usePatients } from "@/contexts/PatientsContext";
 import { useAttendances } from "@/contexts/AttendancesContext";
 
-const initialRecommendations: IRecommendations = {
+const initialRecommendations: Recommendations = {
   food: "",
   water: "",
   ointment: "",
@@ -24,11 +24,11 @@ const initialRecommendations: IRecommendations = {
   returnWeeks: 0,
 };
 
-const initialPatient: Omit<IPatient, "id"> = {
+const initialPatient: Omit<Patient, "id"> = {
   name: "",
   phone: "",
-  priority: "3" as IPriority,
-  status: "N" as IStatus,
+  priority: "3" as Priority,
+  status: "N" as Status,
   birthDate: new Date(),
   mainComplaint: "",
   startDate: new Date(),
@@ -65,7 +65,7 @@ export function usePatientForm() {
       type === "checkbox" ? (e.target as HTMLInputElement).checked : undefined;
 
     if (name.startsWith("recommendations.")) {
-      const recKey = name.replace("recommendations.", "") as keyof IRecommendations;
+      const recKey = name.replace("recommendations.", "") as keyof Recommendations;
       setPatient((prev) => ({
         ...prev,
         currentRecommendations: {

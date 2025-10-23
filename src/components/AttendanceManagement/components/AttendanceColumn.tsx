@@ -1,27 +1,27 @@
 import React from "react";
 import {
-  IAttendanceProgression,
-  IAttendanceType,
-  IAttendanceStatusDetail,
-} from "@/types/globals";
+  AttendanceProgression,
+  AttendanceType,
+  AttendanceStatusDetail,
+} from "@/types/types";
 import { IDraggedItem } from "../types";
 import AttendanceCard from "./AttendanceCards/AttendanceCard";
 import { getStatusColor, getStatusLabel } from "../styles/cardStyles";
 import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
 import type { IGroupedPatient } from "../utils/patientGrouping";
 
-interface PatientWithType extends IAttendanceStatusDetail {
-  originalType: IAttendanceType;
+interface PatientWithType extends AttendanceStatusDetail {
+  originalType: AttendanceType;
 }
 
 interface AttendanceColumnProps {
-  status: IAttendanceProgression;
+  status: AttendanceProgression;
   patients: (PatientWithType | IGroupedPatient)[];
   dragged: IDraggedItem | null;
   handleDragStart: (
-    type: IAttendanceType,
+    type: AttendanceType,
     index: number,
-    status: IAttendanceProgression,
+    status: AttendanceProgression,
     patientId?: number
   ) => void;
   handleDragEnd: () => void;
@@ -74,7 +74,7 @@ const AttendanceColumn: React.FC<AttendanceColumnProps> = React.memo(
               (acc[regularPatient.originalType] || 0) + 1;
           }
           return acc;
-        }, {} as Record<IAttendanceType, number>),
+        }, {} as Record<AttendanceType, number>),
       [patients]
     );
 

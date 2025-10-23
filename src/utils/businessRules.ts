@@ -1,6 +1,6 @@
 // Business logic for scheduling, priorities, and status
 
-import { IAttendanceStatus, IAttendanceStatusDetail, IAttendanceByDate } from "@/types/globals";
+import { AttendanceStatus, AttendanceStatusDetail, AttendanceByDate } from "@/types/types";
 
 /**
  * Priority Queue Rules for Checked-In Patients
@@ -83,7 +83,7 @@ export const sortPatientsByPriority = <T extends {
 export const isPatientAlreadyScheduled = (
   patientName: string, 
   selectedAttendanceTypes: string[],
-  attendancesByDate: IAttendanceByDate | null
+  attendancesByDate: AttendanceByDate | null
 ): boolean => {
   // Check against the current attendancesByDate
   // This works for both today's validation and when the context has loaded data for the target date
@@ -96,8 +96,8 @@ export const isPatientAlreadyScheduled = (
     const typeAttendances = attendancesByDate[type as keyof typeof attendancesByDate];
     if (typeAttendances && typeof typeAttendances === 'object' && 'scheduled' in typeAttendances) {
       for (const status of allStatuses) {
-        const statusAttendances = (typeAttendances as IAttendanceStatus)[status];
-        if (statusAttendances && statusAttendances.some((attendance: IAttendanceStatusDetail) => 
+        const statusAttendances = (typeAttendances as AttendanceStatus)[status];
+        if (statusAttendances && statusAttendances.some((attendance: AttendanceStatusDetail) => 
           attendance.name.toLowerCase() === patientName.toLowerCase()
         )) {
           return true;

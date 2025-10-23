@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import NewPatientCheckInForm from "../NewPatientCheckInForm";
-import { IPatient } from "@/types/globals";
+import { Patient } from "@/types/types";
 import * as attendancesApi from "@/api/attendances";
 import * as patientsApi from "@/api/patients";
 import {
@@ -43,7 +43,7 @@ const mockUpdatePatient = patientsApi.updatePatient as jest.MockedFunction<
   typeof patientsApi.updatePatient
 >;
 
-const mockPatient: IPatient = {
+const mockPatient: Patient = {
   id: "1",
   name: "João Silva",
   phone: "(11) 99999-9999",

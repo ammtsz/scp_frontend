@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Search } from "react-feather";
-import { IPriority } from "@/types/globals";
+import { Priority } from "@/types/types";
 import { useAttendanceForm as useAttendanceManagement } from "../../hooks/useAttendanceForm";
 import { formatDateForInput } from "@/utils/formHelpers";
 import Switch from "@/components/common/Switch";
@@ -13,7 +13,7 @@ interface NewAttendanceFormProps {
     name: string,
     selectedTypes: string[],
     isNewPatient: boolean,
-    priority: IPriority,
+    priority: Priority,
     nextAvailableDate?: string
   ) => void;
   showDateField?: boolean;
@@ -179,7 +179,7 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
             <label className="block font-bold text-gray-700">Prioridade</label>
             <select
               value={priority}
-              onChange={(e) => setPriority(e.target.value as IPriority)}
+              onChange={(e) => setPriority(e.target.value as Priority)}
               className="input w-full"
               disabled={isSubmitting}
             >

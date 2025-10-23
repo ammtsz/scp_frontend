@@ -18,15 +18,15 @@ import {
   AttendanceType,
   CreateAttendanceRequest,
 } from "@/api/types";
-import { IAgenda, ICalendarAgenda, IPriority } from "@/types/globals";
+import { Agenda, CalendarAgenda, Priority } from "@/types/types";
 import { transformAttendanceType } from "@/utils/apiTransformers";
 
 // Transform backend data to frontend agenda format
 const transformToAgenda = (
   attendances: AttendanceAgendaDto[]
-): ICalendarAgenda => {
-  const spiritual: IAgenda["spiritual"] = [];
-  const lightBath: IAgenda["lightBath"] = [];
+): CalendarAgenda => {
+  const spiritual: Agenda["spiritual"] = [];
+  const lightBath: Agenda["lightBath"] = [];
 
   // Group attendances by date and type
   const grouped = attendances.reduce((acc, attendance) => {
@@ -41,12 +41,12 @@ const transformToAgenda = (
     acc[type][dateKey].push({
       id: attendance.patient_id.toString(),
       name: attendance.patient_name,
-      priority: attendance.patient_priority as IPriority,
+      priority: attendance.patient_priority as Priority,
       attendanceId: attendance.id,
       type: attendance.type, // Use the specific attendance type
     });
     return acc;
-  }, {} as Record<string, Record<string, Array<{ id: string; name: string; priority: IPriority; attendanceId: number; type: AttendanceType }>>>);
+  }, {} as Record<string, Record<string, Array<{ id: string; name: string; priority: Priority; attendanceId: number; type: AttendanceType }>>>);
 
   // Convert grouped data to frontend format
   Object.entries(grouped.spiritual || {}).forEach(([date, patients]) => {
@@ -79,7 +79,7 @@ const transformToAgenda = (
 };
 
 interface AgendaContextProps {
-  agenda: ICalendarAgenda;
+  agenda: CalendarAgenda;
   loading: boolean;
   error: string | null;
   loadAgendaAttendances: (filters?: {
@@ -97,7 +97,7 @@ interface AgendaContextProps {
 const AgendaContext = createContext<AgendaContextProps | undefined>(undefined);
 
 export const AgendaProvider = ({ children }: { children: ReactNode }) => {
-  const [agenda, setAgenda] = useState<ICalendarAgenda>({
+  const [agenda, setAgenda] = useState<CalendarAgenda>({
     spiritual: [],
     lightBath: [],
   });

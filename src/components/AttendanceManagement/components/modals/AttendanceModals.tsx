@@ -8,7 +8,7 @@ import type {
   SpiritualTreatmentData,
   TreatmentStatus,
 } from "../Forms/PostAttendanceForms";
-import type { IPatient } from "@/types/globals";
+import type { Patient } from "@/types/types";
 import { IAttendanceStatusDetailWithType } from "../../utils/attendanceDataUtils";
 
 interface AttendanceModalsProps {
@@ -27,10 +27,10 @@ interface AttendanceModalsProps {
   onEditPatientSuccess: () => void;
 
   // New patient check-in
-  patientToCheckIn: IPatient | null;
+  patientToCheckIn: Patient | null;
   attendanceId?: number;
   onCloseNewPatientCheckIn: () => void;
-  onNewPatientSuccess: (updatedPatient: IPatient) => void;
+  onNewPatientSuccess: (updatedPatient: Patient) => void;
 
   // Treatment workflow modals - Removed unused spiritual consultation
 

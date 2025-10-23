@@ -2,8 +2,9 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import EndOfDayModal from "../EndOfDayContainer";
+import { TimezoneProvider } from "@/contexts/TimezoneContext";
 import type { IAttendanceStatusDetailWithType } from "../../../utils/attendanceDataUtils";
-import type { IAttendanceType } from "@/types/globals";
+import type { AttendanceType } from "@/types/types";
 import type { AbsenceJustification } from "../types";
 
 const mockOnClose = jest.fn<() => void>();
@@ -22,7 +23,7 @@ const createMockIncompleteAttendance = (
   onGoingTime: null,
   completedTime: null,
   patientId: id,
-  attendanceType: "spiritual" as IAttendanceType,
+  attendanceType: "spiritual" as AttendanceType,
 });
 
 const createMockScheduledAbsence = (
@@ -35,19 +36,23 @@ const createMockScheduledAbsence = (
   onGoingTime: null,
   completedTime: null,
   patientId: id,
-  attendanceType: "lightBath" as IAttendanceType,
+  attendanceType: "lightBath" as AttendanceType,
 });
 
 const defaultProps = {
   isOpen: true,
-  onClose: mockOnClose,
-  selectedDate: "2025-01-15",
+  selectedDate: "2025-10-21",
   incompleteAttendances: [],
-  completedAttendances: [],
   scheduledAbsences: [],
+  completedAttendances: [],
+  onClose: mockOnClose,
   onHandleCompletion: mockOnHandleCompletion,
   onReschedule: mockOnReschedule,
   onSubmitEndOfDay: mockOnSubmitEndOfDay,
+};
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(<TimezoneProvider>{ui}</TimezoneProvider>);
 };
 
 describe("EndOfDayModal", () => {
@@ -56,14 +61,14 @@ describe("EndOfDayModal", () => {
   });
 
   it("renders modal when open", () => {
-    render(<EndOfDayModal {...defaultProps} />);
+    renderWithProviders(<EndOfDayModal {...defaultProps} />);
 
     expect(screen.getByText("Finalizar o Dia")).toBeInTheDocument();
     expect(screen.getByText("Atendimentos")).toBeInTheDocument();
   });
 
   it("does not render when closed", () => {
-    render(<EndOfDayModal {...defaultProps} isOpen={false} />);
+    renderWithProviders(<EndOfDayModal {...defaultProps} isOpen={false} />);
 
     expect(screen.queryByText("Encerramento do Dia")).not.toBeInTheDocument();
   });
@@ -74,7 +79,7 @@ describe("EndOfDayModal", () => {
       createMockIncompleteAttendance(2, "Maria Santos"),
     ];
 
-    render(
+    renderWithProviders(
       <EndOfDayModal
         {...defaultProps}
         incompleteAttendances={incompleteAttendances}
@@ -82,7 +87,7 @@ describe("EndOfDayModal", () => {
     );
 
     expect(
-      screen.getByText("Atendimentos Incompletos - 15/01/2025")
+      screen.getByText("Atendimentos Incompletos - 21/10/2025")
     ).toBeInTheDocument();
     expect(screen.getByText("João Silva")).toBeInTheDocument();
     expect(screen.getByText("Maria Santos")).toBeInTheDocument();
@@ -97,7 +102,7 @@ describe("EndOfDayModal", () => {
       createMockIncompleteAttendance(1, "João Silva"),
     ];
 
-    render(
+    renderWithProviders(
       <EndOfDayModal
         {...defaultProps}
         incompleteAttendances={incompleteAttendances}
@@ -116,7 +121,7 @@ describe("EndOfDayModal", () => {
   it("navigates to absences step when no incomplete attendances", async () => {
     const scheduledAbsences = [createMockScheduledAbsence(1, "Pedro Costa")];
 
-    render(
+    renderWithProviders(
       <EndOfDayModal {...defaultProps} scheduledAbsences={scheduledAbsences} />
     );
 
@@ -126,7 +131,7 @@ describe("EndOfDayModal", () => {
     fireEvent.click(nextButton);
 
     expect(
-      screen.getByText("Faltas Agendadas - 15/01/2025")
+      screen.getByText("Faltas Agendadas - 21/10/2025")
     ).toBeInTheDocument();
     // Check step indicator instead of duplicate "Faltas" text
     expect(screen.getByText("2")).toBeInTheDocument();
@@ -139,7 +144,7 @@ describe("EndOfDayModal", () => {
       createMockScheduledAbsence(2, "Ana Oliveira"),
     ];
 
-    render(
+    renderWithProviders(
       <EndOfDayModal {...defaultProps} scheduledAbsences={scheduledAbsences} />
     );
 
@@ -160,7 +165,7 @@ describe("EndOfDayModal", () => {
   it("handles absence justification selection", () => {
     const scheduledAbsences = [createMockScheduledAbsence(1, "Pedro Costa")];
 
-    render(
+    renderWithProviders(
       <EndOfDayModal {...defaultProps} scheduledAbsences={scheduledAbsences} />
     );
 
@@ -183,7 +188,7 @@ describe("EndOfDayModal", () => {
   it("prevents navigation to confirmation without justifying all absences", () => {
     const scheduledAbsences = [createMockScheduledAbsence(1, "Pedro Costa")];
 
-    render(
+    renderWithProviders(
       <EndOfDayModal {...defaultProps} scheduledAbsences={scheduledAbsences} />
     );
 
@@ -198,7 +203,7 @@ describe("EndOfDayModal", () => {
   it("navigates to confirmation step when all absences are justified", () => {
     const scheduledAbsences = [createMockScheduledAbsence(1, "Pedro Costa")];
 
-    render(
+    renderWithProviders(
       <EndOfDayModal {...defaultProps} scheduledAbsences={scheduledAbsences} />
     );
 
@@ -224,7 +229,7 @@ describe("EndOfDayModal", () => {
     ];
     const scheduledAbsences = [createMockScheduledAbsence(2, "Pedro Costa")];
 
-    render(
+    renderWithProviders(
       <EndOfDayModal
         {...defaultProps}
         incompleteAttendances={incompleteAttendances}
@@ -262,7 +267,7 @@ describe("EndOfDayModal", () => {
   });
 
   it("handles form submission", async () => {
-    render(<EndOfDayModal {...defaultProps} />);
+    renderWithProviders(<EndOfDayModal {...defaultProps} />);
 
     // Navigate through all steps
     fireEvent.click(screen.getByText("Próximo")); // incomplete -> absences
@@ -286,7 +291,7 @@ describe("EndOfDayModal", () => {
         () => new Promise((resolve) => setTimeout(resolve, 100))
       );
 
-    render(
+    renderWithProviders(
       <EndOfDayModal {...defaultProps} onSubmitEndOfDay={delayedSubmit} />
     );
 
@@ -311,7 +316,7 @@ describe("EndOfDayModal", () => {
   });
 
   it("handles cancel action", () => {
-    render(<EndOfDayModal {...defaultProps} />);
+    renderWithProviders(<EndOfDayModal {...defaultProps} />);
 
     fireEvent.click(screen.getByLabelText("Fechar modal"));
 
@@ -319,7 +324,7 @@ describe("EndOfDayModal", () => {
   });
 
   it("allows navigation backward between steps", () => {
-    render(<EndOfDayModal {...defaultProps} />);
+    renderWithProviders(<EndOfDayModal {...defaultProps} />);
 
     // Navigate forward
     fireEvent.click(screen.getByText("Próximo")); // incomplete -> absences
@@ -338,7 +343,7 @@ describe("EndOfDayModal", () => {
   it("validates all absences have justification before submission", async () => {
     const scheduledAbsences = [createMockScheduledAbsence(1, "Pedro Costa")];
 
-    render(
+    renderWithProviders(
       <EndOfDayModal {...defaultProps} scheduledAbsences={scheduledAbsences} />
     );
 

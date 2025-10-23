@@ -12,40 +12,40 @@ import { useState, useCallback } from "react";
 import { useAttendances } from "@/contexts/AttendancesContext";
 import { usePatients } from "@/contexts/PatientsContext";
 import { 
-  IAttendanceStatusDetail,
-  IAttendanceType,
-  IPriority,
-  IPatients,
-  IAttendanceByDate 
-} from "@/types/globals";
+  AttendanceStatusDetail,
+  AttendanceType,
+  Priority,
+  PatientBasic,
+  AttendanceByDate 
+} from "@/types/types";
 import { AttendanceService, PatientService } from "../services";
 import { sortPatientsByPriority } from "@/utils/businessRules";
 
 export interface UseAttendanceDataProps {
-  onNewPatientDetected?: (patient: IPatients) => void;
+  onNewPatientDetected?: (patient: PatientBasic) => void;
   onCheckInProcessed?: () => void;
 }
 
 interface PatientCreationResult {
   success: boolean;
-  patient?: IPatients;
+  patient?: PatientBasic;
   error?: string;
 }
 
 export interface UseAttendanceDataReturn {
   // Data state
-  attendancesByDate: IAttendanceByDate | null;
+  attendancesByDate: AttendanceByDate | null;
   selectedDate: string;
   loading: boolean;
   error: string | null;
   
   // Patient data
-  patients: IPatients[];
+  patients: PatientBasic[];
   
   // Actions
   createAttendance: (params: {
     patientId: number;
-    attendanceType: IAttendanceType;
+    attendanceType: AttendanceType;
     scheduledDate?: string;
   }) => Promise<boolean>;
   
@@ -57,7 +57,7 @@ export interface UseAttendanceDataReturn {
   createPatient: (params: {
     name: string;
     phone?: string;
-    priority: IPriority;
+    priority: Priority;
     birthDate: Date;
     mainComplaint?: string;
   }) => Promise<PatientCreationResult>;
@@ -67,9 +67,9 @@ export interface UseAttendanceDataReturn {
   refreshData: () => Promise<void>;
   
   // Utility functions
-  getIncompleteAttendances: () => IAttendanceStatusDetail[];
-  getScheduledAbsences: () => IAttendanceStatusDetail[];
-  getSortedPatients: () => IPatients[];
+  getIncompleteAttendances: () => AttendanceStatusDetail[];
+  getScheduledAbsences: () => AttendanceStatusDetail[];
+  getSortedPatients: () => PatientBasic[];
 }
 
 export const useAttendanceData = ({
@@ -105,7 +105,7 @@ export const useAttendanceData = ({
    */
   const createAttendance = useCallback(async (params: {
     patientId: number;
-    attendanceType: IAttendanceType;
+    attendanceType: AttendanceType;
     scheduledDate?: string;
   }) => {
     try {
@@ -169,7 +169,7 @@ export const useAttendanceData = ({
   const createPatient = useCallback(async (params: {
     name: string;
     phone?: string;
-    priority: IPriority;
+    priority: Priority;
     birthDate: Date;
     mainComplaint?: string;
   }) => {
@@ -204,9 +204,9 @@ export const useAttendanceData = ({
             priority: params.priority,
             status: "T", // Default status
             age: PatientService.calculateAge(params.birthDate),
-            attendanceType: "spiritual" as IAttendanceType,
+            attendanceType: "spiritual" as AttendanceType,
             missingAppointmentsStreak: 0
-          } as IPatients;
+          } as PatientBasic;
           
           onNewPatientDetected(newPatient);
         }
@@ -220,9 +220,9 @@ export const useAttendanceData = ({
             priority: params.priority,
             status: "T",
             age: PatientService.calculateAge(params.birthDate),
-            attendanceType: "spiritual" as IAttendanceType,
+            attendanceType: "spiritual" as AttendanceType,
             missingAppointmentsStreak: 0
-          } as IPatients : undefined
+          } as PatientBasic : undefined
         };
       } else {
         return {
@@ -278,17 +278,17 @@ export const useAttendanceData = ({
   /**
    * Get incomplete attendances from current data
    */
-  const getIncompleteAttendances = useCallback((): IAttendanceStatusDetail[] => {
+  const getIncompleteAttendances = useCallback((): AttendanceStatusDetail[] => {
     if (!attendancesByDate) return [];
 
-    const incomplete: IAttendanceStatusDetail[] = [];
+    const incomplete: AttendanceStatusDetail[] = [];
     ["spiritual", "lightBath", "rod"].forEach((type) => {
       ["checkedIn", "onGoing"].forEach((status) => {
         const typeData = attendancesByDate[type as keyof typeof attendancesByDate];
         if (typeData && typeof typeData === "object") {
           const statusData = typeData[status as keyof typeof typeData];
           if (Array.isArray(statusData)) {
-            incomplete.push(...(statusData as IAttendanceStatusDetail[]));
+            incomplete.push(...(statusData as AttendanceStatusDetail[]));
           }
         }
       });
@@ -300,16 +300,16 @@ export const useAttendanceData = ({
   /**
    * Get scheduled absences from current data
    */
-  const getScheduledAbsences = useCallback((): IAttendanceStatusDetail[] => {
+  const getScheduledAbsences = useCallback((): AttendanceStatusDetail[] => {
     if (!attendancesByDate) return [];
 
-    const scheduled: IAttendanceStatusDetail[] = [];
+    const scheduled: AttendanceStatusDetail[] = [];
     ["spiritual", "lightBath", "rod"].forEach((type) => {
       const typeData = attendancesByDate[type as keyof typeof attendancesByDate];
       if (typeData && typeof typeData === "object" && "scheduled" in typeData) {
         const scheduledData = typeData.scheduled;
         if (Array.isArray(scheduledData)) {
-          scheduled.push(...(scheduledData as IAttendanceStatusDetail[]));
+          scheduled.push(...(scheduledData as AttendanceStatusDetail[]));
         }
       }
     });
@@ -320,7 +320,7 @@ export const useAttendanceData = ({
   /**
    * Get patients sorted by priority
    */
-  const getSortedPatients = useCallback((): IPatients[] => {
+  const getSortedPatients = useCallback((): PatientBasic[] => {
     return sortPatientsByPriority(patients);
   }, [patients]);
 

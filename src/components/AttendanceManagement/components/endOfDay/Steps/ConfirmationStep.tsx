@@ -1,7 +1,7 @@
 import React from "react";
 import type { AbsenceJustification, ScheduledAbsence } from "../types";
 import { getAttendanceTypeLabel } from "@/utils/apiTransformers";
-import type { IAttendanceType } from "@/types/globals";
+import type { AttendanceType } from "@/types/types";
 
 interface ConfirmationStepProps {
   selectedDate: string;
@@ -114,7 +114,7 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
                     {attendanceType && (
                       <div className="text-xs text-blue-600 font-medium">
                         {getAttendanceTypeLabel(
-                          attendanceType as IAttendanceType
+                          attendanceType as AttendanceType
                         )}
                       </div>
                     )}
@@ -146,7 +146,7 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({
                     {attendanceType && (
                       <div className="text-xs text-blue-600 font-medium ml-2">
                         {getAttendanceTypeLabel(
-                          attendanceType as IAttendanceType
+                          attendanceType as AttendanceType
                         )}
                       </div>
                     )}

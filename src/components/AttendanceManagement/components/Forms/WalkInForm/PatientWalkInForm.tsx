@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Search } from "react-feather";
-import { IPriority, IAttendanceType } from "@/types/globals";
+import { Priority, AttendanceType } from "@/types/types";
 import { createPatient } from "@/api/patients";
 import {
   createAttendance,
@@ -28,7 +28,7 @@ interface PatientWalkInFormProps {
     patientName: string,
     types: string[],
     isNew: boolean,
-    priority: IPriority
+    priority: Priority
   ) => void;
   isDropdown?: boolean; // Controls whether to render with card styling
 }
@@ -37,7 +37,7 @@ interface WalkInFormData {
   name: string;
   phone: string;
   birthDate: Date | null;
-  priority: IPriority;
+  priority: Priority;
   mainComplaint: string;
   selectedTypes: string[];
   isNewPatient: boolean;
@@ -224,7 +224,9 @@ const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
       const duplicateTypes: string[] = [];
 
       selectedTypes.forEach((type) => {
-        const apiType = transformAttendanceTypeToApi(type as IAttendanceType);
+        const apiType = transformAttendanceTypeToApi(
+          type as AttendanceType
+        );
         const hasDuplicate = existingAttendances.some(
           (attendance) => attendance.type === apiType
         );
@@ -336,7 +338,7 @@ const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
         // First create the attendance
         const createResult = await createAttendance({
           patient_id: Number(patientId),
-          type: transformAttendanceTypeToApi(type as IAttendanceType),
+          type: transformAttendanceTypeToApi(type as AttendanceType),
           scheduled_date: today,
           scheduled_time: currentTime,
           notes: notes,

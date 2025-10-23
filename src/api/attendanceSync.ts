@@ -5,14 +5,14 @@ import {
   startAttendance,
   completeAttendance
 } from '@/api/attendances';
-import { IAttendanceProgression } from '@/types/globals';
+import { AttendanceProgression } from '@/types/types';
 
 /**
  * Updates attendance status in the backend with appropriate timestamp
  */
 export const updateAttendanceStatus = async (
   attendanceId: number,
-  newStatus: IAttendanceProgression
+  newStatus: AttendanceProgression
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     let result;

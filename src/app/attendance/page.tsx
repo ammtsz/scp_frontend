@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense, lazy } from "react";
 import { PatientWalkInPanel } from "@/components/AttendanceManagement/components/Forms/WalkInForm";
-import { IPriority } from "@/types/globals";
+import { Priority } from "@/types/types";
 import LoadingFallback from "@/components/common/LoadingFallback";
 
 // Lazy load the heavy AttendanceManagement component
@@ -15,7 +15,7 @@ export default function AttendancePage() {
     name: string;
     types: string[];
     isNew: boolean;
-    priority: IPriority;
+    priority: Priority;
   } | null>(null);
 
   return (

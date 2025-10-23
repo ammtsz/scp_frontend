@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, Suspense, lazy } from "react";
-import { IPriority, IPatients, IAttendanceType } from "../../types/globals";
+import { Priority, PatientBasic, AttendanceType } from "../../types/types";
 import LoadingFallback from "@/components/common/LoadingFallback";
 import { useAttendanceData } from "./hooks/useAttendanceData";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
@@ -87,7 +87,7 @@ const AttendanceManagement: React.FC<{
     name: string;
     types: string[];
     isNew: boolean;
-    priority?: IPriority;
+    priority?: Priority;
   } | null;
   onCheckInProcessed?: () => void;
 }> = ({ unscheduledCheckIn, onCheckInProcessed }) => {
@@ -97,7 +97,7 @@ const AttendanceManagement: React.FC<{
     attendanceId?: number;
     patientId?: number;
     patientName?: string;
-    attendanceType?: IAttendanceType;
+    attendanceType?: AttendanceType;
     onComplete?: (success: boolean) => void;
   }>({
     open: false,
@@ -143,16 +143,16 @@ const AttendanceManagement: React.FC<{
 
   // Handle new patient detection from drag and drop
   const handleNewPatientDetected = (
-    patient: IPatients,
+    patient: PatientBasic,
     attendanceId?: number
   ) => {
-    // Convert IPatients to IPatient for the check-in form
+    // Convert PatientBasic to Patient for the check-in form
     const patientForCheckIn = {
       ...patient,
-      birthDate: new Date(), // Default value since IPatients doesn't have birthDate
-      mainComplaint: "", // Default value since IPatients doesn't have mainComplaint
-      startDate: new Date(), // Default value since IPatients doesn't have startDate
-      dischargeDate: null, // Default value since IPatients doesn't have dischargeDate
+      birthDate: new Date(), // Default value since PatientBasic doesn't have birthDate
+      mainComplaint: "", // Default value since PatientBasic doesn't have mainComplaint
+      startDate: new Date(), // Default value since PatientBasic doesn't have startDate
+      dischargeDate: null, // Default value since PatientBasic doesn't have dischargeDate
       nextAttendanceDates: [], // Default empty array
       currentRecommendations: {
         // Default recommendations
@@ -176,7 +176,7 @@ const AttendanceManagement: React.FC<{
     attendanceId: number;
     patientId: number;
     patientName: string;
-    attendanceType: IAttendanceType;
+    attendanceType: AttendanceType;
     onComplete: (success: boolean) => void;
   }) => {
     setPostTreatmentModal({

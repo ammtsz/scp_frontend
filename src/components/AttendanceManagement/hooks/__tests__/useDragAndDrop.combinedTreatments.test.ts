@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useDragAndDrop } from '../useDragAndDrop';
 import { useAttendances } from '@/contexts/AttendancesContext';
 import { usePatients } from '@/contexts/PatientsContext';
-import { IAttendanceByDate } from '@/types/globals';
+import { AttendanceByDate } from '@/types/types';
 
 // Mock the contexts
 jest.mock('@/contexts/AttendancesContext');
@@ -17,7 +17,7 @@ const mockUsePatients = usePatients as jest.MockedFunction<typeof usePatients>;
 describe('useDragAndDrop - Combined Treatment Cards', () => {
   const mockSetAttendancesByDate = jest.fn();
   
-  const mockAttendancesByDate: IAttendanceByDate = {
+  const mockAttendancesByDate: AttendanceByDate = {
     date: new Date('2025-10-17'),
     spiritual: {
       scheduled: [],

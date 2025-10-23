@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useAttendances } from "@/contexts/AttendancesContext";
 import { updateAttendanceStatus } from "@/api/attendanceSync";
 import { getIncompleteAttendances } from "../utils/attendanceDataUtils";
-import type { IAttendanceType } from "@/types/globals";
+import type { AttendanceType } from "@/types/types";
 
 export const useAttendanceWorkflow = () => {
   const { selectedDate, attendancesByDate, refreshCurrentDate } = useAttendances();
 
   // Collapsed state for attendance sections
   const [collapsed, setCollapsed] = useState<{
-    [key in IAttendanceType]: boolean;
+    [key in AttendanceType]: boolean;
   }>({ spiritual: false, lightBath: false, rod: false, combined: false });
 
   // Day finalization state
@@ -43,7 +43,7 @@ export const useAttendanceWorkflow = () => {
   }, []);
 
   // Toggle collapsed state for attendance sections
-  const toggleCollapsed = useCallback((type: IAttendanceType) => {
+  const toggleCollapsed = useCallback((type: AttendanceType) => {
     setCollapsed((prev) => ({ ...prev, [type]: !prev[type] }));
   }, []);
 

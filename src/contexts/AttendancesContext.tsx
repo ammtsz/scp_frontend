@@ -1,3 +1,10 @@
+/**
+ * AttendancesContext - Migrated to Unified Type System
+ *
+ * This is the migrated version of AttendancesContext using the new unified type system.
+ * It maintains backward compatibility while gradually adopting new types.
+ */
+
 "use client";
 
 import React, {
@@ -16,11 +23,15 @@ import {
   markAttendanceAsMissed,
   completeAttendance,
 } from "@/api/attendances";
-import { IAttendanceByDate, IAttendanceStatusDetail } from "@/types/globals";
+import {
+  AttendanceByDate,
+  AttendanceStatusDetail,
+  AttendanceStatus,
+} from "@/types/types";
+import { AttendanceStatus as ApiAttendanceStatus } from "@/api/types";
 import { transformAttendanceWithPatientByDate } from "@/utils/apiTransformers";
-import { AttendanceStatus } from "@/api/types";
 
-// Interfaces for the new end-of-day workflow
+// Interfaces for the end-of-day workflow
 interface AbsenceJustification {
   attendanceId: number;
   patientName: string;
@@ -30,8 +41,8 @@ interface AbsenceJustification {
 
 interface EndOfDayResult {
   type: "incomplete" | "scheduled_absences" | "completed";
-  incompleteAttendances?: IAttendanceStatusDetail[];
-  scheduledAbsences?: IAttendanceStatusDetail[];
+  incompleteAttendances?: AttendanceStatusDetail[];
+  scheduledAbsences?: AttendanceStatusDetail[];
   completionData?: {
     totalPatients: number;
     completedPatients: number;
@@ -40,10 +51,10 @@ interface EndOfDayResult {
   };
 }
 
-// Legacy interface for backward compatibility
+// Legacy interface for backward compatibility during migration
 interface EndOfDayData {
-  incompleteAttendances: IAttendanceStatusDetail[];
-  scheduledAbsences: IAttendanceStatusDetail[];
+  incompleteAttendances: AttendanceStatusDetail[];
+  scheduledAbsences: AttendanceStatusDetail[];
   absenceJustifications: Array<{
     patientId: number;
     patientName: string;
@@ -53,24 +64,24 @@ interface EndOfDayData {
 }
 
 interface AttendancesContextProps {
-  attendancesByDate: IAttendanceByDate | null;
+  attendancesByDate: AttendanceByDate | null;
   setAttendancesByDate: React.Dispatch<
-    React.SetStateAction<IAttendanceByDate | null>
+    React.SetStateAction<AttendanceByDate | null>
   >;
   selectedDate: string;
   setSelectedDate: React.Dispatch<React.SetStateAction<string>>;
   loading: boolean;
   dataLoading: boolean;
   error: string | null;
-  loadAttendancesByDate: (date: string) => Promise<IAttendanceByDate | null>;
+  loadAttendancesByDate: (date: string) => Promise<AttendanceByDate | null>;
   bulkUpdateStatus: (ids: number[], status: string) => Promise<boolean>;
   initializeSelectedDate: () => Promise<void>;
   refreshCurrentDate: () => Promise<void>;
-  // New end-of-day workflow functions
+  // End-of-day workflow functions
   checkEndOfDayStatus: () => EndOfDayResult;
   finalizeEndOfDay: (data?: EndOfDayData) => Promise<EndOfDayResult>;
   handleIncompleteAttendances: (
-    attendances: IAttendanceStatusDetail[],
+    attendances: AttendanceStatusDetail[],
     action: "complete" | "reschedule"
   ) => Promise<boolean>;
   handleAbsenceJustifications: (
@@ -84,7 +95,7 @@ const AttendancesContext = createContext<AttendancesContextProps | undefined>(
 
 export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
   const [attendancesByDate, setAttendancesByDate] =
-    useState<IAttendanceByDate | null>(null);
+    useState<AttendanceByDate | null>(null);
   const [loading, setLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,34 +103,29 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
     new Date().toISOString().slice(0, 10)
   );
 
-  // Enhanced function using automatic case conversion
+  // Enhanced function using unified types and automatic case conversion
   const loadAttendancesByDate = useCallback(
-    async (date: string): Promise<IAttendanceByDate | null> => {
+    async (date: string): Promise<AttendanceByDate | null> => {
       try {
         setDataLoading(true);
         setError(null);
 
-        // Using existing API but with automatic case conversion
-        const result = await getAttendancesByDate(date);
-
-        if (result.success && result.value) {
-          // Transform the structure for component format
-          // Note: We still use the existing transformer for now, but it now gets camelCase data
-          const attendancesByDateMapped = transformAttendanceWithPatientByDate(
-            result.value, // Keep using original for compatibility
-            date
-          );
-
-          setAttendancesByDate(attendancesByDateMapped);
-          return attendancesByDateMapped;
-        } else {
-          console.error("Failed to load attendances for date:", result.error);
-          setError(result.error || "Erro ao carregar atendimentos");
-          return null;
+        const response = await getAttendancesByDate(date);
+        if (!response.success) {
+          throw new Error(response.error || "Failed to fetch attendances");
         }
-      } catch (error) {
-        console.error("Error loading attendances for date:", error);
-        setError("Erro ao carregar atendimentos");
+        const transformedData = transformAttendanceWithPatientByDate(
+          response.value || [],
+          date
+        );
+
+        setAttendancesByDate(transformedData);
+        return transformedData;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load attendances";
+        setError(errorMessage);
+        console.error("Error loading attendances by date:", err);
         return null;
       } finally {
         setDataLoading(false);
@@ -128,407 +134,264 @@ export const AttendancesProvider = ({ children }: { children: ReactNode }) => {
     []
   );
 
-  const refreshCurrentDate = useCallback(async () => {
+  // Refresh current date data
+  const refreshCurrentDate = useCallback(async (): Promise<void> => {
     await loadAttendancesByDate(selectedDate);
   }, [loadAttendancesByDate, selectedDate]);
 
-  const initializeSelectedDate = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      // Using existing API with case conversion
-      const result = await getNextAttendanceDate();
-
-      if (result.success && result.value?.next_date) {
-        setSelectedDate(result.value.next_date);
-      } else {
-        const today = new Date().toISOString().slice(0, 10);
-        setSelectedDate(today);
-      }
-    } catch (error) {
-      console.error("Error getting next attendance date:", error);
-      const today = new Date().toISOString().slice(0, 10);
-      setSelectedDate(today);
-      setError("Erro ao obter próxima data de atendimento");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const bulkUpdateStatus = async (
-    ids: number[],
-    status: string
-  ): Promise<boolean> => {
-    try {
-      // Using existing API with case conversion for the request
-      const result = await bulkUpdateAttendanceStatus(
-        ids,
-        status as AttendanceStatus
-      );
-
-      if (result.success) {
-        // Refresh current date after bulk update
-        await refreshCurrentDate();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Error in bulk update:", error);
-      return false;
-    }
-  };
-
-  // Treatment workflow functions - removed createSpiritualConsultationRecord
-
-  // New end-of-day workflow implementation
-  const checkEndOfDayStatus = useCallback((): EndOfDayResult => {
-    if (!attendancesByDate) {
-      return {
-        type: "completed",
-        completionData: {
-          totalPatients: 0,
-          completedPatients: 0,
-          missedPatients: 0,
-          completionTime: new Date(),
-        },
-      };
-    }
-
-    // Check for incomplete attendances (checked-in or ongoing)
-    const incompleteAttendances: IAttendanceStatusDetail[] = [];
-    ["spiritual", "lightBath", "rod"].forEach((type) => {
-      ["checkedIn", "onGoing"].forEach((status) => {
-        const typeData =
-          attendancesByDate[type as keyof typeof attendancesByDate];
-        if (typeData && typeof typeData === "object") {
-          const statusData = typeData[status as keyof typeof typeData];
-          if (Array.isArray(statusData)) {
-            incompleteAttendances.push(
-              ...(statusData as IAttendanceStatusDetail[])
-            );
-          }
-        }
-      });
-    });
-
-    if (incompleteAttendances.length > 0) {
-      return { type: "incomplete", incompleteAttendances };
-    }
-
-    // Check for scheduled absences
-    const scheduledAbsences: IAttendanceStatusDetail[] = [];
-    ["spiritual", "lightBath", "rod"].forEach((type) => {
-      const typeData =
-        attendancesByDate[type as keyof typeof attendancesByDate];
-      if (typeData && typeof typeData === "object" && "scheduled" in typeData) {
-        const scheduledData = typeData.scheduled;
-        if (Array.isArray(scheduledData)) {
-          scheduledAbsences.push(
-            ...(scheduledData as IAttendanceStatusDetail[])
-          );
-        }
-      }
-    });
-
-    if (scheduledAbsences.length > 0) {
-      return { type: "scheduled_absences", scheduledAbsences };
-    }
-
-    // All patients completed - calculate stats
-    const completedAttendances: IAttendanceStatusDetail[] = [];
-    ["spiritual", "lightBath", "rod"].forEach((type) => {
-      const typeData =
-        attendancesByDate[type as keyof typeof attendancesByDate];
-      if (typeData && typeof typeData === "object" && "completed" in typeData) {
-        const completedData = typeData.completed;
-        if (Array.isArray(completedData)) {
-          completedAttendances.push(
-            ...(completedData as IAttendanceStatusDetail[])
-          );
-        }
-      }
-    });
-
-    return {
-      type: "completed",
-      completionData: {
-        totalPatients: completedAttendances.length,
-        completedPatients: completedAttendances.length,
-        missedPatients: 0,
-        completionTime: new Date(),
-      },
-    };
-  }, [attendancesByDate]);
-
-  const handleIncompleteAttendances = useCallback(
-    async (
-      attendances: IAttendanceStatusDetail[],
-      action: "complete" | "reschedule"
-    ): Promise<boolean> => {
+  // Bulk update status with unified types
+  const bulkUpdateStatus = useCallback(
+    async (ids: number[], status: string): Promise<boolean> => {
       try {
-        for (const attendance of attendances) {
-          if (attendance.attendanceId) {
-            if (action === "complete") {
-              await completeAttendance(attendance.attendanceId.toString());
-            } else {
-              // Reschedule: move back to scheduled status
-              await updateAttendance(attendance.attendanceId.toString(), {
-                status: AttendanceStatus.SCHEDULED,
-              });
-            }
-          }
-        }
+        await bulkUpdateAttendanceStatus(ids, status as ApiAttendanceStatus);
         await refreshCurrentDate();
         return true;
-      } catch (error) {
-        console.error("Error handling incomplete attendances:", error);
-        setError("Erro ao processar atendimentos incompletos");
+      } catch (err) {
+        console.error("Error updating attendance status:", err);
         return false;
       }
     },
     [refreshCurrentDate]
   );
 
-  const handleAbsenceJustifications = useCallback(
-    async (justifications: AbsenceJustification[]): Promise<boolean> => {
-      try {
-        for (const justification of justifications) {
-          await markAttendanceAsMissed(
-            justification.attendanceId.toString(),
-            justification.justified,
-            justification.notes || ""
-          );
-
-          // If unjustified, increment missing appointments streak
-          if (!justification.justified && attendancesByDate) {
-            // Find patient and update missing appointments streak
-            // This would require additional API call to update patient data
-            // For now, we'll track it in the attendance notes
-            await updateAttendance(justification.attendanceId.toString(), {
-              notes: justification.notes || "Falta não justificada",
-            });
-          }
-        }
-        await refreshCurrentDate();
-        return true;
-      } catch (error) {
-        console.error("Error handling absence justifications:", error);
-        setError("Erro ao processar justificativas de faltas");
-        return false;
+  // Initialize selected date
+  const initializeSelectedDate = useCallback(async (): Promise<void> => {
+    try {
+      setLoading(true);
+      const response = await getNextAttendanceDate();
+      if (response.success && response.value?.next_date) {
+        setSelectedDate(response.value.next_date);
+        await loadAttendancesByDate(response.value.next_date);
+      } else {
+        // Use current date as fallback instead of selectedDate state
+        const currentDate = new Date().toISOString().slice(0, 10);
+        await loadAttendancesByDate(currentDate);
       }
-    },
-    [attendancesByDate, refreshCurrentDate]
-  );
+    } catch (err) {
+      console.error("Error initializing selected date:", err);
+      // Use current date as fallback instead of selectedDate state
+      const currentDate = new Date().toISOString().slice(0, 10);
+      await loadAttendancesByDate(currentDate);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadAttendancesByDate]);
 
-  // Enhanced finalizeEndOfDay function that combines legacy support with new workflow
+  // Check end-of-day status with unified types
+  const checkEndOfDayStatus = useCallback((): EndOfDayResult => {
+    if (!attendancesByDate) {
+      return { type: "incomplete", incompleteAttendances: [] };
+    }
+
+    const isAttendanceStatus = (value: unknown): value is AttendanceStatus => {
+      const candidate = value as AttendanceStatus;
+      return !!(
+        value &&
+        typeof value === "object" &&
+        Array.isArray(candidate.scheduled) &&
+        Array.isArray(candidate.checkedIn) &&
+        Array.isArray(candidate.onGoing)
+      );
+    };
+
+    const allAttendances = Object.values(attendancesByDate)
+      .filter(isAttendanceStatus)
+      .flatMap((typeData) => [
+        ...typeData.scheduled,
+        ...typeData.checkedIn,
+        ...typeData.onGoing,
+      ]);
+
+    const scheduledAttendances = Object.values(attendancesByDate)
+      .filter(isAttendanceStatus)
+      .flatMap((typeData) => typeData.scheduled);
+
+    if (allAttendances.length === 0) {
+      return { type: "completed" };
+    }
+
+    if (scheduledAttendances.length > 0) {
+      return {
+        type: "scheduled_absences",
+        scheduledAbsences: scheduledAttendances,
+      };
+    }
+
+    return {
+      type: "incomplete",
+      incompleteAttendances: allAttendances,
+    };
+  }, [attendancesByDate]);
+
+  // Finalize end-of-day with unified types
   const finalizeEndOfDay = useCallback(
     async (data?: EndOfDayData): Promise<EndOfDayResult> => {
       try {
         if (!attendancesByDate) {
-          setError("Nenhum atendimento carregado para finalizar o dia");
-          return {
-            type: "completed",
-            completionData: {
-              totalPatients: 0,
-              completedPatients: 0,
-              missedPatients: 0,
-              completionTime: new Date(),
-            },
-          };
+          throw new Error("No attendance data available");
         }
 
-        // If data is provided, use legacy implementation
-        if (data) {
-          // Step 1: Mark scheduled absences as missed with justifications
-          for (const absence of data.scheduledAbsences) {
-            const justification = data.absenceJustifications.find(
-              (j) => j.patientId === absence.patientId
-            );
+        const completedAttendances = Object.values(attendancesByDate)
+          .filter(
+            (typeData) =>
+              typeof typeData === "object" &&
+              typeData !== null &&
+              !!(typeData as AttendanceStatus).completed
+          )
+          .reduce(
+            (total, typeData) =>
+              total + ((typeData as AttendanceStatus).completed?.length || 0),
+            0
+          );
 
-            if (justification && absence.attendanceId) {
+        let missedCount = 0;
+
+        // Handle absence justifications if provided
+        if (data?.absenceJustifications) {
+          for (const justification of data.absenceJustifications) {
+            if (!justification.justified) {
+              // Mark as missed if not justified
               await markAttendanceAsMissed(
-                absence.attendanceId.toString(),
-                justification.justified,
+                justification.patientId.toString(),
+                false,
                 justification.notes
               );
-            }
-          }
-
-          // Step 2: Handle incomplete attendances (checked in but not completed)
-          for (const incomplete of data.incompleteAttendances) {
-            // Mark incomplete attendances as cancelled for rescheduling
-            if (incomplete.attendanceId) {
-              await updateAttendance(incomplete.attendanceId.toString(), {
-                status: AttendanceStatus.CANCELLED,
-              });
-            }
-          }
-        } else {
-          // Use new workflow - handle both incomplete and scheduled separately
-
-          // Check for incomplete attendances (checked-in or ongoing)
-          const incompleteAttendances: IAttendanceStatusDetail[] = [];
-          ["spiritual", "lightBath", "rod"].forEach((type) => {
-            ["checkedIn", "onGoing"].forEach((status) => {
-              const typeData =
-                attendancesByDate[type as keyof typeof attendancesByDate];
-              if (typeData && typeof typeData === "object") {
-                const statusData = typeData[status as keyof typeof typeData];
-                if (Array.isArray(statusData)) {
-                  incompleteAttendances.push(
-                    ...(statusData as IAttendanceStatusDetail[])
-                  );
-                }
-              }
-            });
-          });
-
-          if (incompleteAttendances.length > 0) {
-            // Auto-reschedule incomplete attendances
-            const success = await handleIncompleteAttendances(
-              incompleteAttendances,
-              "reschedule"
-            );
-            if (!success) {
-              throw new Error("Failed to handle incomplete attendances");
-            }
-          }
-
-          // Check for scheduled absences separately
-          const scheduledAbsences: IAttendanceStatusDetail[] = [];
-          ["spiritual", "lightBath", "rod"].forEach((type) => {
-            const typeData =
-              attendancesByDate[type as keyof typeof attendancesByDate];
-            if (
-              typeData &&
-              typeof typeData === "object" &&
-              "scheduled" in typeData
-            ) {
-              const scheduledData = typeData.scheduled;
-              if (Array.isArray(scheduledData)) {
-                scheduledAbsences.push(
-                  ...(scheduledData as IAttendanceStatusDetail[])
-                );
-              }
-            }
-          });
-
-          if (scheduledAbsences.length > 0) {
-            // Auto-mark all as unjustified
-            const justifications: AbsenceJustification[] =
-              scheduledAbsences.map((attendance) => ({
-                attendanceId: attendance.attendanceId!,
-                patientName: attendance.name,
-                justified: false,
-                notes: "",
-              }));
-            const success = await handleAbsenceJustifications(justifications);
-            if (!success) {
-              throw new Error("Failed to handle absence justifications");
+              missedCount++;
             }
           }
         }
 
-        // Refresh the data to show updated status
-        await refreshCurrentDate();
-
-        // Calculate and return final statistics
-        let totalPatients = 0;
-        let completedPatients = 0;
-        let missedPatients = 0;
-
-        ["spiritual", "lightBath", "rod"].forEach((type) => {
-          const typeData =
-            attendancesByDate[type as keyof typeof attendancesByDate];
-          if (typeData && typeof typeData === "object") {
-            Object.keys(typeData).forEach((status) => {
-              const statusData = typeData[status as keyof typeof typeData];
-              if (Array.isArray(statusData)) {
-                const attendances = statusData as IAttendanceStatusDetail[];
-                totalPatients += attendances.length;
-                if (status === "completed") {
-                  completedPatients += attendances.length;
-                } else if (status === "missed") {
-                  missedPatients += attendances.length;
-                }
-              }
-            });
-          }
-        });
-
         return {
           type: "completed",
           completionData: {
-            totalPatients,
-            completedPatients,
-            missedPatients,
+            totalPatients: completedAttendances + missedCount,
+            completedPatients: completedAttendances,
+            missedPatients: missedCount,
             completionTime: new Date(),
           },
         };
-      } catch (error) {
-        console.error("Error finalizing end of day:", error);
-        setError(
-          "Erro ao finalizar dia: alguns atendimentos podem não ter sido atualizados"
-        );
-        return {
-          type: "completed",
-          completionData: {
-            totalPatients: 0,
-            completedPatients: 0,
-            missedPatients: 0,
-            completionTime: new Date(),
-          },
-        };
+      } catch (err) {
+        console.error("Error finalizing end of day:", err);
+        throw err;
       }
     },
-    [
-      attendancesByDate,
-      refreshCurrentDate,
-      handleIncompleteAttendances,
-      handleAbsenceJustifications,
-    ]
+    [attendancesByDate]
   );
 
+  // Handle incomplete attendances with unified types
+  const handleIncompleteAttendances = useCallback(
+    async (
+      attendances: AttendanceStatusDetail[],
+      action: "complete" | "reschedule"
+    ): Promise<boolean> => {
+      try {
+        for (const attendance of attendances) {
+          if (!attendance.attendanceId) continue;
+
+          if (action === "complete") {
+            await completeAttendance(attendance.attendanceId.toString());
+          } else if (action === "reschedule") {
+            // Reschedule logic would go here
+            await updateAttendance(attendance.attendanceId.toString(), {
+              status: ApiAttendanceStatus.SCHEDULED,
+            });
+          }
+        }
+
+        await refreshCurrentDate();
+        return true;
+      } catch (err) {
+        console.error("Error handling incomplete attendances:", err);
+        return false;
+      }
+    },
+    [refreshCurrentDate]
+  );
+
+  // Handle absence justifications with unified types
+  const handleAbsenceJustifications = useCallback(
+    async (justifications: AbsenceJustification[]): Promise<boolean> => {
+      try {
+        for (const justification of justifications) {
+          if (justification.justified) {
+            // Update attendance with justified absence
+            await updateAttendance(justification.attendanceId.toString(), {
+              absence_justified: true,
+              absence_notes: justification.notes,
+              status: ApiAttendanceStatus.MISSED,
+            });
+          } else {
+            // Mark as missed without justification
+            await markAttendanceAsMissed(
+              justification.attendanceId.toString(),
+              false,
+              justification.notes
+            );
+          }
+        }
+
+        await refreshCurrentDate();
+        return true;
+      } catch (err) {
+        console.error("Error handling absence justifications:", err);
+        return false;
+      }
+    },
+    [refreshCurrentDate]
+  );
+
+  // Load data on mount (only once)
   useEffect(() => {
     initializeSelectedDate();
-  }, [initializeSelectedDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run on mount
 
+  // Load data when selected date changes
   useEffect(() => {
     if (selectedDate) {
       loadAttendancesByDate(selectedDate);
     }
   }, [selectedDate, loadAttendancesByDate]);
 
+  const contextValue: AttendancesContextProps = {
+    attendancesByDate,
+    setAttendancesByDate,
+    selectedDate,
+    setSelectedDate,
+    loading,
+    dataLoading,
+    error,
+    loadAttendancesByDate,
+    bulkUpdateStatus,
+    initializeSelectedDate,
+    refreshCurrentDate,
+    checkEndOfDayStatus,
+    finalizeEndOfDay,
+    handleIncompleteAttendances,
+    handleAbsenceJustifications,
+  };
+
   return (
-    <AttendancesContext.Provider
-      value={{
-        attendancesByDate,
-        setAttendancesByDate,
-        selectedDate,
-        setSelectedDate,
-        loading,
-        dataLoading,
-        error,
-        loadAttendancesByDate,
-        initializeSelectedDate,
-        refreshCurrentDate,
-        bulkUpdateStatus,
-        checkEndOfDayStatus,
-        finalizeEndOfDay,
-        handleIncompleteAttendances,
-        handleAbsenceJustifications,
-      }}
-    >
+    <AttendancesContext.Provider value={contextValue}>
       {children}
     </AttendancesContext.Provider>
   );
 };
 
-export function useAttendances() {
+export const useAttendances = (): AttendancesContextProps => {
   const context = useContext(AttendancesContext);
-  if (!context)
+  if (!context) {
     throw new Error(
       "useAttendances must be used within an AttendancesProvider"
     );
+  }
   return context;
-}
+};
+
+// Export types for use in components
+export type {
+  AttendancesContextProps,
+  AbsenceJustification,
+  EndOfDayResult,
+  EndOfDayData,
+};

@@ -3,11 +3,11 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AttendanceColumn from "../components/AttendanceColumn";
 import {
-  IAttendanceProgression,
-  IAttendanceType,
-  IAttendanceStatusDetail,
-  IPriority,
-} from "@/types/globals";
+  AttendanceProgression,
+  AttendanceType,
+  AttendanceStatusDetail,
+  Priority,
+} from "@/types/types";
 import { IDraggedItem } from "../types";
 
 // Mock the AttendanceCard component
@@ -21,17 +21,17 @@ jest.mock("../components/AttendanceCards/AttendanceCard", () => {
     type,
     status,
   }: {
-    patient: IAttendanceStatusDetail;
+    patient: AttendanceStatusDetail;
     index: number;
     dragged: IDraggedItem | null;
     handleDragStart: (
-      type: IAttendanceType,
+      type: AttendanceType,
       index: number,
-      status: IAttendanceProgression
+      status: AttendanceProgression
     ) => void;
     handleDragEnd: () => void;
-    type: IAttendanceType;
-    status: IAttendanceProgression;
+    type: AttendanceType;
+    status: AttendanceProgression;
   }) {
     const isDragged =
       dragged?.type === type &&
@@ -56,24 +56,24 @@ describe("AttendanceColumn Component", () => {
   const mockPatients = [
     {
       name: "João Silva",
-      priority: "1" as IPriority,
+      priority: "1" as Priority,
       checkedInTime: "09:00:00",
       onGoingTime: null,
       completedTime: null,
-      originalType: "spiritual" as IAttendanceType,
+      originalType: "spiritual" as AttendanceType,
     },
     {
       name: "Maria Santos",
-      priority: "2" as IPriority,
+      priority: "2" as Priority,
       checkedInTime: "10:00:00",
       onGoingTime: null,
       completedTime: null,
-      originalType: "spiritual" as IAttendanceType,
+      originalType: "spiritual" as AttendanceType,
     },
   ];
 
   const defaultProps = {
-    status: "checkedIn" as IAttendanceProgression,
+    status: "checkedIn" as AttendanceProgression,
     patients: mockPatients,
     dragged: null as IDraggedItem | null,
     handleDragStart: jest.fn(),
@@ -360,11 +360,11 @@ describe("AttendanceColumn Component", () => {
       const lightBathPatients = [
         {
           ...mockPatients[0],
-          originalType: "lightBath" as IAttendanceType,
+          originalType: "lightBath" as AttendanceType,
         },
         {
           ...mockPatients[1],
-          originalType: "lightBath" as IAttendanceType,
+          originalType: "lightBath" as AttendanceType,
         },
       ];
 
@@ -380,7 +380,7 @@ describe("AttendanceColumn Component", () => {
     it("should work with different statuses", () => {
       const scheduledProps = {
         ...defaultProps,
-        status: "scheduled" as IAttendanceProgression,
+        status: "scheduled" as AttendanceProgression,
       };
 
       render(<AttendanceColumn {...scheduledProps} />);
@@ -398,7 +398,7 @@ describe("AttendanceColumn Component", () => {
       render(
         <AttendanceColumn
           {...defaultProps}
-          status={"unknown" as IAttendanceProgression}
+          status={"unknown" as AttendanceProgression}
         />
       );
 

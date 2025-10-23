@@ -3,14 +3,14 @@
 import React, { useState } from "react";
 import { ChevronDown, Plus } from "react-feather";
 import PatientWalkInForm from "./PatientWalkInForm";
-import { IPriority } from "@/types/globals";
+import { Priority } from "@/types/types";
 
 interface PatientWalkInPanelProps {
   onRegisterNewAttendance?: (
     patientName: string,
     types: string[],
     isNew: boolean,
-    priority: IPriority
+    priority: Priority
   ) => void;
 }
 
@@ -23,7 +23,7 @@ const PatientWalkInPanel: React.FC<PatientWalkInPanelProps> = ({
     patientName: string,
     types: string[],
     isNew: boolean,
-    priority: IPriority
+    priority: Priority
   ) => {
     // Call parent callback
     if (onRegisterNewAttendance) {

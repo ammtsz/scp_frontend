@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { IAttendanceType } from "@/types/globals";
+import { AttendanceType } from "@/types/types";
 import { useAgenda } from "@/contexts/AgendaContext";
 
 export function useAgendaCalendar() {
@@ -10,7 +10,7 @@ export function useAgendaCalendar() {
     id: string;
     date: Date;
     name: string;
-    type: IAttendanceType;
+    type: AttendanceType;
     attendanceId?: number;
   } | null>(null);
   const [showNewAttendance, setShowNewAttendance] = useState(false);
@@ -85,7 +85,7 @@ export function useAgendaCalendar() {
     id: string;
     date: Date;
     name: string;
-    type: IAttendanceType;
+    type: AttendanceType;
     attendanceId?: number;
   }) {
     setConfirmRemove(params);

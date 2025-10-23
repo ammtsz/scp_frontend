@@ -1,8 +1,8 @@
 import React from "react";
-import { IAttendanceType } from "@/types/globals";
+import { AttendanceType } from "@/types/types";
 
 interface AttendanceTypeTagProps {
-  type: IAttendanceType;
+  type: AttendanceType;
   size?: "sm" | "md";
 }
 
@@ -10,7 +10,7 @@ const AttendanceTypeTag: React.FC<AttendanceTypeTagProps> = ({
   type,
   size = "sm",
 }) => {
-  const getTypeConfig = (attendanceType: IAttendanceType) => {
+  const getTypeConfig = (attendanceType: AttendanceType) => {
     switch (attendanceType) {
       case "rod":
         return {

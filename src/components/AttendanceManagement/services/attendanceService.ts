@@ -15,9 +15,9 @@ import {
   updateAttendance
 } from "@/api/attendances";
 import { 
-  IAttendanceStatusDetail, 
-  IAttendanceType
-} from "@/types/globals";
+  AttendanceStatusDetail, 
+  AttendanceType
+} from "@/types/types";
 import { AttendanceStatus } from "@/api/types";
 import { 
   transformAttendanceTypeToApi
@@ -27,7 +27,7 @@ import { SCHEDULED_TIME } from "@/utils/constants";
 
 export interface CreateAttendanceParams {
   patientId: number;
-  attendanceType: IAttendanceType;
+  attendanceType: AttendanceType;
   scheduledDate?: string;
   notes?: string;
 }
@@ -227,7 +227,7 @@ export class AttendanceService {
    * Handle incomplete attendances (reschedule or complete)
    */
   static async handleIncompleteAttendances(
-    attendances: IAttendanceStatusDetail[],
+    attendances: AttendanceStatusDetail[],
     action: "complete" | "reschedule"
   ) {
     try {

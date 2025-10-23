@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AttendanceTimes from "../components/AttendanceCards/AttendanceTimes";
-import { IAttendanceProgression } from "@/types/globals";
+import { AttendanceProgression } from "@/types/types";
 
 // Mock the TimezoneContext
 const mockUseTimezone = {
@@ -245,7 +245,7 @@ describe("AttendanceTimes Component", () => {
 
   describe("Time Display Conditions", () => {
     const testCases: {
-      status: IAttendanceProgression;
+      status: AttendanceProgression;
       times: {
         checkedInTime?: string | null;
         onGoingTime?: string | null;

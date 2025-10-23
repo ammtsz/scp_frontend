@@ -1,10 +1,10 @@
 import React from "react";
 import AttendanceColumn from "./AttendanceColumn";
 import {
-  IAttendanceProgression,
-  IAttendanceType,
-  IAttendanceStatusDetail,
-} from "@/types/globals";
+  AttendanceProgression,
+  AttendanceType,
+  AttendanceStatusDetail,
+} from "@/types/types";
 import { IDraggedItem } from "../types";
 import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
 import { groupPatientsByTreatments } from "../utils/patientGrouping";
@@ -12,23 +12,23 @@ import { groupPatientsByTreatments } from "../utils/patientGrouping";
 interface AttendanceSectionsProps {
   collapsed: Record<string, boolean>;
   getPatients: (
-    type: IAttendanceType,
-    status: IAttendanceProgression
-  ) => IAttendanceStatusDetail[];
+    type: AttendanceType,
+    status: AttendanceProgression
+  ) => AttendanceStatusDetail[];
   dragged: IDraggedItem | null;
   handleDragStart: (
-    type: IAttendanceType,
+    type: AttendanceType,
     index: number,
-    status: IAttendanceProgression,
+    status: AttendanceProgression,
     patientId?: number
   ) => void;
   handleDragEnd: () => void;
   handleDropWithConfirm: (
-    type: IAttendanceType,
-    status: IAttendanceProgression
+    type: AttendanceType,
+    status: AttendanceProgression
   ) => void;
   onDelete: (attendanceId: number, patientName: string) => Promise<void>;
-  toggleCollapsed: (type: IAttendanceType) => void;
+  toggleCollapsed: (type: AttendanceType) => void;
   isDayFinalized?: boolean;
   treatmentsByPatient?: Map<number, TreatmentInfo>;
   onTreatmentInfoClick?: (patientId: number) => void;
@@ -65,13 +65,13 @@ export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
                 "checkedIn",
                 "onGoing",
                 "completed",
-              ] as IAttendanceProgression[]
+              ] as AttendanceProgression[]
             ).map((status) => {
               // For spiritual section, just spiritual patients
               const spiritualPatients = getPatients("spiritual", status).map(
                 (patient) => ({
                   ...patient,
-                  originalType: "spiritual" as IAttendanceType,
+                  originalType: "spiritual" as AttendanceType,
                 })
               );
 
@@ -131,7 +131,7 @@ export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
                 "checkedIn",
                 "onGoing",
                 "completed",
-              ] as IAttendanceProgression[]
+              ] as AttendanceProgression[]
             ).map((status) => {
               // Get separate light bath and rod patients
               const lightBathPatients = getPatients("lightBath", status);

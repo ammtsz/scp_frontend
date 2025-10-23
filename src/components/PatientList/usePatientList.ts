@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { IPatients } from "@/types/globals";
+import { PatientBasic } from "@/types/types";
 import { usePatients } from "@/contexts/PatientsContext";
 
 export function usePatientList() {
@@ -11,7 +11,7 @@ export function usePatientList() {
     refreshPatients
   } = usePatients();
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<keyof IPatients | null>(null);
+  const [sortBy, setSortBy] = useState<keyof PatientBasic | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
   const [visibleCount, setVisibleCount] = useState(20);
   const loaderRef = useRef<HTMLDivElement | null>(null);
@@ -24,7 +24,7 @@ export function usePatientList() {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSort = (key: keyof IPatients) => {
+  const handleSort = (key: keyof PatientBasic) => {
     if (sortBy === key) {
       setSortAsc((asc) => !asc);
     } else {

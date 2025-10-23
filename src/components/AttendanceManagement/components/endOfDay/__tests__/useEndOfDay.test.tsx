@@ -1,6 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import { useEndOfDay } from "../useEndOfDay";
-import type { IAttendanceStatusDetail } from "@/types/globals";
+import type { AttendanceStatusDetail } from "@/types/types";
 
 // Mock functions
 const mockOnHandleCompletion = jest.fn();
@@ -8,7 +8,7 @@ const mockOnSubmitEndOfDay = jest.fn();
 
 const createMockIncompleteAttendance = (
   overrides = {}
-): IAttendanceStatusDetail => ({
+): AttendanceStatusDetail => ({
   name: "Test Treatment",
   priority: "1" as const,
   patientId: 1,

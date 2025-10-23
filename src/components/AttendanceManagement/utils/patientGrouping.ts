@@ -1,14 +1,14 @@
-import type { IAttendanceStatusDetail, IAttendanceType } from "@/types/globals";
+import type { AttendanceStatusDetail, AttendanceType } from "@/types/types";
 
 // Extended interface to include combined treatment information
-export interface IGroupedPatient extends IAttendanceStatusDetail {
-  originalType: IAttendanceType;
-  treatmentTypes: IAttendanceType[];
+export interface IGroupedPatient extends AttendanceStatusDetail {
+  originalType: AttendanceType;
+  treatmentTypes: AttendanceType[];
   combinedType: 'lightBath' | 'rod' | 'combined';
 }
 
 // Define color mappings for treatment combinations
-export const getTreatmentCombinationColor = (treatmentTypes: IAttendanceType[]): 'lightBath' | 'rod' | 'combined' => {
+export const getTreatmentCombinationColor = (treatmentTypes: AttendanceType[]): 'lightBath' | 'rod' | 'combined' => {
   const hasLightBath = treatmentTypes.includes('lightBath');
   const hasRod = treatmentTypes.includes('rod');
   
@@ -26,8 +26,8 @@ export const getTreatmentCombinationColor = (treatmentTypes: IAttendanceType[]):
 
 // Group patients by patientId for the same day, combining their treatments
 export const groupPatientsByTreatments = (
-  lightBathPatients: IAttendanceStatusDetail[],
-  rodPatients: IAttendanceStatusDetail[]
+  lightBathPatients: AttendanceStatusDetail[],
+  rodPatients: AttendanceStatusDetail[]
 ): IGroupedPatient[] => {
   const patientMap = new Map<number, IGroupedPatient>();
   
@@ -75,7 +75,7 @@ export const groupPatientsByTreatments = (
 };
 
 // Get treatment type labels for display
-export const getCombinedTreatmentLabel = (treatmentTypes: IAttendanceType[]): string => {
+export const getCombinedTreatmentLabel = (treatmentTypes: AttendanceType[]): string => {
   const hasLightBath = treatmentTypes.includes('lightBath');
   const hasRod = treatmentTypes.includes('rod');
   

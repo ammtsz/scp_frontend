@@ -8,13 +8,13 @@ import Breadcrumb from "@/components/common/Breadcrumb";
 import { AttendancesDropdown } from "@/components/AttendanceManagement/components";
 import { getPatientById } from "@/api/patients";
 import { transformSinglePatientFromApi } from "@/utils/apiTransformers";
-import { IPatient } from "@/types/globals";
+import { Patient } from "@/types/types";
 
 export default function PatientDetailPage() {
   const params = useParams();
   // TODO: We'll implement patient-specific attendances loading later
   // For now, we'll just show the patient details without attendances integration
-  const [patient, setPatient] = useState<IPatient | null>(null);
+  const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

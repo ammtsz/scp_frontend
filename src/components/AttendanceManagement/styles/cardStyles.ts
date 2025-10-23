@@ -1,6 +1,6 @@
-import { IAttendanceProgression, IAttendanceType } from "@/types/globals";
+import { AttendanceProgression, AttendanceType } from "@/types/types";
 
-export const getStatusStyles = (status: IAttendanceProgression) => {
+export const getStatusStyles = (status: AttendanceProgression) => {
   // Default gray borders for all status types
   const statusStyles = {
     scheduled:
@@ -18,7 +18,7 @@ export const getStatusStyles = (status: IAttendanceProgression) => {
   );
 };
 
-export const getTypeBasedStyles = (attendanceType: IAttendanceType | "combined") => {
+export const getTypeBasedStyles = (attendanceType: AttendanceType | "combined") => {
   const typeStyles = {
     rod: "shadow-[0_2px_6px_0_rgba(59,130,246,0.5)] border-l-4 border-l-blue-400",
     lightBath: "shadow-[0_2px_6px_0_rgba(251,191,36,0.5)] border-l-4 border-l-yellow-400",
@@ -28,7 +28,7 @@ export const getTypeBasedStyles = (attendanceType: IAttendanceType | "combined")
   return typeStyles[attendanceType] || typeStyles.spiritual;
 };
 
-export const getTypeIndicatorConfig = (attendanceType: IAttendanceType) => {
+export const getTypeIndicatorConfig = (attendanceType: AttendanceType) => {
   const configs = {
     lightBath: {
       className: "text-yellow-600",
@@ -51,11 +51,11 @@ export const getTypeIndicatorConfig = (attendanceType: IAttendanceType) => {
   return configs[attendanceType] || configs.spiritual;
 };
 
-export const shouldShowTypeIndicator = (attendanceType: IAttendanceType) => {
+export const shouldShowTypeIndicator = (attendanceType: AttendanceType) => {
   return attendanceType !== "spiritual";
 };
 
-export const getStatusColor = (status: IAttendanceProgression) => {
+export const getStatusColor = (status: AttendanceProgression) => {
   switch (status) {
     case "scheduled":
       return "text-blue-600";
@@ -70,7 +70,7 @@ export const getStatusColor = (status: IAttendanceProgression) => {
   }
 };
 
-export const getStatusLabel = (status: IAttendanceProgression) => {
+export const getStatusLabel = (status: AttendanceProgression) => {
   const labels = {
     scheduled: "Agendados",
     checkedIn: "Sala de Espera",

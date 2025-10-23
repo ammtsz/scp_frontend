@@ -1,9 +1,9 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
-import type { IAttendanceStatusDetail, IAttendanceType } from "@/types/globals";
+import type { AttendanceStatusDetail, AttendanceType } from "@/types/types";
 import type { AbsenceJustification, ScheduledAbsence } from "./types";
 
 interface UseEndOfDayProps {
-  incompleteAttendances: IAttendanceStatusDetail[];
+  incompleteAttendances: AttendanceStatusDetail[];
   scheduledAbsences: ScheduledAbsence[];
   onHandleCompletion: (attendanceId: number) => void;
   onReschedule: (attendanceId: number) => void;
@@ -37,7 +37,7 @@ export const useEndOfDay = ({
   }, [initialAbsenceJustifications]);
 
   const handleJustificationChange = useCallback(
-    (patientId: number, attendanceType: IAttendanceType, justified: boolean, justification?: string) => {
+    (patientId: number, attendanceType: AttendanceType, justified: boolean, justification?: string) => {
       setAbsenceJustifications((prev) => {
         return prev.map((item) =>
           item.patientId === patientId && item.attendanceType === attendanceType

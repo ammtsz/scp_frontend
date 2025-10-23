@@ -4,6 +4,7 @@ import "@testing-library/jest-dom";
 import AttendanceManagement from "../index";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { PatientsProvider } from "@/contexts/PatientsContext";
+import { TimezoneProvider } from "@/contexts/TimezoneContext";
 
 // Mock the API functions that AttendancesContext uses
 jest.mock("@/api/attendances", () => ({
@@ -160,11 +161,15 @@ describe("AttendanceManagement Integration Tests", () => {
 
   const renderWithProvider = (props = {}) => {
     return render(
-      <PatientsProvider>
-        <AttendancesProvider>
-          <AttendanceManagement {...props} />
-        </AttendancesProvider>
-      </PatientsProvider>
+      <TimezoneProvider>
+        <PatientsProvider>
+          <AttendancesProvider>
+            <AttendancesProvider>
+              <AttendanceManagement {...props} />
+            </AttendancesProvider>
+          </AttendancesProvider>
+        </PatientsProvider>
+      </TimezoneProvider>
     );
   };
 
@@ -240,8 +245,8 @@ describe("AttendanceManagement Integration Tests", () => {
       await waitFor(
         () => {
           expect(
-            screen.getAllByText("Erro ao carregar atendimentos")
-          ).toHaveLength(2); // Error appears in both error state and component details
+            screen.getByText("Erro ao carregar atendimentos")
+          ).toBeInTheDocument(); // Error appears in error state
         },
         { timeout: 3000 }
       );

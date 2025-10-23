@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { IPatient, IAttendanceType, IPriority } from "@/types/globals";
+import { Patient, AttendanceType, Priority } from "@/types/types";
 import { createAttendance, checkInAttendance } from "@/api/attendances";
 import { updatePatient } from "@/api/patients";
 import { useAttendances } from "@/contexts/AttendancesContext";
@@ -15,9 +15,9 @@ import { formatPhoneNumber, formatDateForInput } from "@/utils/formHelpers";
 import ErrorDisplay from "@/components/common/ErrorDisplay";
 
 interface NewPatientCheckInFormProps {
-  patient: IPatient;
+  patient: Patient;
   attendanceId?: number;
-  onSuccess: (updatedPatient: IPatient) => void;
+  onSuccess: (updatedPatient: Patient) => void;
   onCancel: () => void;
 }
 
@@ -41,7 +41,7 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
     name: patient.name || "",
     phone: patient.phone || "",
     birthDate: patient.birthDate ? formatDateForInput(patient.birthDate) : "",
-    priority: patient.priority || ("3" as IPriority),
+    priority: patient.priority || ("3" as Priority),
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,7 +128,7 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
         // Create attendance
         const createResult = await createAttendance({
           patient_id: parseInt(patient.id),
-          type: transformAttendanceTypeToApi("spiritual" as IAttendanceType),
+          type: transformAttendanceTypeToApi("spiritual" as AttendanceType),
           scheduled_date: today.toISOString().split("T")[0], // YYYY-MM-DD
           scheduled_time: now.toTimeString().split(" ")[0].substring(0, 5), // HH:mm
         });
@@ -154,7 +154,7 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
       await Promise.all([refreshCurrentDate(), refreshPatients()]);
 
       // Create updated patient object for callback
-      const updatedPatient: IPatient = {
+      const updatedPatient: Patient = {
         ...patient,
         name: formData.name.trim(),
         phone: formData.phone,

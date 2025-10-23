@@ -5,15 +5,15 @@ import { updateAttendanceStatus } from "@/api/attendanceSync";
 import { sortPatientsByPriority } from "@/utils/businessRules";
 
 import type {
-  IAttendanceProgression,
-  IAttendanceType,
-  IAttendanceStatusDetail,
-  IPatients,
-} from "@/types/globals";
+  AttendanceProgression,
+  AttendanceType,
+  AttendanceStatusDetail,
+  PatientBasic,
+} from "@/types/types";
 import type { IDraggedItem } from "../types";
 
 interface UseDragAndDropProps {
-  onNewPatientDetected?: (patient: IPatients, attendanceId?: number) => void;
+  onNewPatientDetected?: (patient: PatientBasic, attendanceId?: number) => void;
   onTreatmentFormOpen?: (attendanceDetails: {
     id: number;
     patientId: number;
@@ -28,7 +28,7 @@ interface UseDragAndDropProps {
     attendanceId: number;
     patientId: number;
     patientName: string;
-    attendanceType: IAttendanceType;
+    attendanceType: AttendanceType;
     onComplete: (success: boolean) => void;
   }) => void;
 }
@@ -45,24 +45,24 @@ export const useDragAndDrop = ({
   const [dragged, setDragged] = useState<IDraggedItem | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDrop, setPendingDrop] = useState<{
-    toType: IAttendanceType;
-    toStatus: IAttendanceProgression;
+    toType: AttendanceType;
+    toStatus: AttendanceProgression;
   } | null>(null);
   const [multiSectionModalOpen, setMultiSectionModalOpen] = useState(false);
   const [multiSectionPending, setMultiSectionPending] = useState<{
     patientId: number;
-    fromStatus: IAttendanceProgression;
-    toStatus: IAttendanceProgression;
-    draggedType: IAttendanceType;
+    fromStatus: AttendanceProgression;
+    toStatus: AttendanceProgression;
+    draggedType: AttendanceType;
   } | null>(null);
 
   // Helper function to find patient by ID
   const findPatient = useCallback(
     (
-      type: IAttendanceType,
-      status: IAttendanceProgression,
+      type: AttendanceType,
+      status: AttendanceProgression,
       patientId: number
-    ): IAttendanceStatusDetail | undefined => {
+    ): AttendanceStatusDetail | undefined => {
       return attendancesByDate?.[type]?.[status]?.find(
         (p) => p.patientId === patientId
       );
@@ -73,10 +73,10 @@ export const useDragAndDrop = ({
   // Helper function to update patient timestamps
   const updatePatientTimestamps = useCallback(
     (
-      patient: IAttendanceStatusDetail,
-      status: IAttendanceProgression
-    ): IAttendanceStatusDetail => {
-      const updates: Partial<IAttendanceStatusDetail> = {};
+      patient: AttendanceStatusDetail,
+      status: AttendanceProgression
+    ): AttendanceStatusDetail => {
+      const updates: Partial<AttendanceStatusDetail> = {};
       if (status === "checkedIn") updates.checkedInTime = new Date().toTimeString().split(' ')[0];
       if (status === "onGoing") updates.onGoingTime = new Date().toTimeString().split(' ')[0];
       if (status === "completed") {
@@ -123,16 +123,16 @@ export const useDragAndDrop = ({
   // Get patients for a specific type and status
   const getPatients = useCallback(
     (
-      type: IAttendanceType,
-      status: IAttendanceProgression
-    ): IAttendanceStatusDetail[] => {
+      type: AttendanceType,
+      status: AttendanceProgression
+    ): AttendanceStatusDetail[] => {
       if (!attendancesByDate) return [];
 
       const patients = attendancesByDate[type][status] || [];
 
       // Sort checkedIn patients by priority using business rules
       if (status === "checkedIn") {
-        return sortPatientsByPriority(patients) as IAttendanceStatusDetail[];
+        return sortPatientsByPriority(patients) as AttendanceStatusDetail[];
       }
 
       return patients;
@@ -143,9 +143,9 @@ export const useDragAndDrop = ({
   // Drag and drop handlers
   const handleDragStart = useCallback(
     (
-      type: IAttendanceType,
+      type: AttendanceType,
       idx: number,
-      status: IAttendanceProgression,
+      status: AttendanceProgression,
       patientId?: number
     ) => {
       let patient;
@@ -174,7 +174,7 @@ export const useDragAndDrop = ({
       const rodPatient = findPatient("rod", status, patient.patientId);
       const isCombinedTreatment = !!(lightBathPatient && rodPatient);
       
-      let treatmentTypes: IAttendanceType[] = [type];
+      let treatmentTypes: AttendanceType[] = [type];
       if (isCombinedTreatment) {
         treatmentTypes = ["lightBath", "rod"];
       }
@@ -197,7 +197,7 @@ export const useDragAndDrop = ({
 
   // Helper function for performing the actual move
   const performMove = useCallback(
-    async (toType: IAttendanceType, toStatus: IAttendanceProgression) => {
+    async (toType: AttendanceType, toStatus: AttendanceProgression) => {
       if (!dragged || !attendancesByDate || !setAttendancesByDate) return;
 
       // For combined treatments, we need to move both treatment types atomically
@@ -262,7 +262,7 @@ export const useDragAndDrop = ({
   );
 
   const handleDropWithConfirm = useCallback(
-    (toType: IAttendanceType, toStatus: IAttendanceProgression) => {
+    (toType: AttendanceType, toStatus: AttendanceProgression) => {
       if (!dragged || !attendancesByDate) return;
 
       // Find patient by ID using helper function
@@ -377,7 +377,7 @@ export const useDragAndDrop = ({
     if (!patient) return; // Patient not found
 
     // Sync with backend for all types if attendanceIds are available
-    const syncPromises = (["spiritual", "lightBath", "rod"] as IAttendanceType[])
+    const syncPromises = (["spiritual", "lightBath", "rod"] as AttendanceType[])
       .map((type) =>
         findPatient(type, "scheduled", multiSectionPending.patientId)
       )
@@ -396,7 +396,7 @@ export const useDragAndDrop = ({
     // Create immutable update for all consultation types
     let newAttendancesByDate = { ...attendancesByDate };
 
-    (["spiritual", "lightBath", "rod"] as IAttendanceType[]).forEach((type) => {
+    (["spiritual", "lightBath", "rod"] as AttendanceType[]).forEach((type) => {
       const patientToMove = findPatient(
         type,
         "scheduled",

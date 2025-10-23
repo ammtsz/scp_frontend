@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { formatDateBR } from "@/utils/dateHelpers";
-import { IPreviousAttendance } from "@/types/globals";
+import { PreviousAttendance } from "@/types/types";
 
 interface AttendancesDropdownProps {
-  attendances: IPreviousAttendance[];
+  attendances: PreviousAttendance[];
 }
 
 const AttendancesDropdown: React.FC<AttendancesDropdownProps> = ({
@@ -18,7 +18,7 @@ const AttendancesDropdown: React.FC<AttendancesDropdownProps> = ({
   };
   return (
     <ul className="ml-4 list-none text-sm">
-      {attendances.map((att: IPreviousAttendance, i: number) => (
+      {attendances.map((att: PreviousAttendance, i: number) => (
         <li
           key={att.date.toISOString() + i}
           className="mb-2 border-b border-[color:var(--border)]"

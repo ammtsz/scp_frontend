@@ -8,7 +8,7 @@ import {
   markAttendanceAsMissed, 
   updateAttendance 
 } from "@/api/attendances";
-import { IAttendanceStatusDetail, IAttendanceByDate } from "@/types/globals";
+import { AttendanceStatusDetail, AttendanceByDate } from "@/types/types";
 import { AttendanceService } from "./attendanceService";
 
 // Removed SpiritualConsultationData interface - no longer needed
@@ -83,9 +83,9 @@ export class TreatmentService {
    * Process end of day finalization with comprehensive statistics
    */
   static async finalizeEndOfDay(
-    attendancesByDate: IAttendanceByDate | null,
-    incompleteAttendances?: IAttendanceStatusDetail[],
-    scheduledAbsences?: IAttendanceStatusDetail[]
+    attendancesByDate: AttendanceByDate | null,
+    incompleteAttendances?: AttendanceStatusDetail[],
+    scheduledAbsences?: AttendanceStatusDetail[]
   ): Promise<{
     success: boolean;
     completionData: EndOfDayCompletionData;
@@ -147,7 +147,7 @@ export class TreatmentService {
   /**
    * Calculate comprehensive day statistics
    */
-  static calculateDayStatistics(attendancesByDate: IAttendanceByDate | null): EndOfDayCompletionData {
+  static calculateDayStatistics(attendancesByDate: AttendanceByDate | null): EndOfDayCompletionData {
     if (!attendancesByDate) {
       return {
         totalPatients: 0,
@@ -167,7 +167,7 @@ export class TreatmentService {
         Object.keys(typeData).forEach((status) => {
           const statusData = typeData[status as keyof typeof typeData];
           if (Array.isArray(statusData)) {
-            const attendances = statusData as IAttendanceStatusDetail[];
+            const attendances = statusData as AttendanceStatusDetail[];
             totalPatients += attendances.length;
             
             if (status === "completed") {
@@ -191,7 +191,7 @@ export class TreatmentService {
   /**
    * Check day status for end-of-day workflow
    */
-  static checkEndOfDayStatus(attendancesByDate: IAttendanceByDate | null) {
+  static checkEndOfDayStatus(attendancesByDate: AttendanceByDate | null) {
     if (!attendancesByDate) {
       return {
         type: "completed" as const,
@@ -201,7 +201,7 @@ export class TreatmentService {
     }
 
     // Check for incomplete attendances (checked-in or ongoing)
-    const incompleteAttendances: IAttendanceStatusDetail[] = [];
+    const incompleteAttendances: AttendanceStatusDetail[] = [];
     ["spiritual", "lightBath", "rod"].forEach((type) => {
       ["checkedIn", "onGoing"].forEach((status) => {
         const typeData = attendancesByDate[type as keyof typeof attendancesByDate];
@@ -209,7 +209,7 @@ export class TreatmentService {
           const statusData = typeData[status as keyof typeof typeData];
           if (Array.isArray(statusData)) {
             incompleteAttendances.push(
-              ...(statusData as IAttendanceStatusDetail[])
+              ...(statusData as AttendanceStatusDetail[])
             );
           }
         }
@@ -217,14 +217,14 @@ export class TreatmentService {
     });
 
     // Check for scheduled absences
-    const scheduledAbsences: IAttendanceStatusDetail[] = [];
+    const scheduledAbsences: AttendanceStatusDetail[] = [];
     ["spiritual", "lightBath", "rod"].forEach((type) => {
       const typeData = attendancesByDate[type as keyof typeof attendancesByDate];
       if (typeData && typeof typeData === "object" && "scheduled" in typeData) {
         const scheduledData = typeData.scheduled;
         if (Array.isArray(scheduledData)) {
           scheduledAbsences.push(
-            ...(scheduledData as IAttendanceStatusDetail[])
+            ...(scheduledData as AttendanceStatusDetail[])
           );
         }
       }

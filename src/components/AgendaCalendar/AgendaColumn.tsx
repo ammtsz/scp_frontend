@@ -1,14 +1,14 @@
 import React from "react";
 import AttendanceTypeTag from "@/components/AttendanceManagement/components/AttendanceCards/AttendanceTypeTag";
 import { formatDateWithDayOfWeekBR } from "@/utils/dateHelpers";
-import { IAttendanceType } from "@/types/globals";
+import { AttendanceType } from "@/types/types";
 import Spinner from "@/components/common/Spinner";
 
 interface Patient {
   id: string;
   name: string;
   attendanceId?: number;
-  attendanceType: IAttendanceType;
+  attendanceType: AttendanceType;
 }
 
 interface AgendaItem {
@@ -25,7 +25,7 @@ interface AgendaColumnProps {
     id: string;
     date: Date;
     name: string;
-    type: IAttendanceType;
+    type: AttendanceType;
     attendanceId?: number;
   }) => void;
   columnType: "spiritual" | "lightBath";

@@ -3,21 +3,21 @@ import {
   PatientPriority,
   TreatmentStatus,
   AttendanceResponseDto,
-  AttendanceType,
-  AttendanceStatus 
+  AttendanceType as ApiAttendanceType,
+  AttendanceStatus as ApiAttendanceStatus 
 } from '@/api/types';
 import { 
-  IPatients, 
-  IPatient, 
-  IPriority, 
-  IStatus, 
-  IAttendanceType,
-  IAttendanceProgression,
-  IAttendanceStatusDetail,
-  IAttendanceByDate
-} from '@/types/globals';
+  PatientBasic, 
+  Patient, 
+  Priority, 
+  Status, 
+  AttendanceType,
+  AttendanceProgression,
+  AttendanceStatusDetail,
+  AttendanceByDate
+} from '@/types/types';
 
-export const transformPriority = (apiPriority: PatientPriority): IPriority => {
+export const transformPriority = (apiPriority: PatientPriority): Priority => {
   switch (apiPriority) {
     case PatientPriority.NORMAL:
       return "3";
@@ -30,7 +30,7 @@ export const transformPriority = (apiPriority: PatientPriority): IPriority => {
   }
 };
 
-export const transformStatus = (apiStatus: TreatmentStatus): IStatus => {
+export const transformStatus = (apiStatus: TreatmentStatus): Status => {
   switch (apiStatus) {
     case TreatmentStatus.NEW_PATIENT:
       return "N";
@@ -46,13 +46,13 @@ export const transformStatus = (apiStatus: TreatmentStatus): IStatus => {
 };
 
 // Transform API AttendanceType to local AttendanceType
-export const transformAttendanceType = (apiType: AttendanceType): IAttendanceType => {
+export const transformAttendanceType = (apiType: ApiAttendanceType): AttendanceType => {
   switch (apiType) {
-    case AttendanceType.SPIRITUAL:
+    case ApiAttendanceType.SPIRITUAL:
       return "spiritual";
-    case AttendanceType.LIGHT_BATH:
+    case ApiAttendanceType.LIGHT_BATH:
       return "lightBath";
-    case AttendanceType.ROD:
+    case ApiAttendanceType.ROD:
       return "rod";
     default:
       return "spiritual";
@@ -60,15 +60,15 @@ export const transformAttendanceType = (apiType: AttendanceType): IAttendanceTyp
 };
 
 // Transform API AttendanceStatus to local AttendanceProgression
-export const transformAttendanceProgression = (apiStatus: AttendanceStatus): IAttendanceProgression => {
+export const transformAttendanceProgression = (apiStatus: ApiAttendanceStatus): AttendanceProgression => {
   switch (apiStatus) {
-    case AttendanceStatus.SCHEDULED:
+    case ApiAttendanceStatus.SCHEDULED:
       return "scheduled";
-    case AttendanceStatus.CHECKED_IN:
+    case ApiAttendanceStatus.CHECKED_IN:
       return "checkedIn";
-    case AttendanceStatus.IN_PROGRESS:
+    case ApiAttendanceStatus.IN_PROGRESS:
       return "onGoing";
-    case AttendanceStatus.COMPLETED:
+    case ApiAttendanceStatus.COMPLETED:
       return "completed";
     default:
       return "scheduled";
@@ -76,7 +76,7 @@ export const transformAttendanceProgression = (apiStatus: AttendanceStatus): IAt
 };
 
 // Transform Patient from API to local format
-export const transformPatientFromApi = (apiPatient: PatientResponseDto): IPatients => {
+export const transformPatientFromApi = (apiPatient: PatientResponseDto): PatientBasic => {
   return {
     id: apiPatient.id.toString(),
     name: apiPatient.name,
@@ -86,15 +86,15 @@ export const transformPatientFromApi = (apiPatient: PatientResponseDto): IPatien
   };
 };
 
-// Transform single patient to IPatient format for editing
-export const transformSinglePatientFromApi = (apiPatient: PatientResponseDto): IPatient => {
+// Transform single patient to Patient format for editing
+export const transformSinglePatientFromApi = (apiPatient: PatientResponseDto): Patient => {
   return {
     id: apiPatient.id.toString(),
     name: apiPatient.name,
     phone: apiPatient.phone || '',
     priority: transformPriority(apiPatient.priority),
     status: transformStatus(apiPatient.treatment_status),
-    // Required IPatient properties with default values
+    // Required Patient properties with default values
     birthDate: apiPatient.birth_date ? new Date(apiPatient.birth_date) : new Date(),
     mainComplaint: apiPatient.main_complaint || '',
     startDate: new Date(apiPatient.start_date),
@@ -114,16 +114,16 @@ export const transformSinglePatientFromApi = (apiPatient: PatientResponseDto): I
   };
 };
 
-// Transform array of attendances by date into IAttendanceByDate format
+// Transform array of attendances by date into AttendanceByDate format
 export const transformAttendanceWithPatientByDate = (
   apiAttendances: AttendanceResponseDto[], 
   date: string
-): IAttendanceByDate => {
+): AttendanceByDate => {
   // Parse YYYY-MM-DD format to avoid timezone issues
   // Add 'T00:00:00' to ensure it's interpreted as local time
   const dateObj = new Date(date + 'T00:00:00');
   
-  const result: IAttendanceByDate = {
+  const result: AttendanceByDate = {
     date: dateObj,
     spiritual: {
       scheduled: [],
@@ -165,12 +165,12 @@ export const transformAttendanceWithPatientByDate = (
 };
 
 // Transform array of patients from API to local format  
-export const transformPatientsFromApi = (apiPatients: PatientResponseDto[]): IPatients[] => {
+export const transformPatientsFromApi = (apiPatients: PatientResponseDto[]): PatientBasic[] => {
   return apiPatients.map(transformPatientFromApi);
 };
 
-// Transform IPatient to create/update payload for API
-export const transformPatientToApi = (patient: IPatient, isCreate: boolean = false) => {
+// Transform Patient to create/update payload for API
+export const transformPatientToApi = (patient: Patient, isCreate: boolean = false) => {
   const apiPatient = {
     name: patient.name.trim(),
     phone: patient.phone?.trim() || null,
@@ -189,8 +189,8 @@ export const transformPatientToApi = (patient: IPatient, isCreate: boolean = fal
   return apiPatient;
 };
 
-// Transform IPatient specifically for creation with all required fields
-export const transformPatientToApiCreate = (patient: Omit<IPatient, 'id'>) => {
+// Transform Patient specifically for creation with all required fields
+export const transformPatientToApiCreate = (patient: Omit<Patient, 'id'>) => {
   return {
     name: patient.name.trim(),
     phone: patient.phone?.trim() || undefined,
@@ -202,7 +202,7 @@ export const transformPatientToApiCreate = (patient: Omit<IPatient, 'id'>) => {
 };
 
 // Transform local priority to API priority
-export const transformPriorityToApi = (localPriority: IPriority): PatientPriority => {
+export const transformPriorityToApi = (localPriority: Priority): PatientPriority => {
   switch (localPriority) {
     case "1":
       return PatientPriority.EMERGENCY;
@@ -216,7 +216,7 @@ export const transformPriorityToApi = (localPriority: IPriority): PatientPriorit
 };
 
 // Transform local status to API status
-export const transformStatusToApi = (localStatus: IStatus): TreatmentStatus => {
+export const transformStatusToApi = (localStatus: Status): TreatmentStatus => {
   switch (localStatus) {
     case "T":
       return TreatmentStatus.IN_TREATMENT;
@@ -230,32 +230,32 @@ export const transformStatusToApi = (localStatus: IStatus): TreatmentStatus => {
 };
 
 // Transform local attendance type to API attendance type
-export const transformAttendanceTypeToApi = (localType: IAttendanceType): AttendanceType => {
+export const transformAttendanceTypeToApi = (localType: AttendanceType): ApiAttendanceType => {
   switch (localType) {
     case "spiritual":
-      return AttendanceType.SPIRITUAL;
+      return ApiAttendanceType.SPIRITUAL;
     case "lightBath":
-      return AttendanceType.LIGHT_BATH;
+      return ApiAttendanceType.LIGHT_BATH;
     case "rod":
-      return AttendanceType.ROD;
+      return ApiAttendanceType.ROD;
     default:
-      return AttendanceType.SPIRITUAL;
+      return ApiAttendanceType.SPIRITUAL;
   }
 };
 
 // Transform local attendance progression to API attendance status
-export const transformAttendanceProgressionToApi = (localProgression: IAttendanceProgression): AttendanceStatus => {
+export const transformAttendanceProgressionToApi = (localProgression: AttendanceProgression): ApiAttendanceStatus => {
   switch (localProgression) {
     case "scheduled":
-      return AttendanceStatus.SCHEDULED;
+      return ApiAttendanceStatus.SCHEDULED;
     case "checkedIn":
-      return AttendanceStatus.CHECKED_IN;
+      return ApiAttendanceStatus.CHECKED_IN;
     case "onGoing":
-      return AttendanceStatus.IN_PROGRESS;
+      return ApiAttendanceStatus.IN_PROGRESS;
     case "completed":
-      return AttendanceStatus.COMPLETED;
+      return ApiAttendanceStatus.COMPLETED;
     default:
-      return AttendanceStatus.SCHEDULED;
+      return ApiAttendanceStatus.SCHEDULED;
   }
 };
 
@@ -264,11 +264,11 @@ interface IAttendanceRecord {
   attendanceId: number;
   patientId: string;
   patientName: string;
-  attendanceType: IAttendanceType;
-  attendanceProgression: IAttendanceProgression;
+  attendanceType: AttendanceType;
+  attendanceProgression: AttendanceProgression;
   scheduledDate: string;
   scheduledTime: string;
-  priority: IPriority;
+  priority: Priority;
   notes: string;
   checkedInTime?: string; // HH:mm:ss time only
   startedTime?: string; // HH:mm:ss time only  
@@ -300,7 +300,7 @@ export const transformAttendanceFromApi = (apiAttendance: AttendanceResponseDto)
 };
 
 // Transform attendance status details from API
-export const transformAttendanceStatusFromApi = (apiAttendance: AttendanceResponseDto): IAttendanceStatusDetail => {
+export const transformAttendanceStatusFromApi = (apiAttendance: AttendanceResponseDto): AttendanceStatusDetail => {
   const patientName = apiAttendance.patient?.name || `Patient ${apiAttendance.patient_id}`;
   const patientPriority = apiAttendance.patient?.priority || PatientPriority.NORMAL;
   
@@ -368,7 +368,7 @@ export const formatTimeForApi = (time: string): string => {
 /**
  * Transform priority label for display
  */
-export const getPriorityLabel = (priority: IPriority): string => {
+export const getPriorityLabel = (priority: Priority): string => {
   switch (priority) {
     case "1":
       return "Exceção";
@@ -384,7 +384,7 @@ export const getPriorityLabel = (priority: IPriority): string => {
 /**
  * Transform attendance type label for display
  */
-export const getAttendanceTypeLabel = (type: IAttendanceType): string => {
+export const getAttendanceTypeLabel = (type: AttendanceType): string => {
   switch (type) {
     case "spiritual":
       return "Consulta Espiritual";
@@ -400,7 +400,7 @@ export const getAttendanceTypeLabel = (type: IAttendanceType): string => {
 /**
  * Transform status label for display
  */
-export const getStatusLabel = (status: IStatus): string => {
+export const getStatusLabel = (status: Status): string => {
   switch (status) {
     case "T":
       return "Em Tratamento";
@@ -416,7 +416,7 @@ export const getStatusLabel = (status: IStatus): string => {
 /**
  * Transform attendance progression label for display
  */
-export const getAttendanceProgressionLabel = (progression: IAttendanceProgression): string => {
+export const getAttendanceProgressionLabel = (progression: AttendanceProgression): string => {
   switch (progression) {
     case "scheduled":
       return "Agendado";

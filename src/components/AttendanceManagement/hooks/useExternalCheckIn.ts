@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import type { IAttendanceType, IPriority } from "@/types/globals";
+import type { AttendanceType, Priority } from "@/types/types";
 
 interface ExternalCheckIn {
   name: string;
   types: string[];
   isNew: boolean;
-  priority?: IPriority;
+  priority?: Priority;
 }
 
 interface UseExternalCheckInProps {
@@ -39,12 +39,12 @@ export const useExternalCheckIn = ({
     ) {
       unscheduledCheckIn.types.forEach((type) => {
         if (
-          attendancesByDate[type as IAttendanceType] &&
-          !attendancesByDate[type as IAttendanceType].checkedIn.some(
+          attendancesByDate[type as AttendanceType] &&
+          !attendancesByDate[type as AttendanceType].checkedIn.some(
             (p) => p.name === unscheduledCheckIn.name
           )
         ) {
-          attendancesByDate[type as IAttendanceType].checkedIn.push({
+          attendancesByDate[type as AttendanceType].checkedIn.push({
             name: unscheduledCheckIn.name,
             priority: unscheduledCheckIn.priority || "3",
             checkedInTime: new Date().toTimeString().split(' ')[0],

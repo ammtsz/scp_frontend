@@ -1,7 +1,7 @@
 import React from "react";
 import type { AbsenceJustification, ScheduledAbsence } from "../types";
 import { getAttendanceTypeLabel } from "@/utils/apiTransformers";
-import type { IAttendanceType } from "@/types/globals";
+import type { AttendanceType } from "@/types/types";
 
 interface AbsenceJustificationStepProps {
   scheduledAbsences: ScheduledAbsence[];
@@ -9,7 +9,7 @@ interface AbsenceJustificationStepProps {
   absenceJustifications: AbsenceJustification[];
   onJustificationChange: (
     patientId: number,
-    attendanceType: import("@/types/globals").IAttendanceType,
+    attendanceType: import("@/types/types").AttendanceType,
     justified: boolean,
     justification?: string
   ) => void;
@@ -122,7 +122,7 @@ const AbsenceJustificationStep: React.FC<AbsenceJustificationStepProps> = ({
                     </p>
                     <p className="text-xs text-blue-600 font-medium">
                       {getAttendanceTypeLabel(
-                        absence.attendanceType as IAttendanceType
+                        absence.attendanceType as AttendanceType
                       )}
                     </p>
                   </div>
@@ -137,7 +137,7 @@ const AbsenceJustificationStep: React.FC<AbsenceJustificationStepProps> = ({
                           onChange={() =>
                             onJustificationChange(
                               absence.patientId,
-                              absence.attendanceType as IAttendanceType,
+                              absence.attendanceType as AttendanceType,
                               true
                             )
                           }
@@ -155,7 +155,7 @@ const AbsenceJustificationStep: React.FC<AbsenceJustificationStepProps> = ({
                           onChange={() =>
                             onJustificationChange(
                               absence.patientId,
-                              absence.attendanceType as IAttendanceType,
+                              absence.attendanceType as AttendanceType,
                               false
                             )
                           }
@@ -181,7 +181,7 @@ const AbsenceJustificationStep: React.FC<AbsenceJustificationStepProps> = ({
                           onChange={(e) =>
                             onJustificationChange(
                               absence.patientId,
-                              absence.attendanceType as IAttendanceType,
+                              absence.attendanceType as AttendanceType,
                               true,
                               e.target.value
                             )

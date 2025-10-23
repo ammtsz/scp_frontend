@@ -2,7 +2,7 @@
 
 import React from "react";
 import NewAttendanceForm from "../Forms/NewAttendanceForm";
-import { IPriority } from "@/types/globals";
+import { Priority } from "@/types/types";
 import BaseModal from "@/components/common/BaseModal";
 import ErrorDisplay from "@/components/common/ErrorDisplay";
 
@@ -14,7 +14,7 @@ interface NewAttendanceFormModalProps {
     patientName: string,
     types: string[],
     isNew: boolean,
-    priority: IPriority,
+    priority: Priority,
     date?: string
   ) => void;
   onClose?: () => void;
@@ -40,7 +40,7 @@ const NewAttendanceFormModal: React.FC<NewAttendanceFormModalProps> = ({
     patientName: string,
     types: string[],
     isNew: boolean,
-    priority: IPriority,
+    priority: Priority,
     date?: string
   ) => {
     try {

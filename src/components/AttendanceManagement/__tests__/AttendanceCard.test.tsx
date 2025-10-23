@@ -3,11 +3,11 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AttendanceCard from "../components/AttendanceCards/AttendanceCard";
 import {
-  IAttendanceProgression,
-  IAttendanceType,
-  IAttendanceStatusDetail,
-  IPriority,
-} from "@/types/globals";
+  AttendanceProgression,
+  AttendanceType,
+  AttendanceStatusDetail,
+  Priority,
+} from "@/types/types";
 import { IDraggedItem } from "../types";
 
 // Mock react-feather
@@ -27,7 +27,7 @@ jest.mock("../components/AttendanceCards/AttendanceTimes", () => {
     onGoingTime,
     completedTime,
   }: {
-    status: IAttendanceProgression;
+    status: AttendanceProgression;
     checkedInTime?: string | null;
     onGoingTime?: string | null;
     completedTime?: string | null;
@@ -63,9 +63,9 @@ jest.mock("../../TreatmentSessionProgress", () => {
 });
 
 describe("AttendanceCard Component", () => {
-  const mockPatient: IAttendanceStatusDetail = {
+  const mockPatient: AttendanceStatusDetail = {
     name: "João Silva",
-    priority: "1" as IPriority,
+    priority: "1" as Priority,
     attendanceId: 123,
     patientId: 456,
     checkedInTime: "09:00:00",
@@ -75,8 +75,8 @@ describe("AttendanceCard Component", () => {
 
   const defaultProps = {
     patient: mockPatient,
-    status: "checkedIn" as IAttendanceProgression,
-    type: "spiritual" as IAttendanceType,
+    status: "checkedIn" as AttendanceProgression,
+    type: "spiritual" as AttendanceType,
     index: 0,
     dragged: null as IDraggedItem | null,
     handleDragStart: jest.fn(),
@@ -253,14 +253,14 @@ describe("AttendanceCard Component", () => {
       {
         description: "should detect dragged state when all properties match",
         dragged: {
-          type: "spiritual" as IAttendanceType,
-          status: "checkedIn" as IAttendanceProgression,
+          type: "spiritual" as AttendanceType,
+          status: "checkedIn" as AttendanceProgression,
           idx: 0,
           patientId: 456,
         },
         cardProps: {
-          type: "spiritual" as IAttendanceType,
-          status: "checkedIn" as IAttendanceProgression,
+          type: "spiritual" as AttendanceType,
+          status: "checkedIn" as AttendanceProgression,
           idx: 0,
         },
         expectedDragged: true,
@@ -268,14 +268,14 @@ describe("AttendanceCard Component", () => {
       {
         description: "should not detect dragged state when type differs",
         dragged: {
-          type: "lightBath" as IAttendanceType,
-          status: "checkedIn" as IAttendanceProgression,
+          type: "lightBath" as AttendanceType,
+          status: "checkedIn" as AttendanceProgression,
           idx: 0,
           patientId: 1,
         },
         cardProps: {
-          type: "spiritual" as IAttendanceType,
-          status: "checkedIn" as IAttendanceProgression,
+          type: "spiritual" as AttendanceType,
+          status: "checkedIn" as AttendanceProgression,
           idx: 0,
         },
         expectedDragged: false,
@@ -283,14 +283,14 @@ describe("AttendanceCard Component", () => {
       {
         description: "should not detect dragged state when status differs",
         dragged: {
-          type: "spiritual" as IAttendanceType,
-          status: "scheduled" as IAttendanceProgression,
+          type: "spiritual" as AttendanceType,
+          status: "scheduled" as AttendanceProgression,
           idx: 0,
           patientId: 1,
         },
         cardProps: {
-          type: "spiritual" as IAttendanceType,
-          status: "checkedIn" as IAttendanceProgression,
+          type: "spiritual" as AttendanceType,
+          status: "checkedIn" as AttendanceProgression,
           idx: 0,
         },
         expectedDragged: false,
@@ -298,14 +298,14 @@ describe("AttendanceCard Component", () => {
       {
         description: "should not detect dragged state when index differs",
         dragged: {
-          type: "spiritual" as IAttendanceType,
-          status: "checkedIn" as IAttendanceProgression,
+          type: "spiritual" as AttendanceType,
+          status: "checkedIn" as AttendanceProgression,
           idx: 1,
           patientId: 1,
         },
         cardProps: {
-          type: "spiritual" as IAttendanceType,
-          status: "checkedIn" as IAttendanceProgression,
+          type: "spiritual" as AttendanceType,
+          status: "checkedIn" as AttendanceProgression,
           idx: 0,
         },
         expectedDragged: false,
@@ -336,9 +336,9 @@ describe("AttendanceCard Component", () => {
 
   describe("Patient Data Variations", () => {
     it("should render different priority values", () => {
-      const patientWithPriority2: IAttendanceStatusDetail = {
+      const patientWithPriority2: AttendanceStatusDetail = {
         ...mockPatient,
-        priority: "2" as IPriority,
+        priority: "2" as Priority,
       };
 
       render(
@@ -349,7 +349,7 @@ describe("AttendanceCard Component", () => {
     });
 
     it("should render different patient names", () => {
-      const differentPatient: IAttendanceStatusDetail = {
+      const differentPatient: AttendanceStatusDetail = {
         ...mockPatient,
         name: "Maria Santos",
       };
@@ -360,10 +360,10 @@ describe("AttendanceCard Component", () => {
     });
 
     it("should pass correct times to AttendanceTimes component", () => {
-      const patientWithTimes: IAttendanceStatusDetail = {
+      const patientWithTimes: AttendanceStatusDetail = {
         patientId: 1,
         name: "Test Patient",
-        priority: "1" as IPriority,
+        priority: "1" as Priority,
         checkedInTime: "09:00:00",
         onGoingTime: "09:30:00",
         completedTime: "10:00:00",
@@ -416,10 +416,10 @@ describe("AttendanceCard Component", () => {
 
   describe("Edge Cases", () => {
     it("should handle null times gracefully", () => {
-      const patientWithNullTimes: IAttendanceStatusDetail = {
+      const patientWithNullTimes: AttendanceStatusDetail = {
         patientId: 1,
         name: "Test Patient",
-        priority: "1" as IPriority,
+        priority: "1" as Priority,
         checkedInTime: null,
         onGoingTime: null,
         completedTime: null,

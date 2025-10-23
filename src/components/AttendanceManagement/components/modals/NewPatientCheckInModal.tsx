@@ -1,16 +1,16 @@
 "use client";
 
 import React from "react";
-import { IPatient } from "@/types/globals";
+import { Patient } from "@/types/types";
 import BaseModal from "@/components/common/BaseModal";
 import NewPatientCheckInForm from "../Forms/NewPatientCheckInForm";
 
 interface NewPatientCheckInModalProps {
-  patient: IPatient;
+  patient: Patient;
   attendanceId?: number; // Add attendance ID to check in existing attendance
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (updatedPatient: IPatient) => void;
+  onSuccess: (updatedPatient: Patient) => void;
 }
 
 const NewPatientCheckInModal: React.FC<NewPatientCheckInModalProps> = ({

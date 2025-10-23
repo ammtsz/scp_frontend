@@ -1,11 +1,11 @@
 import React from "react";
-import { IPatient } from "@/types/globals";
+import { Patient } from "@/types/types";
 import { formatDateForInput } from "@/utils/formHelpers";
 
 interface PatientFormFieldsProps {
   patient:
-    | IPatient
-    | Omit<IPatient, "id">
+    | Patient
+    | Omit<Patient, "id">
     | {
         name: string;
         phone: string;

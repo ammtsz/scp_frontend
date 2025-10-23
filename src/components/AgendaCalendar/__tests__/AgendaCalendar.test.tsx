@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AgendaCalendar from "../index";
 import { useAgendaCalendar } from "../useAgendaCalendar";
-import { IPriority, IAttendanceType } from "@/types/globals";
+import { Priority, AttendanceType } from "@/types/types";
 
 // Mock the hook
 jest.mock("../useAgendaCalendar");
@@ -27,8 +27,8 @@ describe("AgendaCalendar - Basic Functionality", () => {
             id: "1",
             name: "João Silva",
             attendanceId: 1,
-            priority: "3" as IPriority,
-            attendanceType: "spiritual" as IAttendanceType,
+            priority: "3" as Priority,
+            attendanceType: "spiritual" as AttendanceType,
           },
         ],
       },
@@ -53,6 +53,7 @@ describe("AgendaCalendar - Basic Functionality", () => {
     handleRemovePatient: jest.fn(),
     handleConfirmRemove: jest.fn(),
     handleNewAttendance: jest.fn(),
+    handleFormSuccess: jest.fn(),
     loading: false,
     error: null,
     refreshAgenda: jest.fn(),

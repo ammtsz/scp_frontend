@@ -6,13 +6,13 @@
  */
 
 import { createPatient, updatePatient } from "@/api/patients";
-import { IPatient, IPriority } from "@/types/globals";
+import { Patient, Priority } from "@/types/types";
 import { transformPriorityToApi } from "@/utils/apiTransformers";
 
 export interface CreatePatientParams {
   name: string;
   phone?: string;
-  priority: IPriority;
+  priority: Priority;
   birthDate: Date;
   mainComplaint?: string;
 }
@@ -21,7 +21,7 @@ export interface UpdatePatientParams {
   id: number;
   name?: string;
   phone?: string;
-  priority?: IPriority;
+  priority?: Priority;
   birthDate?: Date;
   mainComplaint?: string;
 }
@@ -151,7 +151,7 @@ export class PatientService {
   /**
    * Format patient data for display
    */
-  static formatPatientForDisplay(patient: IPatient) {
+  static formatPatientForDisplay(patient: Patient) {
     return {
       ...patient,
       formattedPhone: patient.phone 
