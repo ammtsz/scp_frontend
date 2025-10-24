@@ -339,3 +339,38 @@ export interface MissedSessionsAnalyticsData {
   period_start?: string;
   period_end?: string;
 }
+
+// Patient Notes types
+export const NOTE_CATEGORIES = [
+  'general',
+  'treatment',
+  'observation',
+  'behavior',
+  'medication',
+  'progress',
+  'family',
+  'emergency',
+] as const;
+
+export type NoteCategory = typeof NOTE_CATEGORIES[number];
+
+export interface PatientNoteResponseDto {
+  id: number;
+  patient_id: number;
+  note_content: string;
+  category: string;
+  created_date: string; // YYYY-MM-DD
+  created_time: string; // HH:mm:ss
+  updated_date: string; // YYYY-MM-DD
+  updated_time: string; // HH:mm:ss
+}
+
+export interface CreatePatientNoteRequest {
+  note_content: string;
+  category?: NoteCategory;
+}
+
+export interface UpdatePatientNoteRequest {
+  note_content?: string;
+  category?: NoteCategory;
+}

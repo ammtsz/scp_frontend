@@ -9,6 +9,7 @@ import {
 import { 
   PatientBasic, 
   Patient, 
+  PreviousAttendance, 
   Priority, 
   Status, 
   AttendanceType,
@@ -111,6 +112,68 @@ export const transformSinglePatientFromApi = (apiPatient: PatientResponseDto): P
       returnWeeks: 0
     },
     previousAttendances: []
+  };
+};
+
+// Transform attendance API data to PreviousAttendance format
+export const transformAttendanceToPrevious = (apiAttendance: AttendanceResponseDto): PreviousAttendance => {
+  return {
+    attendanceId: apiAttendance.id.toString(),
+    date: new Date(apiAttendance.scheduled_date),
+    type: transformAttendanceType(apiAttendance.type),
+    notes: apiAttendance.notes || '',
+    recommendations: null // TODO: We need to implement recommendations mapping when backend provides this data
+  };
+};
+
+// Transform attendance API data to next attendance format
+export const transformAttendanceToNext = (apiAttendance: AttendanceResponseDto): { date: Date, type: AttendanceType } => {
+  return {
+    date: new Date(apiAttendance.scheduled_date),
+    type: transformAttendanceType(apiAttendance.type)
+  };
+};
+
+// Enhanced patient transformer that includes attendance history
+export const transformPatientWithAttendances = (
+  apiPatient: PatientResponseDto, 
+  attendances: AttendanceResponseDto[]
+): Patient => {
+  const basePatient = transformSinglePatientFromApi(apiPatient);
+  
+  console.log('Transforming patient with attendances:', {
+    patientId: apiPatient.id,
+    totalAttendances: attendances.length,
+    attendanceStatuses: attendances.map(a => a.status),
+    completedCount: attendances.filter(a => a.status === 'completed').length,
+    futureCount: attendances.filter(a => ['scheduled', 'checked_in', 'in_progress'].includes(a.status)).length
+  });
+  
+  // Filter completed attendances and transform them
+  const previousAttendances = attendances
+    .filter(attendance => attendance.status === 'completed')
+    .sort((a, b) => new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime())
+    .map(transformAttendanceToPrevious);
+  
+  // Filter future attendances (scheduled, checked_in, in_progress) and transform them
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Set to start of day for comparison
+  
+  const nextAttendanceDates = attendances
+    .filter(attendance => {
+      const isNotCompleted = ['scheduled', 'checked_in', 'in_progress'].includes(attendance.status);
+      const attendanceDate = new Date(attendance.scheduled_date);
+      attendanceDate.setHours(0, 0, 0, 0);
+      const isFuture = attendanceDate >= currentDate;
+      return isNotCompleted && isFuture;
+    })
+    .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime())
+    .map(transformAttendanceToNext);
+    
+  return {
+    ...basePatient,
+    previousAttendances,
+    nextAttendanceDates
   };
 };
 

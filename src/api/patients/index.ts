@@ -5,6 +5,9 @@ import type {
   CreatePatientRequest,
   UpdatePatientRequest,
   PatientResponseDto,
+  PatientNoteResponseDto,
+  CreatePatientNoteRequest,
+  UpdatePatientNoteRequest,
   ApiResponse
 } from '../types';
 
@@ -23,7 +26,14 @@ export const getPatientById = async (id: string): Promise<ApiResponse<PatientRes
     const { data } = await api.get(`/patients/${id}`);
     return { success: true, value: data };
   } catch (error) {
-    const message = getErrorMessage((error as AxiosError).status);
+    const axiosError = error as AxiosError;
+    let message = getErrorMessage(axiosError.status);
+    
+    // Provide more specific error for patient not found
+    if (axiosError.status === 404) {
+      message = 'Paciente não encontrado';
+    }
+    
     return { success: false, error: message };
   }
 };
@@ -54,6 +64,81 @@ export const deletePatient = async (id: string): Promise<ApiResponse<void>> => {
     return { success: true };
   } catch (error) {
     const message = getErrorMessage((error as AxiosError).status);
+    return { success: false, error: message };
+  }
+};
+
+// Patient Notes API functions
+export const getPatientNotes = async (patientId: string): Promise<ApiResponse<PatientNoteResponseDto[]>> => {
+  try {
+    const { data } = await api.get(`/patients/${patientId}/notes`);
+    return { success: true, value: data };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    let message = getErrorMessage(axiosError.status);
+    
+    if (axiosError.status === 404) {
+      message = 'Paciente não encontrado';
+    }
+    
+    return { success: false, error: message };
+  }
+};
+
+export const createPatientNote = async (
+  patientId: string,
+  noteData: CreatePatientNoteRequest
+): Promise<ApiResponse<PatientNoteResponseDto>> => {
+  try {
+    const { data } = await api.post(`/patients/${patientId}/notes`, noteData);
+    return { success: true, value: data };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    let message = getErrorMessage(axiosError.status);
+    
+    if (axiosError.status === 404) {
+      message = 'Paciente não encontrado';
+    }
+    
+    return { success: false, error: message };
+  }
+};
+
+export const updatePatientNote = async (
+  patientId: string,
+  noteId: string,
+  noteData: UpdatePatientNoteRequest
+): Promise<ApiResponse<PatientNoteResponseDto>> => {
+  try {
+    const { data } = await api.patch(`/patients/${patientId}/notes/${noteId}`, noteData);
+    return { success: true, value: data };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    let message = getErrorMessage(axiosError.status);
+    
+    if (axiosError.status === 404) {
+      message = 'Nota não encontrada';
+    }
+    
+    return { success: false, error: message };
+  }
+};
+
+export const deletePatientNote = async (
+  patientId: string,
+  noteId: string
+): Promise<ApiResponse<void>> => {
+  try {
+    await api.delete(`/patients/${patientId}/notes/${noteId}`);
+    return { success: true };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    let message = getErrorMessage(axiosError.status);
+    
+    if (axiosError.status === 404) {
+      message = 'Nota não encontrada';
+    }
+    
     return { success: false, error: message };
   }
 };

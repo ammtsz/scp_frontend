@@ -1,86 +1,162 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import Link from "next/link";
-import React, { useEffect, useState } from "react";
-import { formatDateBR } from "@/utils/dateHelpers";
+import React, { useEffect, useState, useCallback } from "react";
 import Breadcrumb from "@/components/common/Breadcrumb";
-import { AttendancesDropdown } from "@/components/AttendanceManagement/components";
 import { getPatientById } from "@/api/patients";
-import { transformSinglePatientFromApi } from "@/utils/apiTransformers";
+import { getAttendancesByPatient } from "@/api/attendances";
+import {
+  transformSinglePatientFromApi,
+  transformPatientWithAttendances,
+} from "@/utils/apiTransformers";
 import { Patient } from "@/types/types";
+import { PatientStatusOverview } from "@/components/patients/TreatmentStatusBadge";
+import { HeaderCard } from "@/components/patients/HeaderCard";
+import { CurrentTreatmentCard } from "@/components/patients/CurrentTreatmentCard";
+import { AttendanceHistoryCard } from "@/components/patients/AttendanceHistoryCard";
+import { FutureAppointmentsCard } from "@/components/patients/FutureAppointmentsCard";
+import { PatientNotesCard } from "@/components/patients/PatientNotesCard";
+import { PatientDetailSkeleton } from "@/components/patients/PatientDetailSkeleton";
+import { PageError } from "@/components/common/PageError";
+import { useRetry } from "@/hooks/useRetry";
 
 export default function PatientDetailPage() {
   const params = useParams();
-  // TODO: We'll implement patient-specific attendances loading later
-  // For now, we'll just show the patient details without attendances integration
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attendanceError, setAttendanceError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchPatient = async () => {
-      if (!params.id) return;
+  const fetchPatientData = useCallback(async () => {
+    if (!params.id) return;
 
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await getPatientById(params.id as string);
+    try {
+      setLoading(true);
+      setError(null);
+      setAttendanceError(null);
 
-        if (result.success && result.value) {
-          const transformedPatient = transformSinglePatientFromApi(
-            result.value
+      // Fetch patient data and attendance history in parallel
+      const [patientResult, attendancesResult] = await Promise.all([
+        getPatientById(params.id as string),
+        getAttendancesByPatient(params.id as string),
+      ]);
+
+      if (patientResult.success && patientResult.value) {
+        let transformedPatient;
+
+        if (attendancesResult.success && attendancesResult.value) {
+          // Use enhanced transformer with attendance history
+          transformedPatient = transformPatientWithAttendances(
+            patientResult.value,
+            attendancesResult.value
           );
-          setPatient(transformedPatient);
         } else {
-          setError(result.error || "Erro ao carregar paciente");
+          // Fallback to basic transformer if attendance fetch fails
+          transformedPatient = transformSinglePatientFromApi(
+            patientResult.value
+          );
+          // Set attendance-specific error but don't fail the whole page
+          setAttendanceError(
+            attendancesResult.error ||
+              "Erro ao carregar histórico de atendimentos"
+          );
         }
-      } catch {
-        setError("Erro ao carregar paciente");
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchPatient();
+        setPatient(transformedPatient);
+      } else {
+        // More specific error handling based on the error message
+        const errorMessage = patientResult.error || "Erro ao carregar paciente";
+        setError(errorMessage);
+      }
+    } catch {
+      setError("Erro inesperado ao carregar dados do paciente");
+    } finally {
+      setLoading(false);
+    }
   }, [params.id]);
 
-  if (loading) {
+  const { retry, attempt, isRetrying, canRetry } = useRetry(fetchPatientData, {
+    maxAttempts: 3,
+    retryDelay: 2000,
+    onRetry: (attemptNumber) => {
+      console.log(`Tentativa ${attemptNumber} de recarregar dados do paciente`);
+    },
+    onMaxAttemptsReached: () => {
+      console.log("Máximo de tentativas alcançado");
+    },
+  });
+
+  useEffect(() => {
+    fetchPatientData();
+  }, [fetchPatientData]);
+
+  // Loading state with skeleton
+  if (loading || isRetrying) {
     return (
       <div className="flex flex-col gap-8 my-16">
         <div className="max-w-4xl mx-auto w-full px-4">
           <Breadcrumb
             items={[
               { label: "Pacientes", href: "/patients" },
-              { label: "Carregando...", isActive: true },
+              {
+                label: isRetrying ? "Recarregando..." : "Carregando...",
+                isActive: true,
+              },
             ]}
           />
-          <div className="card-shadow">
-            <div className="p-8 text-center">Carregando...</div>
-          </div>
+          <PatientDetailSkeleton />
+          {isRetrying && attempt > 1 && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 text-center">
+                Tentativa {attempt} de {3}... Recarregando dados do paciente.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
+  // Error state with retry option
   if (error) {
+    const isPatientNotFound =
+      error.toLowerCase().includes("não encontrado") ||
+      error.toLowerCase().includes("not found");
+
     return (
       <div className="flex flex-col gap-8 my-16">
         <div className="max-w-4xl mx-auto w-full px-4">
           <Breadcrumb
             items={[
               { label: "Pacientes", href: "/patients" },
-              { label: "Erro", isActive: true },
+              {
+                label: isPatientNotFound ? "Não encontrado" : "Erro",
+                isActive: true,
+              },
             ]}
           />
-          <div className="card-shadow">
-            <div className="p-8 text-center">
-              <div className="text-red-600 mb-4">{error}</div>
-              <Link href="/patients" className="button button-primary">
-                Voltar para Pacientes
-              </Link>
+          <PageError
+            error={error}
+            reset={!isPatientNotFound && canRetry ? retry : undefined}
+            title={
+              isPatientNotFound
+                ? "Paciente não encontrado"
+                : attempt > 0
+                ? "Falha após múltiplas tentativas"
+                : "Erro ao carregar paciente"
+            }
+            showBackButton={true}
+          />
+          {!isPatientNotFound && attempt > 0 && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 text-sm text-center">
+                {attempt} tentativa(s) realizadas.{" "}
+                {canRetry
+                  ? "Você pode tentar novamente."
+                  : "Máximo de tentativas alcançado."}
+              </p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     );
@@ -96,189 +172,67 @@ export default function PatientDetailPage() {
               { label: "Não encontrado", isActive: true },
             ]}
           />
-          <div className="card-shadow">
-            <div className="p-8 text-center">
-              <div className="text-red-600 mb-4">Paciente não encontrado.</div>
-              <Link href="/patients" className="button button-primary">
-                Voltar para Pacientes
-              </Link>
-            </div>
-          </div>
+          <PageError
+            error="Paciente não encontrado."
+            title="Paciente não encontrado"
+            backLabel="Voltar para Pacientes"
+            showBackButton={true}
+          />
         </div>
       </div>
     );
   }
 
-  // TODO: Filter attendances for this patient when we have proper attendance structure
-  const future: unknown[] = []; // Temporarily empty until we implement patient-specific attendance loading
-
   return (
-    <div className="flex flex-col gap-8 my-16">
-      <div className="max-w-4xl mx-auto w-full px-4">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <Breadcrumb
           items={[
             { label: "Pacientes", href: "/patients" },
             { label: patient.name, isActive: true },
           ]}
         />
-        <div className="card-shadow">
-          <div className="p-4 border-b border-gray-100">
-            <div className="flex justify-between items-center">
+
+        {/* Show attendance error if present */}
+        {attendanceError && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center">
+              <div className="text-yellow-500 mr-3">⚠️</div>
               <div>
-                <h2 className="text-2xl font-semibold text-gray-800">
-                  {patient.name}
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Detalhes do paciente
-                </p>
+                <p className="text-yellow-800 font-medium">Aviso</p>
+                <p className="text-yellow-700 text-sm">{attendanceError}</p>
               </div>
-              <Link
-                href={`/patients/${patient.id}/edit`}
-                className="button button-secondary"
-              >
-                Editar
-              </Link>
             </div>
           </div>
-          <div className="p-4">
-            <div className="mb-4 text-sm text-gray-700">
-              <div>
-                <b>Registro:</b> {patient.id}
-              </div>
-              <div>
-                <b>Data de nascimento:</b>{" "}
-                {formatDateBR(
-                  patient.birthDate?.toISOString?.() ??
-                    String(patient.birthDate)
-                )}
-              </div>
-              <div>
-                <b>Telefone:</b> {patient.phone}
-              </div>
-              <div>
-                <b>Prioridade:</b> {patient.priority}
-              </div>
-              <div>
-                <b>Status:</b> {patient.status}
-              </div>
-              <div>
-                <b>Queixa principal:</b> {patient.mainComplaint}
-              </div>
-            </div>
-            <div className="mb-4">
-              <h3 className="font-semibold text-[color:var(--primary)] mb-1">
-                Consulta Espiritual
-              </h3>
-              <div className="text-sm">
-                <div>
-                  <b>Início:</b>{" "}
-                  {formatDateBR(
-                    patient.startDate.toISOString?.() ??
-                      String(patient.startDate)
-                  )}
-                </div>
-                <div>
-                  <b>Próxima:</b>{" "}
-                  {formatDateBR(
-                    patient.nextAttendanceDates[0]?.date?.toISOString?.() ??
-                      String(patient.nextAttendanceDates[0]?.date)
-                  )}
-                </div>
-                <div>
-                  <b>Alta:</b>{" "}
-                  {formatDateBR(
-                    patient.dischargeDate?.toISOString?.() ??
-                      String(patient.dischargeDate)
-                  ) || "-"}
-                </div>
-                <div>
-                  <b>
-                    Últimas Recomendações{" ("}
-                    {patient.currentRecommendations.date.toLocaleDateString(
-                      "pt-BR"
-                    )}
-                    {")"}:
-                  </b>
-                </div>
-                <ul className="ml-4 list-disc">
-                  <li>
-                    <b>Alimentação:</b> {patient.currentRecommendations.food}
-                  </li>
-                  <li>
-                    <b>Água:</b> {patient.currentRecommendations.water}
-                  </li>
-                  <li>
-                    <b>Pomada:</b> {patient.currentRecommendations.ointment}
-                  </li>
-                  <li>
-                    <b>Banho de luz:</b>{" "}
-                    {patient.currentRecommendations.lightBath ? "Sim" : "Não"}
-                  </li>
-                  <li>
-                    <b>Bastão:</b>{" "}
-                    {patient.currentRecommendations.rod ? "Sim" : "Não"}
-                  </li>
-                  <li>
-                    <b>Tratamento espiritual:</b>{" "}
-                    {patient.currentRecommendations.spiritualTreatment
-                      ? "Sim"
-                      : "Não"}
-                  </li>
-                  <li>
-                    <b>Retorno (semanas):</b>{" "}
-                    {patient.currentRecommendations.returnWeeks}
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div className="mb-4">
-              <h3 className="font-semibold text-[color:var(--primary)] mb-1">
-                Atendimentos Anteriores
-              </h3>
-              {patient.previousAttendances.length > 0 ? (
-                <AttendancesDropdown
-                  attendances={patient.previousAttendances}
-                />
-              ) : (
-                <div className="text-sm text-gray-500">
-                  Nenhum atendimento anterior.
-                </div>
+        )}
+
+        <HeaderCard patient={patient} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Treatment Info */}
+          <div className="lg:col-span-2 space-y-6">
+            <CurrentTreatmentCard patient={patient} />
+            <AttendanceHistoryCard patient={patient} />
+            <FutureAppointmentsCard patient={patient} />
+          </div>
+
+          {/* Right Column - Notes and Quick Info */}
+          <div className="space-y-6">
+            <PatientNotesCard patientId={patient.id} />
+            <PatientStatusOverview
+              priority={patient.priority}
+              totalAttendances={patient.previousAttendances.length}
+              weeksInTreatment={Math.ceil(
+                (new Date().getTime() - new Date(patient.startDate).getTime()) /
+                  (1000 * 60 * 60 * 24 * 7)
               )}
-            </div>
-            <div>
-              <h3 className="font-semibold text-[color:var(--primary)] mb-1">
-                Próximos Atendimentos
-              </h3>
-              {future.length > 0 ? (
-                <ul className="ml-4 list-disc text-sm">
-                  {/* TODO: Update this when we have proper attendance structure */}
-                  {/* {future.map((a, i) => (
-                <li key={a.date.toISOString() + i}>
-                  {formatDateBR(a.date.toISOString())} (
-                  {a.type === "spiritual"
-                    ? "Consulta Espiritual"
-                    : "Banho de Luz/Bastão"}
-                  )
-                </li>
-              ))} */}
-                  <li>Atendimentos futuros serão exibidos aqui</li>
-                </ul>
-              ) : (
-                <div className="text-sm text-gray-500">
-                  Nenhum atendimento futuro.
-                </div>
-              )}
-            </div>
-            {/* Notes textarea at the bottom */}
-            <div className="mt-8">
-              <label className="block text-sm font-medium text-gray-800 mb-1">
-                Notas sobre o paciente
-              </label>
-              <textarea
-                className="input w-full min-h-[80px] resize-y"
-                placeholder="Adicione observações ou informações importantes..."
-              />
-            </div>
+              nextAppointment={
+                patient.nextAttendanceDates[0]?.date
+                  ? new Date(
+                      patient.nextAttendanceDates[0].date
+                    ).toLocaleDateString("pt-BR")
+                  : "Não agendado"
+              }
+            />
           </div>
         </div>
       </div>

@@ -70,7 +70,7 @@ describe('Patients API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+        error: 'Recurso não encontrado'
       });
     });
   });
@@ -89,8 +89,32 @@ describe('Patients API', () => {
       });
     });
 
-    it('should return error on failure', async () => {
+    it('should return specific error message for 404 (patient not found)', async () => {
       const mockError = { status: 404 };
+      mockApi.get.mockRejectedValue(mockError);
+
+      const result = await getPatientById('non-existent-id');
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Paciente não encontrado'
+      });
+    });
+
+    it('should return generic error on server error', async () => {
+      const mockError = { status: 500 };
+      mockApi.get.mockRejectedValue(mockError);
+
+      const result = await getPatientById('1');
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+      });
+    });
+
+    it('should return generic error on network error', async () => {
+      const mockError = {}; // No status
       mockApi.get.mockRejectedValue(mockError);
 
       const result = await getPatientById('1');
@@ -142,7 +166,7 @@ describe('Patients API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+        error: 'Requisição inválida'
       });
     });
   });
@@ -171,7 +195,7 @@ describe('Patients API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+        error: 'Recurso não encontrado'
       });
     });
   });
@@ -196,7 +220,7 @@ describe('Patients API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+        error: 'Recurso não encontrado'
       });
     });
 

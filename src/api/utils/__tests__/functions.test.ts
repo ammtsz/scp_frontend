@@ -14,6 +14,14 @@ describe('API Utility Functions', () => {
       expect(getErrorMessage(418)).toBe('Erro interno do servidor, por favor tente novamente mais tarde');
     });
 
+    it('should return correct message for 404 Not Found', () => {
+      expect(getErrorMessage(404)).toBe('Recurso não encontrado');
+    });
+
+    it('should return correct message for 400 Bad Request', () => {
+      expect(getErrorMessage(400)).toBe('Requisição inválida');
+    });
+
     it('should return generic message for undefined status', () => {
       expect(getErrorMessage(undefined)).toBe('Erro interno do servidor, por favor tente novamente mais tarde');
     });
@@ -23,9 +31,12 @@ describe('API Utility Functions', () => {
     });
 
     it('should handle standard status codes', () => {
-      expect(getErrorMessage(400)).toBe('Erro interno do servidor, por favor tente novamente mais tarde');
-      expect(getErrorMessage(404)).toBe('Erro interno do servidor, por favor tente novamente mais tarde');
+      expect(getErrorMessage(400)).toBe('Requisição inválida');
+      expect(getErrorMessage(404)).toBe('Recurso não encontrado');
       expect(getErrorMessage(401)).toBe('Faça o login para continuar');
+      expect(getErrorMessage(500)).toBe('Erro interno do servidor, por favor tente novamente mais tarde');
+      expect(getErrorMessage(502)).toBe('Erro interno do servidor, por favor tente novamente mais tarde');
+      expect(getErrorMessage(503)).toBe('Erro interno do servidor, por favor tente novamente mais tarde');
     });
   });
 });

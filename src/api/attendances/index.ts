@@ -41,6 +41,17 @@ export const getAttendancesByDate = async (date: string): Promise<ApiResponse<At
   }
 };
 
+export const getAttendancesByPatient = async (patientId: string): Promise<ApiResponse<AttendanceResponseDto[]>> => {
+  try {
+    // Use the new query parameter approach for better performance
+    const { data } = await api.get(`/attendances?patient_id=${patientId}`);
+    return { success: true, value: data };
+  } catch (error) {
+    const message = getErrorMessage((error as AxiosError).status);
+    return { success: false, error: message };
+  }
+};
+
 export const createAttendance = async (attendanceData: CreateAttendanceRequest): Promise<ApiResponse<AttendanceResponseDto>> => {
   try {
     const { data } = await api.post('/attendances', attendanceData);

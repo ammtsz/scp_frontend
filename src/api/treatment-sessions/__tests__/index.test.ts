@@ -90,7 +90,7 @@ describe('Treatment Sessions API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+        error: 'Recurso não encontrado'
       });
     });
   });
@@ -153,7 +153,7 @@ describe('Treatment Sessions API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+        error: 'Requisição inválida'
       });
     });
   });
@@ -267,7 +267,7 @@ describe('Treatment Sessions API', () => {
 
       expect(result).toEqual({
         success: false,
-        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+        error: 'Recurso não encontrado'
       });
     });
   });
