@@ -35,8 +35,14 @@ export function useRetry(
     canRetry: true,
   });
 
-  // Use ref to track retry state synchronously to prevent race conditions
+  // Use refs to prevent callback dependency issues
   const isRetryingRef = useRef(false);
+  const onRetryRef = useRef(onRetry);
+  const onMaxAttemptsReachedRef = useRef(onMaxAttemptsReached);
+  
+  // Update refs when callbacks change
+  onRetryRef.current = onRetry;
+  onMaxAttemptsReachedRef.current = onMaxAttemptsReached;
 
   const retry = useCallback(async () => {
     // Synchronous check to prevent concurrent retries
@@ -51,7 +57,7 @@ export function useRetry(
       isRetrying: true,
     }));
 
-    onRetry?.(nextAttempt);
+    onRetryRef.current?.(nextAttempt);
 
     try {
       // Add retry delay except for first attempt
@@ -79,12 +85,12 @@ export function useRetry(
       });
 
       if (!canRetryNext) {
-        onMaxAttemptsReached?.();
+        onMaxAttemptsReachedRef.current?.();
       }
 
       throw error;
     }
-  }, [asyncFunction, state.canRetry, state.attempt, maxAttempts, retryDelay, onRetry, onMaxAttemptsReached]);
+  }, [asyncFunction, state.canRetry, state.attempt, maxAttempts, retryDelay]); // ✅ Removed callback dependencies
 
   const reset = useCallback(() => {
     isRetryingRef.current = false;

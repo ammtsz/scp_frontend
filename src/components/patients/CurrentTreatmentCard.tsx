@@ -2,6 +2,10 @@ import React from "react";
 import { Patient, AttendanceType } from "@/types/types";
 import { formatDateBR } from "@/utils/dateHelpers";
 import { TreatmentStatusBadge } from "./TreatmentStatusBadge";
+import { TreatmentProgressBar } from "./TreatmentProgressBar";
+import { TreatmentCompletionBadge } from "./TreatmentCompletionBadge";
+import { useTreatmentSessions } from "@/hooks/useTreatmentSessions";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 interface CurrentTreatmentCardProps {
   patient: Patient;
@@ -10,47 +14,65 @@ interface CurrentTreatmentCardProps {
 export const CurrentTreatmentCard: React.FC<CurrentTreatmentCardProps> = ({
   patient,
 }) => {
-  // Determine the primary treatment type based on patient's attendance history and future appointments
-  const getPrimaryTreatmentType = (): AttendanceType => {
-    // Check if there are upcoming appointments
-    if (patient.nextAttendanceDates.length > 0) {
-      return patient.nextAttendanceDates[0].type;
-    }
-
-    // Check most recent attendance
-    if (patient.previousAttendances.length > 0) {
-      // Sort by date descending and get the most recent
-      const sortedAttendances = [...patient.previousAttendances].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-      return sortedAttendances[0].type;
-    }
-
-    // Default to spiritual if no data available
-    return "spiritual";
-  };
-
+  // Fetch treatment sessions for progress tracking
+  const { treatmentSessions, loading: sessionsLoading } = useTreatmentSessions(
+    Number(patient.id)
+  );
   const getTreatmentTitle = (
     type: AttendanceType
   ): { title: string; icon: string } => {
     const treatmentTitles = {
       spiritual: { title: "Consulta Espiritual", icon: "🔮" },
       lightBath: { title: "Banho de Luz", icon: "💡" },
-      rod: { title: "Tratamento com Bastão", icon: "🔮" },
+      rod: { title: "Tratamento com Bastão", icon: "⚡" },
       combined: { title: "Tratamento Combinado", icon: "✨" },
     };
 
     return treatmentTitles[type] || treatmentTitles.spiritual;
   };
 
-  const primaryTreatmentType = getPrimaryTreatmentType();
-  const { title, icon } = getTreatmentTitle(primaryTreatmentType);
+  // Get active treatment sessions grouped by type
+  const getActiveTreatmentSessions = () => {
+    const activeSessions = treatmentSessions.filter(
+      (session) =>
+        session.status === "scheduled" ||
+        session.status === "active" ||
+        session.status === "in_progress"
+    );
+
+    return {
+      light_bath: activeSessions.filter(
+        (session) => session.treatment_type === "light_bath"
+      ),
+      rod: activeSessions.filter((session) => session.treatment_type === "rod"),
+    };
+  };
+
+  // Get session details for progress display
+  const getSessionDetails = (sessionRecords?: Array<{ status: string }>) => {
+    if (!sessionRecords) return { upcoming: 0, missed: 0, cancelled: 0 };
+
+    return {
+      upcoming: sessionRecords.filter((record) => record.status === "scheduled")
+        .length,
+      missed: sessionRecords.filter((record) => record.status === "missed")
+        .length,
+      cancelled: sessionRecords.filter(
+        (record) => record.status === "cancelled"
+      ).length,
+    };
+  };
+
+  // Static title for the card (always Spiritual Consultation)
+  const cardTitle = "Consulta Espiritual";
+  const cardIcon = "🔮";
+  const groupedActiveSessions = getActiveTreatmentSessions();
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          {icon} {title}
+    <div className="ds-card">
+      <div className="ds-card-body">
+        <h2 className="ds-text-heading-2 mb-4 flex items-center">
+          {cardIcon} {cardTitle}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -106,6 +128,144 @@ export const CurrentTreatmentCard: React.FC<CurrentTreatmentCardProps> = ({
           </div>
         </div>
 
+        {/* Active Treatment Progress - Grouped by Type */}
+        {!sessionsLoading &&
+          (groupedActiveSessions.light_bath.length > 0 ||
+            groupedActiveSessions.rod.length > 0) && (
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+                📊 Progresso dos Tratamentos Ativos
+                {sessionsLoading && <LoadingSpinner size="small" />}
+              </h3>
+
+              {/* Light Bath Treatments */}
+              {groupedActiveSessions.light_bath.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-yellow-700 mb-2 flex items-center gap-2">
+                    💡 Banho de Luz
+                    <span className="text-xs text-gray-500">
+                      ({groupedActiveSessions.light_bath.length} ativo
+                      {groupedActiveSessions.light_bath.length > 1 ? "s" : ""})
+                    </span>
+                  </h4>
+                  <div className="space-y-2">
+                    {groupedActiveSessions.light_bath.map((session) => (
+                      <div
+                        key={session.id}
+                        className="bg-yellow-50 rounded-lg p-3 border border-yellow-100"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-700">
+                              {session.body_location ||
+                                "Local não especificado"}
+                            </span>
+                            {session.color && (
+                              <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">
+                                {session.color}
+                              </span>
+                            )}
+                            {session.duration_minutes && (
+                              <span className="text-xs text-gray-500">
+                                {session.duration_minutes}min
+                              </span>
+                            )}
+                          </div>
+                          <TreatmentCompletionBadge
+                            completionPercentage={Math.round(
+                              (session.completed_sessions /
+                                session.planned_sessions) *
+                                100
+                            )}
+                            status={
+                              session.status as
+                                | "scheduled"
+                                | "active"
+                                | "in_progress"
+                                | "completed"
+                                | "suspended"
+                                | "cancelled"
+                            }
+                            size="sm"
+                            showMilestone={false}
+                          />
+                        </div>
+                        <TreatmentProgressBar
+                          completed={session.completed_sessions}
+                          total={session.planned_sessions}
+                          treatmentType="light_bath"
+                          sessionDetails={getSessionDetails(
+                            session.sessionRecords
+                          )}
+                          size="sm"
+                          showDetails={true}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Rod Treatments */}
+              {groupedActiveSessions.rod.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-purple-700 mb-2 flex items-center gap-2">
+                    ⚡ Tratamento com Bastão
+                    <span className="text-xs text-gray-500">
+                      ({groupedActiveSessions.rod.length} ativo
+                      {groupedActiveSessions.rod.length > 1 ? "s" : ""})
+                    </span>
+                  </h4>
+                  <div className="space-y-2">
+                    {groupedActiveSessions.rod.map((session) => (
+                      <div
+                        key={session.id}
+                        className="bg-purple-50 rounded-lg p-3 border border-purple-100"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-700">
+                              {session.body_location ||
+                                "Local não especificado"}
+                            </span>
+                          </div>
+                          <TreatmentCompletionBadge
+                            completionPercentage={Math.round(
+                              (session.completed_sessions /
+                                session.planned_sessions) *
+                                100
+                            )}
+                            status={
+                              session.status as
+                                | "scheduled"
+                                | "active"
+                                | "in_progress"
+                                | "completed"
+                                | "suspended"
+                                | "cancelled"
+                            }
+                            size="sm"
+                            showMilestone={false}
+                          />
+                        </div>
+                        <TreatmentProgressBar
+                          completed={session.completed_sessions}
+                          total={session.planned_sessions}
+                          treatmentType="rod"
+                          sessionDetails={getSessionDetails(
+                            session.sessionRecords
+                          )}
+                          size="sm"
+                          showDetails={true}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
         {/* Treatment Types Summary */}
         {patient.previousAttendances.length > 0 && (
           <div className="mb-6">
@@ -152,24 +312,36 @@ export const CurrentTreatmentCard: React.FC<CurrentTreatmentCardProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">🍎 Alimentação:</span>
-                    <span className="font-medium">
-                      {patient.currentRecommendations.food ||
-                        "Não especificado"}
-                    </span>
+                    <TreatmentStatusBadge
+                      isActive={!!patient.currentRecommendations.food}
+                      label={
+                        patient.currentRecommendations.food ||
+                        "Não especificado"
+                      }
+                      icon="🍎"
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">💧 Água:</span>
-                    <span className="font-medium">
-                      {patient.currentRecommendations.water ||
-                        "Não especificado"}
-                    </span>
+                    <TreatmentStatusBadge
+                      isActive={!!patient.currentRecommendations.water}
+                      label={
+                        patient.currentRecommendations.water ||
+                        "Não especificado"
+                      }
+                      icon="💧"
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">🧴 Pomada:</span>
-                    <span className="font-medium">
-                      {patient.currentRecommendations.ointment ||
-                        "Não especificado"}
-                    </span>
+                    <TreatmentStatusBadge
+                      isActive={!!patient.currentRecommendations.ointment}
+                      label={
+                        patient.currentRecommendations.ointment ||
+                        "Não especificado"
+                      }
+                      icon="🧴"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -231,7 +403,7 @@ export const CurrentTreatmentCard: React.FC<CurrentTreatmentCardProps> = ({
                 registradas.
               </div>
               <button
-                className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+                className="ds-button-primary"
                 onClick={() => {
                   // TODO: Navigate to create recommendations
                   console.log(

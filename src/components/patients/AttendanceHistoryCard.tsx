@@ -31,9 +31,9 @@ export const AttendanceHistoryCard: React.FC<AttendanceHistoryCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+    <div className="ds-card">
+      <div className="ds-card-body">
+        <h2 className="ds-text-heading-2 mb-4 flex items-center">
           📋 Histórico de Atendimentos
         </h2>
 
@@ -82,7 +82,8 @@ export const AttendanceHistoryCard: React.FC<AttendanceHistoryCardProps> = ({
                           {formatAttendanceDate(attendance.date)}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {attendance.type || "Tipo não especificado"}
+                          {getAttendanceTypeLabel(attendance.type) ||
+                            "Tipo não especificado"}
                         </div>
                       </div>
                     </div>
@@ -174,3 +175,16 @@ export const AttendanceHistoryCard: React.FC<AttendanceHistoryCardProps> = ({
     </div>
   );
 };
+
+// Helper function to translate attendance types to Portuguese
+function getAttendanceTypeLabel(type: string): string {
+  const typeLabels: Record<string, string> = {
+    spiritual: "Consulta Espiritual",
+    lightBath: "Banho de Luz",
+    light_bath: "Banho de Luz",
+    rod: "Tratamento com Bastão",
+    combined: "Tratamento Combinado",
+  };
+
+  return typeLabels[type] || type;
+}

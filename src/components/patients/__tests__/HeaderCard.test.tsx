@@ -62,7 +62,7 @@ describe("HeaderCard", () => {
 
     const priorityBadge = screen.getByText("Intermediário");
     expect(priorityBadge).toBeInTheDocument();
-    expect(priorityBadge).toHaveClass("bg-yellow-100", "text-yellow-800");
+    expect(priorityBadge).toHaveClass("ds-badge-priority-intermediate");
   });
 
   it("calculates and displays age correctly", () => {
@@ -79,8 +79,8 @@ describe("HeaderCard", () => {
     const editLink = screen.getByRole("link", { name: /editar/i });
     expect(editLink).toHaveAttribute("href", "/patients/1/edit");
 
-    expect(screen.getByText("📅 Agendar")).toBeInTheDocument();
-    expect(screen.getByText("📞 Contato")).toBeInTheDocument();
+    expect(screen.getByText("📅 Novo Agendamento")).toBeInTheDocument();
+    expect(screen.getByText("� Exportar")).toBeInTheDocument();
   });
 
   it("displays priority colors correctly for different priority levels", () => {
@@ -88,17 +88,13 @@ describe("HeaderCard", () => {
     const emergencyPatient: Patient = { ...mockPatient, priority: "1" };
     const { rerender } = render(<HeaderCard patient={emergencyPatient} />);
     expect(screen.getByText("Emergência")).toHaveClass(
-      "bg-red-100",
-      "text-red-800"
+      "ds-badge-priority-emergency"
     );
 
     // Test Normal priority
     const normalPatient: Patient = { ...mockPatient, priority: "3" };
     rerender(<HeaderCard patient={normalPatient} />);
-    expect(screen.getByText("Normal")).toHaveClass(
-      "bg-green-100",
-      "text-green-800"
-    );
+    expect(screen.getByText("Normal")).toHaveClass("ds-badge-priority-normal");
   });
 
   it("handles unknown priority gracefully", () => {

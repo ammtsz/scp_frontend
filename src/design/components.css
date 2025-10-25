@@ -1,0 +1,259 @@
+/**
+ * Design System Components - Tailwind v4 Native CSS
+ * 
+ * This file defines custom CSS components using native CSS properties.
+ * Compatible with Tailwind v4 architecture (no @apply directives).
+ */
+
+/* ===========================================
+   CARD COMPONENTS
+   =========================================== */
+
+.ds-card {
+  background-color: rgb(255 255 255);
+  border-radius: 0.5rem;
+  border: 1px solid rgb(229 231 235);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.ds-card-body {
+  padding: 1.5rem;
+}
+
+.ds-card-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgb(229 231 235);
+}
+
+.ds-card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgb(229 231 235);
+}
+
+/* ===========================================
+   TYPOGRAPHY SYSTEM
+   =========================================== */
+
+.ds-text-heading-1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: rgb(17 24 39);
+  line-height: 1.25;
+}
+
+.ds-text-heading-2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgb(17 24 39);
+  line-height: 1.25;
+}
+
+.ds-text-heading-3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgb(17 24 39);
+  line-height: 1.25;
+}
+
+.ds-text-body {
+  font-size: 1rem;
+  color: rgb(17 24 39);
+  line-height: 1.5;
+}
+
+.ds-text-body-secondary {
+  font-size: 0.875rem;
+  color: rgb(75 85 99);
+  line-height: 1.5;
+}
+
+.ds-text-caption {
+  font-size: 0.75rem;
+  color: rgb(107 114 128);
+  line-height: 1.5;
+}
+
+.ds-text-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(55 65 81);
+}
+
+/* ===========================================
+   BUTTON SYSTEM
+   =========================================== */
+
+.ds-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  min-height: 44px;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.ds-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ds-button-primary {
+  background-color: rgb(37 99 235);
+  color: rgb(255 255 255);
+}
+
+.ds-button-primary:hover:not(:disabled) {
+  background-color: rgb(29 78 216);
+}
+
+.ds-button-primary:focus {
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.5);
+}
+
+.ds-button-secondary {
+  background-color: rgb(219 234 254);
+  color: rgb(29 78 216);
+}
+
+.ds-button-secondary:hover:not(:disabled) {
+  background-color: rgb(191 219 254);
+}
+
+.ds-button-secondary:focus {
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.5);
+}
+
+.ds-button-success {
+  background-color: rgb(22 163 74);
+  color: rgb(255 255 255);
+}
+
+.ds-button-success:hover:not(:disabled) {
+  background-color: rgb(21 128 61);
+}
+
+.ds-button-success:focus {
+  box-shadow: 0 0 0 2px rgb(34 197 94 / 0.5);
+}
+
+.ds-button-outline {
+  background-color: rgb(255 255 255);
+  color: rgb(55 65 81);
+  border: 1px solid rgb(209 213 219);
+}
+
+.ds-button-outline:hover:not(:disabled) {
+  background-color: rgb(249 250 251);
+}
+
+.ds-button-outline:focus {
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.5);
+}
+
+.ds-button-ghost {
+  background-color: transparent;
+  color: rgb(75 85 99);
+}
+
+.ds-button-ghost:hover:not(:disabled) {
+  background-color: rgb(243 244 246);
+  color: rgb(17 24 39);
+}
+
+/* ===========================================
+   BADGE SYSTEM
+   =========================================== */
+
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.ds-badge-priority-emergency {
+  background-color: rgb(254 242 242);
+  color: rgb(153 27 27);
+  border-color: rgb(254 202 202);
+}
+
+.ds-badge-priority-intermediate {
+  background-color: rgb(254 252 232);
+  color: rgb(146 64 14);
+  border-color: rgb(254 240 138);
+}
+
+.ds-badge-priority-normal {
+  background-color: rgb(240 253 244);
+  color: rgb(22 101 52);
+  border-color: rgb(187 247 208);
+}
+
+/* ===========================================
+   FORM INPUT SYSTEM
+   =========================================== */
+
+.ds-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgb(209 213 219);
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  background-color: rgb(255 255 255);
+  color: rgb(17 24 39);
+  font-size: 16px; /* Prevents iOS zoom */
+  min-height: 44px;
+}
+
+.ds-input::placeholder {
+  color: rgb(156 163 175);
+}
+
+.ds-input:focus {
+  outline: none;
+  border-color: rgb(59 130 246);
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.5);
+}
+
+.ds-input:disabled {
+  background-color: rgb(243 244 246);
+  color: rgb(107 114 128);
+  cursor: not-allowed;
+}
+
+.ds-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(55 65 81);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.ds-form-group {
+  margin-bottom: 1rem;
+}
+
+/* ===========================================
+   MOBILE RESPONSIVE IMPROVEMENTS
+   =========================================== */
+
+@media (max-width: 640px) {
+  .ds-button {
+    min-height: 48px;
+    padding: 0.75rem 1.5rem;
+  }
+  
+  .ds-input {
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+  }
+}

@@ -1,0 +1,419 @@
+/**
+ * Design System Utility Classes
+ * 
+ * CSS utilities that implement the design tokens for consistent styling.
+ * Uses standard CSS instead of @apply for Tailwind v4 compatibility.
+ */
+
+/* ===========================================
+   CARD COMPONENTS
+   =========================================== */
+
+.ds-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.ds-card-body {
+  padding: 1.5rem;
+}
+
+.ds-card-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ds-card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ===========================================
+   TYPOGRAPHY SYSTEM
+   =========================================== */
+
+.ds-text-heading-1 {
+  @apply text-3xl font-bold text-gray-900 leading-tight;
+}
+
+.ds-text-heading-2 {
+  @apply text-xl font-semibold text-gray-900 leading-tight;
+}
+
+.ds-text-heading-3 {
+  @apply text-lg font-semibold text-gray-900 leading-tight;
+}
+
+.ds-text-body {
+  @apply text-base text-gray-900 leading-normal;
+}
+
+.ds-text-body-secondary {
+  @apply text-sm text-gray-600 leading-normal;
+}
+
+.ds-text-caption {
+  @apply text-xs text-gray-500 leading-normal;
+}
+
+.ds-text-label {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.ds-text-link {
+  @apply text-blue-600 hover:text-blue-700 font-medium;
+}
+
+/* ===========================================
+   BUTTON SYSTEM
+   =========================================== */
+
+.ds-button {
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 min-h-[44px] cursor-pointer border-none outline-none;
+}
+
+.ds-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.ds-button-primary {
+  @apply ds-button bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.ds-button-secondary {
+  @apply ds-button bg-blue-100 text-blue-700 hover:bg-blue-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.ds-button-success {
+  @apply ds-button bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+}
+
+.ds-button-warning {
+  @apply ds-button bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2;
+}
+
+.ds-button-error {
+  @apply ds-button bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+}
+
+.ds-button-outline {
+  @apply ds-button bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.ds-button-ghost {
+  @apply ds-button bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+}
+
+/* Mobile-specific button improvements */
+@media (max-width: 640px) {
+  .ds-button {
+    @apply min-h-[48px] px-6 py-3;
+  }
+}
+
+/* ===========================================
+   FORM INPUTS
+   =========================================== */
+
+.ds-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 text-base min-h-[44px];
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+  @apply disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed;
+  font-size: 16px; /* Prevents iOS zoom */
+}
+
+.ds-textarea {
+  @apply ds-input resize-vertical min-h-[80px];
+}
+
+.ds-select {
+  @apply ds-input cursor-pointer;
+}
+
+.ds-label {
+  @apply ds-text-label block mb-1;
+}
+
+.ds-form-group {
+  @apply mb-4;
+}
+
+.ds-form-error {
+  @apply text-red-600 text-sm mt-1;
+}
+
+.ds-form-help {
+  @apply text-gray-500 text-sm mt-1;
+}
+
+/* Mobile-specific form improvements */
+@media (max-width: 640px) {
+  .ds-input,
+  .ds-textarea,
+  .ds-select {
+    @apply min-h-[48px] px-4 py-3;
+  }
+}
+
+/* ===========================================
+   BADGE SYSTEM
+   =========================================== */
+
+.ds-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.ds-badge-priority-emergency {
+  @apply ds-badge bg-red-50 text-red-800 border border-red-200;
+}
+
+.ds-badge-priority-intermediate {
+  @apply ds-badge bg-yellow-50 text-yellow-800 border border-yellow-200;
+}
+
+.ds-badge-priority-normal {
+  @apply ds-badge bg-green-50 text-green-800 border border-green-200;
+}
+
+.ds-badge-treatment-spiritual {
+  @apply ds-badge bg-purple-50 text-purple-800 border border-purple-200;
+}
+
+.ds-badge-treatment-lightbath {
+  @apply ds-badge bg-yellow-50 text-yellow-800 border border-yellow-200;
+}
+
+.ds-badge-treatment-rod {
+  @apply ds-badge bg-purple-50 text-purple-800 border border-purple-200;
+}
+
+.ds-badge-status-active {
+  @apply ds-badge bg-green-50 text-green-800 border border-green-200;
+}
+
+.ds-badge-status-inactive {
+  @apply ds-badge bg-gray-50 text-gray-600 border border-gray-200;
+}
+
+.ds-badge-status-pending {
+  @apply ds-badge bg-yellow-50 text-yellow-800 border border-yellow-200;
+}
+
+.ds-badge-status-error {
+  @apply ds-badge bg-red-50 text-red-800 border border-red-200;
+}
+
+/* ===========================================
+   ALERT SYSTEM
+   =========================================== */
+
+.ds-alert {
+  @apply p-4 rounded-lg border;
+}
+
+.ds-alert-success {
+  @apply ds-alert bg-green-50 text-green-800 border-green-200;
+}
+
+.ds-alert-warning {
+  @apply ds-alert bg-yellow-50 text-yellow-800 border-yellow-200;
+}
+
+.ds-alert-error {
+  @apply ds-alert bg-red-50 text-red-800 border-red-200;
+}
+
+.ds-alert-info {
+  @apply ds-alert bg-blue-50 text-blue-800 border-blue-200;
+}
+
+/* ===========================================
+   SPACING UTILITIES
+   =========================================== */
+
+.ds-stack-1 > * + * {
+  @apply mt-1;
+}
+
+.ds-stack-2 > * + * {
+  @apply mt-2;
+}
+
+.ds-stack-3 > * + * {
+  @apply mt-3;
+}
+
+.ds-stack-4 > * + * {
+  @apply mt-4;
+}
+
+.ds-stack-6 > * + * {
+  @apply mt-6;
+}
+
+.ds-stack-8 > * + * {
+  @apply mt-8;
+}
+
+.ds-inline-stack-2 > * + * {
+  @apply ml-2;
+}
+
+.ds-inline-stack-3 > * + * {
+  @apply ml-3;
+}
+
+.ds-inline-stack-4 > * + * {
+  @apply ml-4;
+}
+
+/* ===========================================
+   PROGRESS INDICATORS
+   =========================================== */
+
+.ds-progress-bar {
+  @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.ds-progress-fill {
+  @apply h-2 rounded-full transition-all duration-300;
+}
+
+.ds-progress-fill-primary {
+  @apply ds-progress-fill bg-blue-600;
+}
+
+.ds-progress-fill-success {
+  @apply ds-progress-fill bg-green-600;
+}
+
+.ds-progress-fill-warning {
+  @apply ds-progress-fill bg-yellow-600;
+}
+
+.ds-progress-fill-error {
+  @apply ds-progress-fill bg-red-600;
+}
+
+/* ===========================================
+   SKELETON LOADING
+   =========================================== */
+
+.ds-skeleton {
+  @apply bg-gray-200 animate-pulse rounded;
+}
+
+.ds-skeleton-text {
+  @apply ds-skeleton h-4;
+}
+
+.ds-skeleton-title {
+  @apply ds-skeleton h-6;
+}
+
+.ds-skeleton-avatar {
+  @apply ds-skeleton w-10 h-10 rounded-full;
+}
+
+.ds-skeleton-button {
+  @apply ds-skeleton h-10 w-20;
+}
+
+/* ===========================================
+   RESPONSIVE GRID SYSTEM
+   =========================================== */
+
+.ds-grid-auto {
+  @apply grid gap-4;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.ds-grid-patient-detail {
+  @apply grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6;
+}
+
+.ds-grid-patient-main {
+  @apply xl:col-span-2 space-y-4 sm:space-y-6;
+}
+
+.ds-grid-patient-sidebar {
+  @apply space-y-4 sm:space-y-6;
+}
+
+/* ===========================================
+   ANIMATION UTILITIES
+   =========================================== */
+
+.ds-fade-in {
+  @apply transition-opacity duration-200 ease-in-out;
+}
+
+.ds-slide-in {
+  @apply transition-transform duration-200 ease-in-out;
+}
+
+.ds-scale-in {
+  @apply transition-transform duration-200 ease-in-out;
+}
+
+.ds-bounce-in {
+  @apply animate-bounce;
+}
+
+/* ===========================================
+   ACCESSIBILITY UTILITIES
+   =========================================== */
+
+.ds-sr-only {
+  @apply sr-only;
+}
+
+.ds-focus-visible {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.ds-touch-target {
+  @apply min-h-[44px] min-w-[44px];
+}
+
+/* Mobile-specific touch targets */
+@media (max-width: 640px) {
+  .ds-touch-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
+}
+
+/* ===========================================
+   UTILITY MODIFIERS
+   =========================================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .ds-card {
+    @apply border-2 border-gray-400;
+  }
+  
+  .ds-button-primary {
+    @apply border-2 border-blue-800;
+  }
+  
+  .ds-input {
+    @apply border-2 border-gray-400;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .ds-fade-in,
+  .ds-slide-in,
+  .ds-scale-in,
+  .ds-progress-fill {
+    @apply transition-none;
+  }
+  
+  .ds-bounce-in {
+    @apply animate-none;
+  }
+}

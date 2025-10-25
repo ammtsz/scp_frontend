@@ -185,7 +185,7 @@ export default function PatientDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
         <Breadcrumb
           items={[
             { label: "Pacientes", href: "/patients" },
@@ -207,16 +207,43 @@ export default function PatientDetailPage() {
         )}
 
         <HeaderCard patient={patient} />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Treatment Info */}
-          <div className="lg:col-span-2 space-y-6">
+
+        {/* Responsive Layout: Mobile-first approach with better breakpoints */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-1 gap-4 sm:gap-6">
+          {/* Mobile: Status Overview First (Most Important) */}
+          <div className="xl:hidden order-1">
+            <PatientStatusOverview
+              priority={patient.priority}
+              totalAttendances={patient.previousAttendances.length}
+              weeksInTreatment={Math.ceil(
+                (new Date().getTime() - new Date(patient.startDate).getTime()) /
+                  (1000 * 60 * 60 * 24 * 7)
+              )}
+              nextAppointment={
+                patient.nextAttendanceDates[0]?.date
+                  ? new Date(
+                      patient.nextAttendanceDates[0].date
+                    ).toLocaleDateString("pt-BR")
+                  : "Não agendado"
+              }
+            />
+          </div>
+
+          {/* Main Content Column - Treatment Info */}
+          <div className="xl:col-span-2 order-2 space-y-4 sm:space-y-6">
             <CurrentTreatmentCard patient={patient} />
+
+            {/* Mobile: Notes Card After Current Treatment */}
+            <div className="xl:hidden">
+              <PatientNotesCard patientId={patient.id} />
+            </div>
+
             <AttendanceHistoryCard patient={patient} />
             <FutureAppointmentsCard patient={patient} />
           </div>
 
-          {/* Right Column - Notes and Quick Info */}
-          <div className="space-y-6">
+          {/* Desktop: Right Sidebar */}
+          <div className="hidden xl:block order-3 space-y-4 sm:space-y-6">
             <PatientNotesCard patientId={patient.id} />
             <PatientStatusOverview
               priority={patient.priority}

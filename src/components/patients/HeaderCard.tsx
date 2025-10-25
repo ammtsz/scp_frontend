@@ -1,23 +1,31 @@
 import React from "react";
-import Link from "next/link";
-import { Patient } from "@/types/types";
+import { Patient, AttendanceResponseDto } from "@/types/types";
+import QuickActions from "./QuickActions";
 
 interface HeaderCardProps {
   patient: Patient;
+  latestAttendance?: AttendanceResponseDto;
+  onAttendanceUpdate?: () => void;
 }
 
-export const HeaderCard: React.FC<HeaderCardProps> = ({ patient }) => {
-  // Helper function to get priority badge color
-  const getPriorityColor = (priority: string) => {
+export const HeaderCard: React.FC<HeaderCardProps> = ({
+  patient,
+  latestAttendance,
+  onAttendanceUpdate,
+}) => {
+  // Helper function to get priority badge styling using design system classes
+  const getPriorityBadgeClass = (priority: string) => {
+    const baseClasses =
+      "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border";
     switch (priority) {
       case "1":
-        return "bg-red-100 text-red-800 border border-red-200";
+        return `${baseClasses} bg-red-50 text-red-800 border-red-200`;
       case "2":
-        return "bg-yellow-100 text-yellow-800 border border-yellow-200";
+        return `${baseClasses} bg-yellow-50 text-yellow-800 border-yellow-200`;
       case "3":
-        return "bg-green-100 text-green-800 border border-green-200";
+        return `${baseClasses} bg-green-50 text-green-800 border-green-200`;
       default:
-        return "bg-gray-100 text-gray-800 border border-gray-200";
+        return `${baseClasses} bg-gray-50 text-gray-600 border-gray-200`;
     }
   };
 
@@ -51,45 +59,39 @@ export const HeaderCard: React.FC<HeaderCardProps> = ({ patient }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border mb-6">
-      <div className="p-6">
+    <div className="ds-card mb-6">
+      <div className="ds-card-body">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           {/* Patient Basic Info */}
           <div className="flex-1">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-              <h1 className="text-3xl font-bold text-gray-900">
-                {patient.name}
-              </h1>
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(
-                  patient.priority
-                )}`}
-              >
+              <h1 className="ds-text-heading-1">{patient.name}</h1>
+              <span className={getPriorityBadgeClass(patient.priority)}>
                 {getPriorityText(patient.priority)}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ds-text-body-secondary">
               <div>
-                <span className="text-gray-500">Registro:</span>
+                <span className="ds-text-caption">Registro:</span>
                 <span className="ml-2 font-medium">#{patient.id}</span>
               </div>
               <div>
-                <span className="text-gray-500">Idade:</span>
+                <span className="ds-text-caption">Idade:</span>
                 <span className="ml-2 font-medium">
                   {calculateAge(patient.birthDate)} anos
                 </span>
               </div>
               <div>
-                <span className="text-gray-500">Telefone:</span>
+                <span className="ds-text-caption">Telefone:</span>
                 <span className="ml-2 font-medium">{patient.phone}</span>
               </div>
               <div>
-                <span className="text-gray-500">Status:</span>
+                <span className="ds-text-caption">Status:</span>
                 <span className="ml-2 font-medium">{patient.status}</span>
               </div>
               <div className="sm:col-span-2">
-                <span className="text-gray-500">Queixa principal:</span>
+                <span className="ds-text-caption">Queixa principal:</span>
                 <span className="ml-2 font-medium">
                   {patient.mainComplaint}
                 </span>
@@ -97,27 +99,12 @@ export const HeaderCard: React.FC<HeaderCardProps> = ({ patient }) => {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/patients/${patient.id}/edit`}
-              className="button button-secondary"
-            >
-              ✏️ Editar
-            </Link>
-            <button
-              className="button button-primary"
-              onClick={() => alert("Funcionalidade em desenvolvimento")}
-            >
-              📅 Agendar
-            </button>
-            <button
-              className="button bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => alert("Funcionalidade em desenvolvimento")}
-            >
-              📞 Contato
-            </button>
-          </div>
+          {/* Quick Actions - Interactive Features */}
+          <QuickActions
+            patient={patient}
+            latestAttendance={latestAttendance}
+            onAttendanceUpdate={onAttendanceUpdate}
+          />
         </div>
       </div>
     </div>

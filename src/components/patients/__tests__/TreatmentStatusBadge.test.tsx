@@ -17,7 +17,7 @@ describe("TreatmentStatusBadge", () => {
     expect(screen.getByText("💡")).toBeInTheDocument();
 
     const badge = screen.getByText("Banho de luz").parentElement;
-    expect(badge).toHaveClass("bg-green-100");
+    expect(badge).toHaveClass("ds-badge-status-active");
   });
 
   test("renders inactive treatment badge correctly", () => {
@@ -27,7 +27,7 @@ describe("TreatmentStatusBadge", () => {
     expect(screen.getByText("🔮")).toBeInTheDocument();
 
     const badge = screen.getByText("Bastão").parentElement;
-    expect(badge).toHaveClass("bg-gray-100");
+    expect(badge).toHaveClass("ds-badge-status-inactive");
   });
 
   test("applies custom className", () => {

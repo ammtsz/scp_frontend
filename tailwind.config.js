@@ -7,7 +7,13 @@ const config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      // We can extend default Tailwind theme if needed
+      colors: {
+        'ds-primary': '#2563eb',
+        'ds-success': '#16a34a',
+      },
+    },
   },
   plugins: [],
 };

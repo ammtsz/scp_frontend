@@ -48,9 +48,9 @@ export const FutureAppointmentsCard: React.FC<FutureAppointmentsCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+    <div className="ds-card">
+      <div className="ds-card-body">
+        <h2 className="ds-text-heading-2 mb-4 flex items-center">
           📅 Próximos Agendamentos
         </h2>
 
@@ -158,7 +158,7 @@ export const FutureAppointmentsCard: React.FC<FutureAppointmentsCardProps> = ({
             </div>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <button
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                className="ds-button-primary"
                 onClick={() => {
                   // TODO: Implement schedule appointment functionality
                   console.log(
@@ -170,7 +170,7 @@ export const FutureAppointmentsCard: React.FC<FutureAppointmentsCardProps> = ({
                 📅 Agendar Consulta
               </button>
               <button
-                className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors"
+                className="ds-button-outline"
                 onClick={() => {
                   // TODO: Navigate to agenda page
                   console.log("Navigate to agenda");

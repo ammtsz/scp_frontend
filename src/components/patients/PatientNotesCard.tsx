@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   getPatientNotes,
   createPatientNote,
@@ -52,11 +52,7 @@ export const PatientNotesCard: React.FC<PatientNotesCardProps> = ({
     useState<NoteCategory>("general");
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
-  useEffect(() => {
-    loadNotes();
-  }, [patientId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadNotes = async () => {
+  const loadNotes = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -68,7 +64,11 @@ export const PatientNotesCard: React.FC<PatientNotesCardProps> = ({
     }
 
     setLoading(false);
-  };
+  }, [patientId]);
+
+  useEffect(() => {
+    loadNotes();
+  }, [loadNotes]);
 
   const handleAddNote = async () => {
     if (!newNoteContent.trim()) return;
@@ -126,11 +126,14 @@ export const PatientNotesCard: React.FC<PatientNotesCardProps> = ({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="p-6">
-          <div className="animate-pulse" data-testid="loading-skeleton">
-            <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+      <div className="ds-card">
+        <div className="ds-card-body">
+          <div
+            className="animate-pulse space-y-4"
+            data-testid="loading-skeleton"
+          >
+            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-4 bg-gray-200 rounded w-full"></div>
             <div className="h-4 bg-gray-200 rounded w-2/3"></div>
           </div>
         </div>
@@ -139,39 +142,40 @@ export const PatientNotesCard: React.FC<PatientNotesCardProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-6">
+    <div className="ds-card">
+      <div className="ds-card-body">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            📝 Notas do Paciente
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center flex-shrink-0">
+            📝 Notas
           </h2>
           <button
             onClick={() => setIsAddingNote(true)}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+            className="bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-2 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 flex-shrink-0"
           >
-            ✏️ Nova Nota
+            ✏️ Nova
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-700 text-sm">{error}</p>
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+            <div className="flex items-center">
+              <div className="text-red-500 mr-3">⚠️</div>
+              <p className="text-red-800 text-sm">{error}</p>
+            </div>
           </div>
         )}
 
         {/* Add new note form */}
         {isAddingNote && (
           <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Categoria
-              </label>
+            <div className="ds-form-group">
+              <label className="ds-label">Categoria</label>
               <select
                 value={newNoteCategory}
                 onChange={(e) =>
                   setNewNoteCategory(e.target.value as NoteCategory)
                 }
-                className="input w-full"
+                className="ds-input"
               >
                 {NOTE_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
@@ -183,25 +187,22 @@ export const PatientNotesCard: React.FC<PatientNotesCardProps> = ({
             <textarea
               value={newNoteContent}
               onChange={(e) => setNewNoteContent(e.target.value)}
-              className="input w-full min-h-[100px] resize-y mb-3"
+              className="ds-input mb-3 min-h-[100px] resize-y"
               placeholder="Digite a nota..."
               maxLength={2000}
             />
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-500">
+              <span className="ds-text-caption">
                 {newNoteContent.length}/2000 caracteres
               </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleCancelAdd}
-                  className="text-gray-600 hover:text-gray-800 text-sm font-medium"
-                >
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button onClick={handleCancelAdd} className="ds-button-ghost">
                   Cancelar
                 </button>
                 <button
                   onClick={handleAddNote}
                   disabled={!newNoteContent.trim()}
-                  className="button button-primary text-sm px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="ds-button-primary"
                 >
                   Salvar Nota
                 </button>
@@ -214,8 +215,10 @@ export const PatientNotesCard: React.FC<PatientNotesCardProps> = ({
         {notes.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-400 text-lg mb-2">📝</div>
-            <p className="text-gray-500">Nenhuma nota adicionada ainda.</p>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="ds-text-body-secondary">
+              Nenhuma nota adicionada ainda.
+            </p>
+            <p className="ds-text-caption mt-1">
               Clique em &quot;Nova Nota&quot; para adicionar observações
               importantes.
             </p>
@@ -285,13 +288,13 @@ export const PatientNotesCard: React.FC<PatientNotesCardProps> = ({
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleDeleteNote(note.id)}
-                        className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700"
+                        className="ds-button-primary bg-red-600 hover:bg-red-700"
                       >
                         Excluir
                       </button>
                       <button
                         onClick={() => setDeleteConfirmId(null)}
-                        className="text-gray-600 hover:text-gray-800 text-xs"
+                        className="ds-button-ghost"
                       >
                         Cancelar
                       </button>
@@ -340,7 +343,7 @@ const EditNoteForm: React.FC<EditNoteFormProps> = ({
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        className="input w-full min-h-[100px] resize-y mb-3"
+        className="ds-input w-full min-h-[100px] resize-y mb-3"
         maxLength={2000}
       />
       <div className="flex justify-between items-center">
@@ -348,16 +351,13 @@ const EditNoteForm: React.FC<EditNoteFormProps> = ({
           {content.length}/2000 caracteres
         </span>
         <div className="flex gap-2">
-          <button
-            onClick={onCancel}
-            className="text-gray-600 hover:text-gray-800 text-sm font-medium"
-          >
+          <button onClick={onCancel} className="ds-button-ghost">
             Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={!content.trim()}
-            className="button button-primary text-sm px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="ds-button-primary text-sm"
           >
             Salvar
           </button>

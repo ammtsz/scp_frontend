@@ -13,14 +13,12 @@ export const TreatmentStatusBadge: React.FC<TreatmentStatusBadgeProps> = ({
   icon = "📋",
   className = "",
 }) => {
-  const baseClasses =
-    "px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1";
   const statusClasses = isActive
-    ? "bg-green-100 text-green-800 border border-green-200"
-    : "bg-gray-100 text-gray-600 border border-gray-200";
+    ? "bg-green-50 text-green-800 border-green-200"
+    : "bg-gray-50 text-gray-600 border-gray-200";
 
   return (
-    <span className={`${baseClasses} ${statusClasses} ${className}`}>
+    <span className={`ds-badge ${statusClasses} ${className}`}>
       <span>{icon}</span>
       <span>{label}</span>
     </span>
@@ -43,8 +41,8 @@ export const TreatmentProgressBar: React.FC<TreatmentProgressBarProps> = ({
   return (
     <div className="w-full">
       <div className="flex justify-between items-center mb-1">
-        <span className="text-sm font-medium text-gray-700">{label}</span>
-        <span className="text-sm text-gray-500">
+        <span className="ds-text-label">{label}</span>
+        <span className="ds-text-caption">
           {current}/{total}
         </span>
       </div>
@@ -74,53 +72,74 @@ export const PatientStatusOverview: React.FC<PatientStatusOverviewProps> = ({
   const getPriorityConfig = (priority: string) => {
     switch (priority) {
       case "1":
-        return { color: "bg-red-500", text: "Emergência", icon: "🚨" };
+        return {
+          badgeClass: "ds-badge-priority-emergency",
+          text: "Emergência",
+          icon: "🚨",
+        };
       case "2":
-        return { color: "bg-yellow-500", text: "Intermediário", icon: "⚠️" };
+        return {
+          badgeClass: "ds-badge-priority-intermediate",
+          text: "Intermediário",
+          icon: "⚠️",
+        };
       case "3":
-        return { color: "bg-green-500", text: "Normal", icon: "✅" };
+        return {
+          badgeClass: "ds-badge-priority-normal",
+          text: "Normal",
+          icon: "✅",
+        };
       default:
-        return { color: "bg-gray-500", text: priority, icon: "📋" };
+        return {
+          badgeClass:
+            "ds-badge bg-gray-50 text-gray-600 border border-gray-200",
+          text: priority,
+          icon: "📋",
+        };
     }
   };
 
   const priorityConfig = getPriorityConfig(priority);
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-400">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-3 h-3 rounded-full ${priorityConfig.color}`} />
-          <span className="font-semibold text-gray-900">
-            Status do Paciente
-          </span>
+    <div className="ds-card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+      <div className="ds-card-body">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <span className={priorityConfig.badgeClass}>
+              {priorityConfig.icon}
+            </span>
+            <span className="ds-text-label">Status do Paciente</span>
+          </div>
+          <span className="ds-text-body-secondary">{priorityConfig.text}</span>
         </div>
-        <span className="text-sm text-gray-600">
-          {priorityConfig.icon} {priorityConfig.text}
-        </span>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="text-gray-600">Total de consultas:</span>
-          <div className="font-semibold text-lg text-blue-900">
-            {totalAttendances}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="ds-text-body-secondary">Total de consultas:</span>
+            <div className="ds-text-heading-3 text-blue-900">
+              {totalAttendances}
+            </div>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="ds-text-body-secondary">
+              Semanas de tratamento:
+            </span>
+            <div className="ds-text-heading-3 text-blue-900">
+              {weeksInTreatment}
+            </div>
           </div>
         </div>
-        <div>
-          <span className="text-gray-600">Semanas de tratamento:</span>
-          <div className="font-semibold text-lg text-blue-900">
-            {weeksInTreatment}
-          </div>
-        </div>
-      </div>
 
-      {nextAppointment && (
-        <div className="mt-3 pt-3 border-t border-blue-200">
-          <span className="text-sm text-gray-600">Próximo atendimento:</span>
-          <div className="font-semibold text-blue-900">{nextAppointment}</div>
-        </div>
-      )}
+        {nextAppointment && (
+          <div className="mt-3 pt-3 border-t border-blue-200">
+            <span className="ds-text-body-secondary">Próximo atendimento:</span>
+            <div className="ds-text-body font-semibold text-blue-900">
+              {nextAppointment}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
