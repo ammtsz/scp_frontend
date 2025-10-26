@@ -8,6 +8,7 @@ import { PatientsProvider } from "@/contexts/PatientsContext";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { AgendaProvider } from "@/contexts/AgendaContext";
 import { TreatmentRecordsProvider } from "@/contexts/TreatmentRecordsContext";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,21 +31,23 @@ export default function RootLayout({
       <body
         className={`${inter.variable} antialiased bg-[color:var(--background)] text-[color:var(--foreground)]`}
       >
-        <TimezoneProvider>
-          <PatientsProvider>
-            <AttendancesProvider>
-              <AgendaProvider>
-                <TreatmentRecordsProvider>
-                  <TopNavigation />
-                  <TabNav />
-                  <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
-                    {children}
-                  </main>
-                </TreatmentRecordsProvider>
-              </AgendaProvider>
-            </AttendancesProvider>
-          </PatientsProvider>
-        </TimezoneProvider>
+        <QueryProvider>
+          <TimezoneProvider>
+            <PatientsProvider>
+              <AttendancesProvider>
+                <AgendaProvider>
+                  <TreatmentRecordsProvider>
+                    <TopNavigation />
+                    <TabNav />
+                    <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
+                      {children}
+                    </main>
+                  </TreatmentRecordsProvider>
+                </AgendaProvider>
+              </AttendancesProvider>
+            </PatientsProvider>
+          </TimezoneProvider>
+        </QueryProvider>
       </body>
     </html>
   );
