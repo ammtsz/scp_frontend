@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { usePatients } from "@/contexts/PatientsContext";
+import { usePatients } from "@/hooks/usePatientQueries";
 import { updateAttendanceStatus } from "@/api/attendanceSync";
 import { sortPatientsByPriority } from "@/utils/businessRules";
 
@@ -38,7 +38,7 @@ export const useDragAndDrop = ({
   onTreatmentFormOpen,
   onTreatmentCompletionOpen,
 }: UseDragAndDropProps = {}) => {
-  const { patients } = usePatients();
+  const { data: patients = [] } = usePatients();
   const { attendancesByDate, setAttendancesByDate } = useAttendances();
 
   // Drag and drop state

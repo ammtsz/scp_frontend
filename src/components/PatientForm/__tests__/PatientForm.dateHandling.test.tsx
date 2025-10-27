@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import PatientForm from "../index";
-import { PatientsProvider } from "@/contexts/PatientsContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
 
 // Mock the useRouter hook
@@ -27,10 +27,17 @@ jest.mock("@/api/attendances", () => ({
 }));
 
 const renderWithProvider = (component: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
   return render(
-    <PatientsProvider>
+    <QueryClientProvider client={queryClient}>
       <AttendancesProvider>{component}</AttendancesProvider>
-    </PatientsProvider>
+    </QueryClientProvider>
   );
 };
 

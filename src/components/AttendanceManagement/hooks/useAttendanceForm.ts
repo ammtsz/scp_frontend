@@ -8,7 +8,7 @@
 import { useState, useCallback } from "react";
 import { Priority, AttendanceType, PatientBasic } from "@/types/types";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { usePatients } from "@/contexts/PatientsContext";
+import { usePatients } from "@/hooks/usePatientQueries";
 import { AttendanceService, PatientService } from "../services";
 import { isPatientAlreadyScheduled } from "@/utils/businessRules";
 import { getNextAvailableDate } from "@/utils/dateHelpers";
@@ -67,7 +67,7 @@ export const useAttendanceForm = ({
   onFormSuccess
 }: UseAttendanceFormProps = {}): UseAttendanceFormReturn => {
   
-  const { patients, refreshPatients } = usePatients();
+  const { data: patients = [], refetch: refreshPatients } = usePatients();
   const { refreshCurrentDate, attendancesByDate } = useAttendances();
   
   // Form state

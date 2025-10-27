@@ -5,7 +5,7 @@ import { Patient, AttendanceType, Priority } from "@/types/types";
 import { createAttendance, checkInAttendance } from "@/api/attendances";
 import { updatePatient } from "@/api/patients";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { usePatients } from "@/contexts/PatientsContext";
+
 import {
   transformAttendanceTypeToApi,
   transformPriorityToApi,
@@ -34,7 +34,6 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
   onCancel,
 }) => {
   const { refreshCurrentDate } = useAttendances();
-  const { refreshPatients } = usePatients();
 
   // Form state for patient information
   const [formData, setFormData] = useState({
@@ -151,7 +150,7 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
       }
 
       // Refresh contexts to update the UI
-      await Promise.all([refreshCurrentDate(), refreshPatients()]);
+      await refreshCurrentDate(); // React Query automatically invalidates patient list
 
       // Create updated patient object for callback
       const updatedPatient: Patient = {

@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AttendanceManagement from "../index";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
-import { PatientsProvider } from "@/contexts/PatientsContext";
 import { TimezoneProvider } from "@/contexts/TimezoneContext";
 
 // Mock the API functions that AttendancesContext uses
@@ -162,13 +161,11 @@ describe("AttendanceManagement Integration Tests", () => {
   const renderWithProvider = (props = {}) => {
     return render(
       <TimezoneProvider>
-        <PatientsProvider>
+        <AttendancesProvider>
           <AttendancesProvider>
-            <AttendancesProvider>
-              <AttendanceManagement {...props} />
-            </AttendancesProvider>
+            <AttendanceManagement {...props} />
           </AttendancesProvider>
-        </PatientsProvider>
+        </AttendancesProvider>
       </TimezoneProvider>
     );
   };

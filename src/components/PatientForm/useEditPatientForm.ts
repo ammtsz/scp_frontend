@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { updatePatient } from "@/api/patients";
-import { usePatients } from "@/contexts/PatientsContext";
+import { useUpdatePatient } from "@/hooks/usePatientQueries";
 import { transformPriorityToApi, transformStatusToApi } from "@/utils/apiTransformers";
 import { formatPhoneNumber } from "@/utils/formHelpers";
 import type { UpdatePatientRequest, PatientResponseDto } from "@/api/types";
@@ -39,7 +38,7 @@ export const useEditPatientForm = ({
   onClose, 
   onSuccess 
 }: UseEditPatientFormProps) => {
-  const { refreshPatients } = usePatients();
+  const updatePatientMutation = useUpdatePatient();
   const [patient, setPatient] = useState<EditPatientFormData>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -165,19 +164,15 @@ export const useEditPatientForm = ({
         updateData.birth_date = patient.birthDate.toISOString().split("T")[0];
       }
 
-      const result = await updatePatient(patientId, updateData);
-      
-      if (!result.success) {
-        setError(result.error || "Erro ao atualizar paciente");
-        return;
-      }
-
-      // Refresh patients list
-      await refreshPatients();
+      // Use React Query mutation
+      const result = await updatePatientMutation.mutateAsync({
+        patientId,
+        data: updateData
+      });
 
       // Call success callback if provided
-      if (onSuccess && result.value) {
-        onSuccess(result.value);
+      if (onSuccess && result) {
+        onSuccess(result);
       }
 
       onClose();

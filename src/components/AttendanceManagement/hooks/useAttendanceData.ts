@@ -10,7 +10,7 @@
 
 import { useState, useCallback } from "react";
 import { useAttendances } from "@/contexts/AttendancesContext";
-import { usePatients } from "@/contexts/PatientsContext";
+import { usePatients } from "@/hooks/usePatientQueries";
 import { 
   AttendanceStatusDetail,
   AttendanceType,
@@ -90,15 +90,15 @@ export const useAttendanceData = ({
   } = useAttendances();
   
   const {
-    patients,
-    loading: patientsLoading,
+    data: patients = [],
+    isLoading: patientsLoading,
     error: patientsError,
-    refreshPatients
+    refetch: refreshPatients
   } = usePatients();
 
   // Consolidated loading and error states
   const loading = attendancesLoading || patientsLoading || processingAttendance;
-  const error = attendancesError || patientsError;
+  const error = attendancesError || (patientsError ? (patientsError as Error).message : null);
 
   /**
    * Create a new attendance

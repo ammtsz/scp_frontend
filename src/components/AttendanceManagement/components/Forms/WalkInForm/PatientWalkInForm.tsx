@@ -9,7 +9,7 @@ import {
   checkInAttendance,
   getAttendancesByDate,
 } from "@/api/attendances";
-import { usePatients } from "@/contexts/PatientsContext";
+import { usePatients } from "@/hooks/usePatientQueries";
 import { useAttendances } from "@/contexts/AttendancesContext";
 import {
   transformPriorityToApi,
@@ -54,7 +54,7 @@ const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
   onRegisterNewAttendance,
   isDropdown = false,
 }) => {
-  const { patients, refreshPatients } = usePatients();
+  const { data: patients = [], refetch: refreshPatients } = usePatients();
   const { refreshCurrentDate } = useAttendances();
 
   const [formData, setFormData] = useState<WalkInFormData>({
@@ -224,9 +224,7 @@ const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
       const duplicateTypes: string[] = [];
 
       selectedTypes.forEach((type) => {
-        const apiType = transformAttendanceTypeToApi(
-          type as AttendanceType
-        );
+        const apiType = transformAttendanceTypeToApi(type as AttendanceType);
         const hasDuplicate = existingAttendances.some(
           (attendance) => attendance.type === apiType
         );

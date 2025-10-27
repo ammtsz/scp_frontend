@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useTreatmentRecords } from "@/contexts/TreatmentRecordsContext";
+import { useTreatmentRecordsCompat as useTreatmentRecords } from "@/hooks/useTreatmentRecords";
 
 interface PatientTreatmentRecordsProps {
   patientId: string;

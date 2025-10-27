@@ -47,7 +47,10 @@ const PatientList: React.FC = () => {
         </div>
         <div className="p-8 text-center">
           <div className="text-red-600 mb-4">{error}</div>
-          <button onClick={refreshPatients} className="button button-primary">
+          <button
+            onClick={() => refreshPatients()}
+            className="button button-primary"
+          >
             Tentar novamente
           </button>
         </div>

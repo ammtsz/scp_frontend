@@ -6,12 +6,12 @@ import {
   Priority,
   Status,
 } from "@/types/types";
-import { createPatient } from "@/api/patients";
+
 import { createAttendance } from "@/api/attendances";
 import { formatPhoneNumber } from "@/utils/formHelpers";
 import { transformPriorityToApi, transformStatusToApi } from "@/utils/apiTransformers";
 import type { CreatePatientRequest, CreateAttendanceRequest, AttendanceType } from "@/api/types";
-import { usePatients } from "@/contexts/PatientsContext";
+import { useCreatePatient } from "@/hooks/usePatientQueries";
 import { useAttendances } from "@/contexts/AttendancesContext";
 
 const initialRecommendations: Recommendations = {
@@ -45,7 +45,7 @@ export function usePatientForm() {
   const [patient, setPatient] = useState(initialPatient);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { refreshPatients } = usePatients();
+  const createPatientMutation = useCreatePatient();
   const { refreshCurrentDate } = useAttendances();
 
   // Helper function to safely create a Date from string input
@@ -142,11 +142,9 @@ export function usePatientForm() {
         patientCreateData.main_complaint = patient.mainComplaint.trim();
       }
       
-      // Call the API to create the patient
-      const result = await createPatient(patientCreateData);
-
-      if (result.success && result.value) {
-        const createdPatient = result.value;
+      try {
+        // Use React Query mutation to create the patient
+        const createdPatient = await createPatientMutation.mutateAsync(patientCreateData);
         alert("Paciente cadastrado com sucesso!");
         
         // Create attendance if next date is provided
@@ -163,7 +161,7 @@ export function usePatientForm() {
               
               try {
                 const attendanceData: CreateAttendanceRequest = {
-                  patient_id: createdPatient.id,
+                  patient_id: createdPatient?.id || 0,
                   type: "spiritual" as AttendanceType,
                   scheduled_date: attendanceDate.toISOString().split('T')[0],
                   scheduled_time: time,
@@ -193,8 +191,8 @@ export function usePatientForm() {
           }
         }
         
-        // Refresh the patients list so the new patient appears
-        await refreshPatients();
+        // React Query automatically invalidates and refetches patient list
+        // No need to manually call refreshPatients()
         
         // TODO: In the future, we could also save the treatment recommendations
         // by creating an initial attendance and treatment record if needed
@@ -204,9 +202,9 @@ export function usePatientForm() {
         
         // Redirect to patients list
         router.push("/patients");
-      } else {
-        console.error("API error details:", result);
-        alert(`Erro ao cadastrar paciente: ${result.error}`);
+      } catch (error) {
+        console.error("Error creating patient:", error);
+        alert(`Erro ao cadastrar paciente: ${(error as Error).message}`);
       }
     } catch (error) {
       console.error("Error creating patient:", error);

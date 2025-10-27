@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getPatientById, updatePatient } from '@/api/patients';
+import { getPatientById, updatePatient, getPatients, createPatient, deletePatient } from '@/api/patients';
 import { getAttendancesByPatient } from '@/api/attendances';
 import { 
   transformSinglePatientFromApi, 
-  transformPatientWithAttendances 
+  transformPatientWithAttendances,
+  transformPatientsFromApi
 } from '@/utils/apiTransformers';
 import { Patient } from '@/types/types';
-import { UpdatePatientRequest } from '@/api/types';
+import { UpdatePatientRequest, CreatePatientRequest } from '@/api/types';
 
 // Query keys for consistent caching
 export const patientKeys = {
@@ -108,6 +109,57 @@ export function usePatientAttendances(patientId: string) {
 }
 
 /**
+ * Query hook for fetching all patients (replaces PatientsContext)
+ * Provides automatic caching, background sync, and error handling
+ */
+export function usePatients() {
+  return useQuery({
+    queryKey: patientKeys.lists(),
+    queryFn: async () => {
+      const result = await getPatients();
+      
+      if (!result.success || !result.value) {
+        throw new Error(result.error || 'Erro ao carregar pacientes');
+      }
+
+      // Transform API response to internal format
+      return transformPatientsFromApi(result.value);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - patient list doesn't change frequently
+    gcTime: 10 * 60 * 1000, // 10 minutes in cache
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+}
+
+/**
+ * Mutation hook for creating new patients
+ * Automatically invalidates patient list after successful creation
+ */
+export function useCreatePatient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreatePatientRequest) => {
+      const result = await createPatient(data);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Erro ao criar paciente');
+      }
+
+      return result.value;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch patient lists
+      queryClient.invalidateQueries({ queryKey: patientKeys.lists() });
+    },
+    onError: (error) => {
+      console.error('Error creating patient:', error);
+    },
+  });
+}
+
+/**
  * Mutation hook for updating patient data
  * Automatically invalidates relevant queries after successful update
  */
@@ -131,6 +183,33 @@ export function useUpdatePatient() {
     },
     onError: (error) => {
       console.error('Error updating patient:', error);
+    },
+  });
+}
+
+/**
+ * Mutation hook for deleting patients
+ * Automatically invalidates patient list after successful deletion
+ */
+export function useDeletePatient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (patientId: string) => {
+      const result = await deletePatient(patientId);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Erro ao excluir paciente');
+      }
+
+      return result.value;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch patient lists
+      queryClient.invalidateQueries({ queryKey: patientKeys.lists() });
+    },
+    onError: (error) => {
+      console.error('Error deleting patient:', error);
     },
   });
 }

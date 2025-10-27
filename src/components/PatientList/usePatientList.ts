@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { PatientBasic } from "@/types/types";
-import { usePatients } from "@/contexts/PatientsContext";
+import { usePatients } from "@/hooks/usePatientQueries";
 
 export function usePatientList() {
   const { 
-    patients: contextPatients, 
-    setPatients: setContextPatients,
-    loading,
-    error,
-    refreshPatients
+    data: patients = [],
+    isLoading: loading,
+    error: queryError,
+    refetch: refreshPatients
   } = usePatients();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<keyof PatientBasic | null>(null);
@@ -16,9 +15,8 @@ export function usePatientList() {
   const [visibleCount, setVisibleCount] = useState(20);
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  // Use context patients as the source of truth
-  const patients = contextPatients;
-  const setPatients = setContextPatients;
+  // Convert React Query error to string for compatibility
+  const error = queryError ? (queryError as Error).message : null;
 
   const filtered = patients.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -80,7 +78,6 @@ export function usePatientList() {
 
   return {
     patients,
-    setPatients,
     search,
     setSearch,
     sortBy,

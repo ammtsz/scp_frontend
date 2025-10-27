@@ -1,7 +1,6 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
-import { PatientsProvider } from "@/contexts/PatientsContext";
 import { TimezoneProvider } from "@/contexts/TimezoneContext";
 import AttendanceManagement from "@/components/AttendanceManagement";
 
@@ -112,9 +111,7 @@ jest.mock("@/contexts/AgendaContext", () => ({
 
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <TimezoneProvider>
-    <PatientsProvider>
-      <AttendancesProvider>{children}</AttendancesProvider>
-    </PatientsProvider>
+    <AttendancesProvider>{children}</AttendancesProvider>
   </TimezoneProvider>
 );
 

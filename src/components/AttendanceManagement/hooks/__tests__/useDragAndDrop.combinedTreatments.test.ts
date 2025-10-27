@@ -1,12 +1,12 @@
 import { renderHook, act } from '@testing-library/react';
 import { useDragAndDrop } from '../useDragAndDrop';
 import { useAttendances } from '@/contexts/AttendancesContext';
-import { usePatients } from '@/contexts/PatientsContext';
+import { usePatients } from '@/hooks/usePatientQueries';
 import { AttendanceByDate } from '@/types/types';
 
 // Mock the contexts
 jest.mock('@/contexts/AttendancesContext');
-jest.mock('@/contexts/PatientsContext');
+jest.mock('@/hooks/usePatientQueries');
 jest.mock('@/api/attendanceSync', () => ({
   updateAttendanceStatus: jest.fn().mockResolvedValue({ success: true })
 }));
@@ -68,12 +68,11 @@ describe('useDragAndDrop - Combined Treatment Cards', () => {
       handleAbsenceJustifications: jest.fn(),
     });
     
-    mockUsePatients.mockReturnValue({
-      patients: [],
-      setPatients: jest.fn(),
-      loading: false,
+    (mockUsePatients as jest.Mock).mockReturnValue({
+      data: [],
+      isLoading: false,
       error: null,
-      refreshPatients: jest.fn(),
+      refetch: jest.fn(),
     });
     
     jest.clearAllMocks();

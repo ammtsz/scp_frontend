@@ -4,10 +4,8 @@ import "./globals.css";
 import TabNav from "@/components/common/TabNav";
 import { TopNavigation } from "@/components/layout/TopNavigation";
 import { TimezoneProvider } from "@/contexts/TimezoneContext";
-import { PatientsProvider } from "@/contexts/PatientsContext";
 import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { AgendaProvider } from "@/contexts/AgendaContext";
-import { TreatmentRecordsProvider } from "@/contexts/TreatmentRecordsContext";
 import { QueryProvider } from "@/providers/QueryProvider";
 
 const inter = Inter({
@@ -33,19 +31,15 @@ export default function RootLayout({
       >
         <QueryProvider>
           <TimezoneProvider>
-            <PatientsProvider>
-              <AttendancesProvider>
-                <AgendaProvider>
-                  <TreatmentRecordsProvider>
-                    <TopNavigation />
-                    <TabNav />
-                    <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
-                      {children}
-                    </main>
-                  </TreatmentRecordsProvider>
-                </AgendaProvider>
-              </AttendancesProvider>
-            </PatientsProvider>
+            <AttendancesProvider>
+              <AgendaProvider>
+                <TopNavigation />
+                <TabNav />
+                <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
+                  {children}
+                </main>
+              </AgendaProvider>
+            </AttendancesProvider>
           </TimezoneProvider>
         </QueryProvider>
       </body>
