@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAttendances } from "@/contexts/AttendancesContext";
+import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
 import { updateAttendanceStatus } from "@/api/attendanceSync";
 import { getIncompleteAttendances } from "../utils/attendanceDataUtils";
 import type { AttendanceType } from "@/types/types";
 
 export const useAttendanceWorkflow = () => {
-  const { selectedDate, attendancesByDate, refreshCurrentDate } = useAttendances();
+  const { selectedDate, attendancesByDate, refreshCurrentDate } = useAttendanceManagement();
 
   // Collapsed state for attendance sections
   const [collapsed, setCollapsed] = useState<{

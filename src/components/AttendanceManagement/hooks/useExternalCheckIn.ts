@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAttendances } from "@/contexts/AttendancesContext";
+import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
 import type { AttendanceType, Priority } from "@/types/types";
 
 interface ExternalCheckIn {
@@ -18,7 +18,7 @@ export const useExternalCheckIn = ({
   unscheduledCheckIn,
   onCheckInProcessed,
 }: UseExternalCheckInProps = {}) => {
-  const { attendancesByDate } = useAttendances();
+  const { attendancesByDate } = useAttendanceManagement();
   const [checkInProcessed, setCheckInProcessed] = useState(false);
 
   // Reset processed flag when unscheduledCheckIn changes

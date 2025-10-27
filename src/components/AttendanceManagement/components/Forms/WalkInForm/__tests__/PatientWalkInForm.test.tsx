@@ -12,10 +12,10 @@ import {
 } from "@/api/types";
 import { AttendanceType } from "@/types/types";
 
-// Mock the contexts
-jest.mock("@/contexts/PatientsContext", () => ({
+// Mock React Query hooks
+jest.mock("@/hooks/usePatientQueries", () => ({
   usePatients: () => ({
-    patients: [
+    data: [
       {
         id: 1,
         name: "João Silva",
@@ -25,15 +25,14 @@ jest.mock("@/contexts/PatientsContext", () => ({
         startDate: "2025-01-01",
       },
     ],
-    loading: false,
-    refreshPatients: jest.fn(),
+    isLoading: false,
+    refetch: jest.fn(),
   }),
 }));
 
-jest.mock("@/contexts/AttendancesContext", () => ({
-  useAttendances: () => ({
-    refreshCurrentDate: jest.fn(),
-    selectedDate: new Date("2025-01-15"),
+jest.mock("@/hooks/useAttendanceQueries", () => ({
+  useAttendancesByDate: () => ({
+    refetch: jest.fn(),
   }),
 }));
 

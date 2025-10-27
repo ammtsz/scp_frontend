@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { TimezoneProvider } from "@/contexts/TimezoneContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AttendanceManagement from "@/components/AttendanceManagement";
 
 // Mock the API calls
@@ -96,24 +96,30 @@ jest.mock("@/api/patients", () => ({
   ),
 }));
 
-// Mock AgendaContext
-jest.mock("@/contexts/AgendaContext", () => ({
-  useAgenda: () => ({
-    agenda: [],
-    refreshAgenda: jest.fn(),
-    loading: false,
+// Mock React Query agenda hooks
+jest.mock("@/hooks/useAgendaQueries", () => ({
+  useScheduledAgenda: () => ({
+    data: [],
+    isLoading: false,
     error: null,
+    refetch: jest.fn(),
   }),
-  AgendaProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
 }));
 
-const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <TimezoneProvider>
-    <AttendancesProvider>{children}</AttendancesProvider>
-  </TimezoneProvider>
-);
+const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TimezoneProvider>{children}</TimezoneProvider>
+    </QueryClientProvider>
+  );
+};
 
 describe("EndOfDayModal Integration - Completed Count Fix", () => {
   beforeEach(() => {

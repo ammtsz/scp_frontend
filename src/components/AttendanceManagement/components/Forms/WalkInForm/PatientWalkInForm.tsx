@@ -10,7 +10,7 @@ import {
   getAttendancesByDate,
 } from "@/api/attendances";
 import { usePatients } from "@/hooks/usePatientQueries";
-import { useAttendances } from "@/contexts/AttendancesContext";
+import { useAttendancesByDate } from "@/hooks/useAttendanceQueries";
 import {
   transformPriorityToApi,
   transformAttendanceTypeToApi,
@@ -55,7 +55,9 @@ const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
   isDropdown = false,
 }) => {
   const { data: patients = [], refetch: refreshPatients } = usePatients();
-  const { refreshCurrentDate } = useAttendances();
+  const { refetch: refreshCurrentDate } = useAttendancesByDate(
+    new Date().toISOString().split("T")[0]
+  );
 
   const [formData, setFormData] = useState<WalkInFormData>({
     name: "",

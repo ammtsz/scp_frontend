@@ -12,7 +12,7 @@ import { formatPhoneNumber } from "@/utils/formHelpers";
 import { transformPriorityToApi, transformStatusToApi } from "@/utils/apiTransformers";
 import type { CreatePatientRequest, CreateAttendanceRequest, AttendanceType } from "@/api/types";
 import { useCreatePatient } from "@/hooks/usePatientQueries";
-import { useAttendances } from "@/contexts/AttendancesContext";
+import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
 
 const initialRecommendations: Recommendations = {
   food: "",
@@ -46,7 +46,7 @@ export function usePatientForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const createPatientMutation = useCreatePatient();
-  const { refreshCurrentDate } = useAttendances();
+  const { refreshCurrentDate } = useAttendanceManagement();
 
   // Helper function to safely create a Date from string input
   const createSafeDate = (dateString: string): Date => {

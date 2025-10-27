@@ -4,8 +4,7 @@ import "./globals.css";
 import TabNav from "@/components/common/TabNav";
 import { TopNavigation } from "@/components/layout/TopNavigation";
 import { TimezoneProvider } from "@/contexts/TimezoneContext";
-import { AttendancesProvider } from "@/contexts/AttendancesContext";
-import { AgendaProvider } from "@/contexts/AgendaContext";
+// Context providers removed - migrated to React Query + Zustand architecture
 import { QueryProvider } from "@/providers/QueryProvider";
 
 const inter = Inter({
@@ -31,15 +30,11 @@ export default function RootLayout({
       >
         <QueryProvider>
           <TimezoneProvider>
-            <AttendancesProvider>
-              <AgendaProvider>
-                <TopNavigation />
-                <TabNav />
-                <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
-                  {children}
-                </main>
-              </AgendaProvider>
-            </AttendancesProvider>
+            <TopNavigation />
+            <TabNav />
+            <main className="w-full min-h-screen p-4 max-w-[1200px] mx-auto">
+              {children}
+            </main>
           </TimezoneProvider>
         </QueryProvider>
       </body>

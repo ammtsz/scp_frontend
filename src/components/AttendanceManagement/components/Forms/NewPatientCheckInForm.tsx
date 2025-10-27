@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Patient, AttendanceType, Priority } from "@/types/types";
 import { createAttendance, checkInAttendance } from "@/api/attendances";
 import { updatePatient } from "@/api/patients";
-import { useAttendances } from "@/contexts/AttendancesContext";
+import { useAttendancesByDate } from "@/hooks/useAttendanceQueries";
 
 import {
   transformAttendanceTypeToApi,
@@ -33,7 +33,9 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const { refreshCurrentDate } = useAttendances();
+  const { refetch: refreshCurrentDate } = useAttendancesByDate(
+    new Date().toISOString().split("T")[0]
+  );
 
   // Form state for patient information
   const [formData, setFormData] = useState({

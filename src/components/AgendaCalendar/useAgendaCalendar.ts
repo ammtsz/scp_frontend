@@ -1,21 +1,42 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { AttendanceType } from "@/types/types";
-import { useAgenda } from "@/contexts/AgendaContext";
+import { useScheduledAgenda, useRemovePatientFromAgenda, useRefreshAgenda } from "@/hooks/useAgendaQueries";
+import { 
+  useSelectedDateString,
+  useShowNext5Dates,
+  useConfirmRemove,
+  useShowNewAttendance,
+  useOpenSpiritualIdx,
+  useOpenLightBathIdx,
+  useSetSelectedDateString,
+  useSetShowNext5Dates,
+  useSetConfirmRemove,
+  useSetShowNewAttendance,
+  useSetOpenSpiritualIdx,
+  useSetOpenLightBathIdx
+} from "@/stores";
 
 export function useAgendaCalendar() {
-  const { agenda, loading, error, refreshAgenda, removePatientFromAgenda } = useAgenda();
-  const [selectedDate, setSelectedDate] = useState("");
-  const [showNext5Dates, setShowNext5Dates] = useState(false); // Default to showing next 5 dates
-  const [confirmRemove, setConfirmRemove] = useState<{
-    id: string;
-    date: Date;
-    name: string;
-    type: AttendanceType;
-    attendanceId?: number;
-  } | null>(null);
-  const [showNewAttendance, setShowNewAttendance] = useState(false);
-  const [openSpiritualIdx, setOpenSpiritualIdx] = useState<number | null>(null);
-  const [openLightBathIdx, setOpenLightBathIdx] = useState<number | null>(null);
+  // React Query for server state
+  const { agenda, isLoading: loading, error } = useScheduledAgenda();
+  const removePatientMutation = useRemovePatientFromAgenda();
+  const refreshAgenda = useRefreshAgenda();
+
+  // Zustand for UI state - using individual selectors for optimal performance
+  const selectedDate = useSelectedDateString();
+  const showNext5Dates = useShowNext5Dates();
+  const confirmRemove = useConfirmRemove();
+  const showNewAttendance = useShowNewAttendance();
+  const openSpiritualIdx = useOpenSpiritualIdx();
+  const openLightBathIdx = useOpenLightBathIdx();
+  
+  // Zustand actions - individual selectors prevent object recreation
+  const setSelectedDate = useSetSelectedDateString();
+  const setShowNext5Dates = useSetShowNext5Dates();
+  const setConfirmRemove = useSetConfirmRemove();
+  const setShowNewAttendance = useSetShowNewAttendance();
+  const setOpenSpiritualIdx = useSetOpenSpiritualIdx();
+  const setOpenLightBathIdx = useSetOpenLightBathIdx();
 
   const filteredAgenda = useMemo(
     () => {
@@ -96,11 +117,13 @@ export function useAgendaCalendar() {
     
     // If we have an attendanceId, use the backend to remove it
     if (confirmRemove.attendanceId) {
-      const success = await removePatientFromAgenda(confirmRemove.attendanceId);
-      if (success) {
+      try {
+        await removePatientMutation.mutateAsync(confirmRemove.attendanceId);
         setConfirmRemove(null);
+      } catch (error) {
+        // Error handling is done by React Query and will be reflected in mutation state
+        console.error('Error removing patient:', error);
       }
-      // Error handling is done in the context
     } else {
       // Fallback for cases where attendanceId is not available (shouldn't happen with backend)
       console.warn('No attendanceId found for patient removal:', confirmRemove);
@@ -132,7 +155,7 @@ export function useAgendaCalendar() {
     handleConfirmRemove,
     handleFormSuccess,
     loading,
-    error,
+    error: error?.message || null,
     refreshAgenda,
   };
 }

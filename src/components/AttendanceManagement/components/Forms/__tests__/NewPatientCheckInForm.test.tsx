@@ -11,23 +11,12 @@ import {
   AttendanceType,
   AttendanceStatus,
 } from "@/api/types";
-import { AttendancesProvider } from "@/contexts/AttendancesContext";
-import { PatientsProvider } from "@/contexts/PatientsContext";
-
 // Mock the APIs
 jest.mock("@/api/attendances");
 jest.mock("@/api/patients");
-jest.mock("@/contexts/AttendancesContext", () => ({
-  AttendancesProvider: ({ children }: { children: React.ReactNode }) =>
-    children,
-  useAttendances: () => ({
-    refreshCurrentDate: jest.fn(),
-  }),
-}));
-jest.mock("@/contexts/PatientsContext", () => ({
-  PatientsProvider: ({ children }: { children: React.ReactNode }) => children,
-  usePatients: () => ({
-    refreshPatients: jest.fn(),
+jest.mock("@/hooks/useAttendanceQueries", () => ({
+  useAttendancesByDate: () => ({
+    refetch: jest.fn(),
   }),
 }));
 
@@ -74,13 +63,7 @@ const defaultProps = {
 };
 
 const renderComponent = (props = {}) => {
-  return render(
-    <AttendancesProvider>
-      <PatientsProvider>
-        <NewPatientCheckInForm {...defaultProps} {...props} />
-      </PatientsProvider>
-    </AttendancesProvider>
-  );
+  return render(<NewPatientCheckInForm {...defaultProps} {...props} />);
 };
 
 describe("NewPatientCheckInForm", () => {

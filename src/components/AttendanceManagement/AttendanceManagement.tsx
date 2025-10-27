@@ -11,7 +11,7 @@ import { useNewPatientCheckIn } from "./hooks/useNewPatientCheckIn";
 import { useTreatmentWorkflow } from "./hooks/useTreatmentWorkflow";
 import { useExternalCheckIn } from "./hooks/useExternalCheckIn";
 import { useTreatmentIndicators } from "@/hooks/useTreatmentIndicators";
-import { useAttendances } from "../../contexts/AttendancesContext";
+import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
 import {
   getTreatmentSessionsByPatient,
   updateTreatmentSession,
@@ -120,8 +120,8 @@ const AttendanceManagement: React.FC<{
     deleteAttendance,
   } = useAttendanceData();
 
-  // AttendancesContext for additional functionality
-  const { setSelectedDate } = useAttendances();
+  // Attendance management functionality
+  const { setSelectedDate } = useAttendanceManagement();
 
   // Treatment indicators hook
   const { treatmentsByPatient } = useTreatmentIndicators(selectedDate);

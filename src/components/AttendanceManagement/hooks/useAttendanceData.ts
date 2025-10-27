@@ -9,7 +9,7 @@
  */
 
 import { useState, useCallback } from "react";
-import { useAttendances } from "@/contexts/AttendancesContext";
+import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
 import { usePatients } from "@/hooks/usePatientQueries";
 import { 
   AttendanceStatusDetail,
@@ -80,14 +80,14 @@ export const useAttendanceData = ({
   // Local state
   const [processingAttendance, setProcessingAttendance] = useState(false);
   
-  // Context hooks
+  // Hybrid hooks (React Query + Zustand)
   const {
     attendancesByDate,
     selectedDate,
     loading: attendancesLoading,
     error: attendancesError,
     refreshCurrentDate
-  } = useAttendances();
+  } = useAttendanceManagement();
   
   const {
     data: patients = [],

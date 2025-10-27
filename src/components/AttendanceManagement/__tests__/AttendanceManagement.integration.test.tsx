@@ -2,8 +2,8 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AttendanceManagement from "../index";
-import { AttendancesProvider } from "@/contexts/AttendancesContext";
 import { TimezoneProvider } from "@/contexts/TimezoneContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Mock the API functions that AttendancesContext uses
 jest.mock("@/api/attendances", () => ({
@@ -159,14 +159,19 @@ describe("AttendanceManagement Integration Tests", () => {
   });
 
   const renderWithProvider = (props = {}) => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
     return render(
-      <TimezoneProvider>
-        <AttendancesProvider>
-          <AttendancesProvider>
-            <AttendanceManagement {...props} />
-          </AttendancesProvider>
-        </AttendancesProvider>
-      </TimezoneProvider>
+      <QueryClientProvider client={queryClient}>
+        <TimezoneProvider>
+          <AttendanceManagement {...props} />
+        </TimezoneProvider>
+      </QueryClientProvider>
     );
   };
 

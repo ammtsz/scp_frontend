@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import PatientForm from "../index";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AttendancesProvider } from "@/contexts/AttendancesContext";
 
 // Mock the API
 jest.mock("@/api/patients", () => ({
@@ -37,9 +36,7 @@ const renderWithProviders = (component: React.ReactElement) => {
   });
 
   return render(
-    <QueryClientProvider client={queryClient}>
-      <AttendancesProvider>{component}</AttendancesProvider>
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{component}</QueryClientProvider>
   );
 };
 

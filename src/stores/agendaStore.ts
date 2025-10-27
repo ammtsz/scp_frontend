@@ -14,8 +14,18 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { AttendanceType } from '@/types/types';
 
 export type AgendaViewMode = 'month' | 'week' | 'day';
+
+// Confirm remove modal state
+interface ConfirmRemoveState {
+  id: string;
+  date: Date;
+  name: string;
+  type: AttendanceType;
+  attendanceId?: number;
+}
 
 export interface AgendaStore {
   // UI State
@@ -35,6 +45,14 @@ export interface AgendaStore {
   // UI Loading States (separate from data loading)
   isNavigating: boolean;
   isProcessingSchedule: boolean;
+  
+  // Agenda Calendar Specific State
+  selectedDateString: string;
+  showNext5Dates: boolean;
+  confirmRemove: ConfirmRemoveState | null;
+  showNewAttendance: boolean;
+  openSpiritualIdx: number | null;
+  openLightBathIdx: number | null;
   
   // Actions - View Management
   setCurrentView: (view: AgendaViewMode) => void;
@@ -57,6 +75,14 @@ export interface AgendaStore {
   setIsNavigating: (isNavigating: boolean) => void;
   setIsProcessingSchedule: (isProcessing: boolean) => void;
   
+  // Actions - Agenda Calendar Specific
+  setSelectedDateString: (date: string) => void;
+  setShowNext5Dates: (show: boolean) => void;
+  setConfirmRemove: (confirmRemove: ConfirmRemoveState | null) => void;
+  setShowNewAttendance: (show: boolean) => void;
+  setOpenSpiritualIdx: (idx: number | null) => void;
+  setOpenLightBathIdx: (idx: number | null) => void;
+  
   // Actions - Utilities
   resetState: () => void;
 }
@@ -73,6 +99,13 @@ const initialState = {
   editingAppointmentId: null,
   isNavigating: false,
   isProcessingSchedule: false,
+  // Agenda Calendar Specific
+  selectedDateString: "",
+  showNext5Dates: false,
+  confirmRemove: null,
+  showNewAttendance: false,
+  openSpiritualIdx: null,
+  openLightBathIdx: null,
 };
 
 export const useAgendaStore = create<AgendaStore>()(
@@ -148,6 +181,25 @@ export const useAgendaStore = create<AgendaStore>()(
       
       setIsProcessingSchedule: (isProcessingSchedule: boolean) => 
         set({ isProcessingSchedule }, false, 'setIsProcessingSchedule'),
+      
+      // Agenda Calendar Specific Actions
+      setSelectedDateString: (selectedDateString: string) => 
+        set({ selectedDateString }, false, 'setSelectedDateString'),
+      
+      setShowNext5Dates: (showNext5Dates: boolean) => 
+        set({ showNext5Dates }, false, 'setShowNext5Dates'),
+      
+      setConfirmRemove: (confirmRemove: ConfirmRemoveState | null) => 
+        set({ confirmRemove }, false, 'setConfirmRemove'),
+      
+      setShowNewAttendance: (showNewAttendance: boolean) => 
+        set({ showNewAttendance }, false, 'setShowNewAttendance'),
+      
+      setOpenSpiritualIdx: (openSpiritualIdx: number | null) => 
+        set({ openSpiritualIdx }, false, 'setOpenSpiritualIdx'),
+      
+      setOpenLightBathIdx: (openLightBathIdx: number | null) => 
+        set({ openLightBathIdx }, false, 'setOpenLightBathIdx'),
       
       // Reset all state to initial values
       resetState: () => 
