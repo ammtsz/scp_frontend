@@ -1,10 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { PatientResponseDto, AttendanceResponseDto } from "@/api/types";
+import {
+  PatientResponseDto,
+  AttendanceResponseDto,
+  AttendanceType,
+} from "@/api/types";
 import { Patient } from "@/types/types";
-import { AttendanceService } from "@/components/AttendanceManagement/services/attendanceService";
+import {
+  useCreateAttendance,
+  useCheckInAttendance,
+  useCompleteAttendance,
+} from "@/hooks/useAttendanceQueries";
 
 interface QuickActionsProps {
   patient: PatientResponseDto | Patient;
@@ -17,86 +25,67 @@ export default function QuickActions({
   latestAttendance,
   onAttendanceUpdate,
 }: QuickActionsProps) {
-  const [isCreatingAttendance, setIsCreatingAttendance] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  // React Query mutations for better cache management
+  const createAttendanceMutation = useCreateAttendance();
+  const checkInAttendanceMutation = useCheckInAttendance();
+  const completeAttendanceMutation = useCompleteAttendance();
 
   // Normalize patient ID to number (handle both legacy and new types)
   const patientId =
     typeof patient.id === "string" ? parseInt(patient.id) : patient.id;
 
   const handleCreateAttendance = async () => {
-    setIsCreatingAttendance(true);
     try {
-      const result = await AttendanceService.createAttendance({
-        patientId: patientId,
-        attendanceType: "spiritual", // Default to spiritual
-        notes: `Novo agendamento para ${patient.name}`,
-      });
+      const attendanceData = {
+        patientId,
+        attendanceType: AttendanceType.SPIRITUAL,
+        scheduledDate: new Date().toISOString().slice(0, 10),
+      };
 
-      if (result.success) {
-        onAttendanceUpdate?.();
-        alert(`✅ Agendamento criado com sucesso para ${patient.name}!`);
-      } else {
-        alert(`❌ Erro ao criar agendamento: ${result.error}`);
+      await createAttendanceMutation.mutateAsync(attendanceData);
+
+      // No need for toast - React Query mutations handle notifications
+      if (onAttendanceUpdate) {
+        onAttendanceUpdate();
       }
     } catch (error) {
       console.error("Error creating attendance:", error);
-      alert("❌ Erro interno ao criar agendamento");
-    } finally {
-      setIsCreatingAttendance(false);
+      // React Query mutations handle error notifications
     }
   };
 
   const handleCheckIn = async () => {
-    if (!latestAttendance?.id) {
-      alert("❌ Nenhum agendamento encontrado para check-in");
-      return;
-    }
+    if (!latestAttendance) return;
 
-    setIsUpdatingStatus(true);
     try {
-      const result = await AttendanceService.checkInAttendance({
+      await checkInAttendanceMutation.mutateAsync({
         attendanceId: latestAttendance.id,
-        patientName: patient.name,
+        patientName: patient.name || "Patient",
       });
 
-      if (result.success) {
-        onAttendanceUpdate?.();
-        alert(`✅ Check-in realizado com sucesso para ${patient.name}!`);
-      } else {
-        alert(`❌ Erro no check-in: ${result.error}`);
+      if (onAttendanceUpdate) {
+        onAttendanceUpdate();
       }
     } catch (error) {
-      console.error("Error checking in:", error);
-      alert("❌ Erro interno no check-in");
-    } finally {
-      setIsUpdatingStatus(false);
+      console.error("Check-in error:", error);
+      // React Query mutations handle error notifications
     }
   };
 
   const handleCompleteAttendance = async () => {
-    if (!latestAttendance?.id) {
-      alert("❌ Nenhum agendamento encontrado para finalizar");
-      return;
-    }
+    if (!latestAttendance) return;
 
-    setIsUpdatingStatus(true);
     try {
-      const result = await AttendanceService.completeAttendance(
-        latestAttendance.id
-      );
+      await completeAttendanceMutation.mutateAsync({
+        id: latestAttendance.id.toString(),
+      });
 
-      if (result.success) {
-        onAttendanceUpdate?.();
-        alert(`✅ Atendimento finalizado com sucesso para ${patient.name}!`);
-      } else {
-        alert(`❌ Erro ao finalizar atendimento: ${result.error}`);
+      if (onAttendanceUpdate) {
+        onAttendanceUpdate();
       }
     } catch (error) {
-      console.error("Error completing attendance:", error);
-      alert("❌ Erro interno ao finalizar atendimento");
-    } finally {
-      setIsUpdatingStatus(false);
+      console.error("Complete attendance error:", error);
+      // React Query mutations handle error notifications
     }
   };
 
@@ -137,9 +126,11 @@ export default function QuickActions({
       <button
         className="ds-button-primary flex-1 sm:flex-none"
         onClick={handleCreateAttendance}
-        disabled={isCreatingAttendance}
+        disabled={createAttendanceMutation.isPending}
       >
-        {isCreatingAttendance ? "⏳ Criando..." : "📅 Novo Agendamento"}
+        {createAttendanceMutation.isPending
+          ? "⏳ Criando..."
+          : "📅 Novo Agendamento"}
       </button>
 
       {/* Check-in (only if scheduled) */}
@@ -147,9 +138,11 @@ export default function QuickActions({
         <button
           className="ds-button-success flex-1 sm:flex-none"
           onClick={handleCheckIn}
-          disabled={isUpdatingStatus}
+          disabled={checkInAttendanceMutation.isPending}
         >
-          {isUpdatingStatus ? "⏳ Processando..." : "✅ Check-in"}
+          {checkInAttendanceMutation.isPending
+            ? "⏳ Processando..."
+            : "✅ Check-in"}
         </button>
       )}
 
@@ -158,9 +151,11 @@ export default function QuickActions({
         <button
           className="ds-button-success flex-1 sm:flex-none"
           onClick={handleCompleteAttendance}
-          disabled={isUpdatingStatus}
+          disabled={completeAttendanceMutation.isPending}
         >
-          {isUpdatingStatus ? "⏳ Finalizando..." : "🏁 Finalizar"}
+          {completeAttendanceMutation.isPending
+            ? "⏳ Finalizando..."
+            : "🏁 Finalizar"}
         </button>
       )}
 

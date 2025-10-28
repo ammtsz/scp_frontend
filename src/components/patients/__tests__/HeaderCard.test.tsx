@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HeaderCard } from "../HeaderCard";
 import { Patient, Priority } from "@/types/types";
 
@@ -46,9 +47,23 @@ const mockPatient: Patient = {
   previousAttendances: [],
 };
 
+// Helper function to render with QueryClient
+const renderWithQueryClient = (component: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>{component}</QueryClientProvider>
+  );
+};
+
 describe("HeaderCard", () => {
   it("renders patient basic information correctly", () => {
-    render(<HeaderCard patient={mockPatient} />);
+    renderWithQueryClient(<HeaderCard patient={mockPatient} />);
 
     expect(screen.getByText("João Silva")).toBeInTheDocument();
     expect(screen.getByText("#1")).toBeInTheDocument();
@@ -58,15 +73,19 @@ describe("HeaderCard", () => {
   });
 
   it("displays priority badge with correct text and styling", () => {
-    render(<HeaderCard patient={mockPatient} />);
+    renderWithQueryClient(<HeaderCard patient={mockPatient} />);
 
     const priorityBadge = screen.getByText("Intermediário");
     expect(priorityBadge).toBeInTheDocument();
-    expect(priorityBadge).toHaveClass("ds-badge-priority-intermediate");
+    expect(priorityBadge).toHaveClass(
+      "bg-yellow-50",
+      "text-yellow-800",
+      "border-yellow-200"
+    );
   });
 
   it("calculates and displays age correctly", () => {
-    render(<HeaderCard patient={mockPatient} />);
+    renderWithQueryClient(<HeaderCard patient={mockPatient} />);
 
     // Calculate expected age (should be 44 as of 2024)
     const expectedAge = new Date().getFullYear() - 1980;
@@ -74,27 +93,48 @@ describe("HeaderCard", () => {
   });
 
   it("renders quick action buttons with correct links", () => {
-    render(<HeaderCard patient={mockPatient} />);
+    renderWithQueryClient(<HeaderCard patient={mockPatient} />);
 
     const editLink = screen.getByRole("link", { name: /editar/i });
     expect(editLink).toHaveAttribute("href", "/patients/1/edit");
 
     expect(screen.getByText("📅 Novo Agendamento")).toBeInTheDocument();
-    expect(screen.getByText("� Exportar")).toBeInTheDocument();
+    expect(screen.getByText("📄 Exportar")).toBeInTheDocument();
   });
 
   it("displays priority colors correctly for different priority levels", () => {
     // Test Emergency priority
     const emergencyPatient: Patient = { ...mockPatient, priority: "1" };
-    const { rerender } = render(<HeaderCard patient={emergencyPatient} />);
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    const { rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <HeaderCard patient={emergencyPatient} />
+      </QueryClientProvider>
+    );
     expect(screen.getByText("Emergência")).toHaveClass(
-      "ds-badge-priority-emergency"
+      "bg-red-50",
+      "text-red-800",
+      "border-red-200"
     );
 
     // Test Normal priority
     const normalPatient: Patient = { ...mockPatient, priority: "3" };
-    rerender(<HeaderCard patient={normalPatient} />);
-    expect(screen.getByText("Normal")).toHaveClass("ds-badge-priority-normal");
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <HeaderCard patient={normalPatient} />
+      </QueryClientProvider>
+    );
+    expect(screen.getByText("Normal")).toHaveClass(
+      "bg-green-50",
+      "text-green-800",
+      "border-green-200"
+    );
   });
 
   it("handles unknown priority gracefully", () => {
@@ -103,7 +143,7 @@ describe("HeaderCard", () => {
       ...mockPatient,
       priority: "4" as unknown as Priority,
     };
-    render(<HeaderCard patient={unknownPriorityPatient} />);
+    renderWithQueryClient(<HeaderCard patient={unknownPriorityPatient} />);
 
     expect(screen.getByText("4")).toBeInTheDocument();
   });

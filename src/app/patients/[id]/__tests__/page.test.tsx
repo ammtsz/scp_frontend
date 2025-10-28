@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useParams } from "next/navigation";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import PatientDetailPage from "../page";
 import { getPatientById } from "@/api/patients";
 import { getAttendancesByPatient } from "@/api/attendances";
@@ -39,6 +40,20 @@ const mockGetAttendancesByPatient =
   >;
 const mockUseParams = useParams as jest.MockedFunction<typeof useParams>;
 
+// Helper function to render with QueryClient
+const renderWithQueryClient = (component: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>{component}</QueryClientProvider>
+  );
+};
+
 describe("PatientDetailPage Error Handling", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -57,7 +72,7 @@ describe("PatientDetailPage Error Handling", () => {
       error: "Not found",
     });
 
-    render(<PatientDetailPage />);
+    renderWithQueryClient(<PatientDetailPage />);
 
     // Wait for loading to finish
     await waitFor(() => {
@@ -87,7 +102,7 @@ describe("PatientDetailPage Error Handling", () => {
       error: "Server error",
     });
 
-    render(<PatientDetailPage />);
+    renderWithQueryClient(<PatientDetailPage />);
 
     // Wait for loading to finish
     await waitFor(() => {
@@ -116,7 +131,7 @@ describe("PatientDetailPage Error Handling", () => {
       error: "Erro de rede",
     });
 
-    render(<PatientDetailPage />);
+    renderWithQueryClient(<PatientDetailPage />);
 
     // Wait for loading to finish
     await waitFor(() => {

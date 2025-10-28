@@ -3,7 +3,7 @@ import { useEditPatientForm } from "./useEditPatientForm";
 import PatientFormFields from "./PatientFormFields";
 import PatientTreatmentRecords from "./PatientTreatmentRecords";
 import { PatientResponseDto } from "@/api/types";
-import { getPatientById } from "@/api/patients";
+import { usePatientWithAttendances } from "@/hooks/usePatientQueries";
 import BaseModal from "@/components/common/BaseModal";
 import ErrorDisplay from "@/components/common/ErrorDisplay";
 import LoadingButton from "@/components/common/LoadingButton";
@@ -43,78 +43,63 @@ const PatientEditModal: React.FC<PatientEditModalProps> = ({
       spiritualTreatment: boolean;
     };
   } | null>(null);
-  const [dataLoading, setDataLoading] = useState(false);
+  // Use React Query hook for patient data fetching
+  const {
+    data: patientQueryData,
+    isLoading: dataLoading,
+    error: patientFetchError,
+  } = usePatientWithAttendances(patientId);
 
-  // Fetch patient data when modal opens
+  // Transform patient data when it's available
   useEffect(() => {
-    const fetchPatientData = async () => {
-      if (isOpen && patientId) {
-        setDataLoading(true);
-        try {
-          const result = await getPatientById(patientId);
-          if (result.success && result.value) {
-            // Transform the API response to match our form format
-            const patient = result.value;
-            setPatientData({
-              name: patient.name,
-              phone: patient.phone || "",
-              birthDate: patient.birth_date
-                ? new Date(patient.birth_date)
-                : null,
-              priority: patient.priority,
-              status: patient.treatment_status,
-              mainComplaint: patient.main_complaint || "",
-              startDate: patient.start_date
-                ? new Date(patient.start_date)
-                : null,
-              dischargeDate: patient.discharge_date
-                ? new Date(patient.discharge_date)
-                : null,
-              nextAttendanceDates: [],
-              currentRecommendations: {
-                food: "",
-                water: "",
-                ointment: "",
-                returnWeeks: 0,
-                lightBath: false,
-                rod: false,
-                spiritualTreatment: false,
-              },
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching patient data:", error);
-          // Fallback to basic data
-          setPatientData({
-            name: patientName,
-            phone: "",
-            birthDate: null,
-            priority: "3",
-            status: "T",
-            mainComplaint: "",
-            startDate: null,
-            dischargeDate: null,
-            nextAttendanceDates: [],
-            currentRecommendations: {
-              food: "",
-              water: "",
-              ointment: "",
-              returnWeeks: 0,
-              lightBath: false,
-              rod: false,
-              spiritualTreatment: false,
-            },
-          });
-        } finally {
-          setDataLoading(false);
-        }
-      } else {
-        setPatientData(null);
-      }
-    };
-
-    fetchPatientData();
-  }, [isOpen, patientId, patientName]);
+    if (isOpen && patientQueryData && !dataLoading) {
+      // Transform the patient data to match our form format
+      setPatientData({
+        name: patientQueryData.name,
+        phone: patientQueryData.phone || "",
+        birthDate: patientQueryData.birthDate || null,
+        priority: patientQueryData.priority,
+        status: patientQueryData.status,
+        mainComplaint: patientQueryData.mainComplaint || "",
+        startDate: patientQueryData.startDate || null,
+        dischargeDate: patientQueryData.dischargeDate || null,
+        nextAttendanceDates: [],
+        currentRecommendations: {
+          food: "",
+          water: "",
+          ointment: "",
+          returnWeeks: 0,
+          lightBath: false,
+          rod: false,
+          spiritualTreatment: false,
+        },
+      });
+    } else if (isOpen && patientFetchError) {
+      // Fallback to basic data on error
+      setPatientData({
+        name: patientName,
+        phone: "",
+        birthDate: null,
+        priority: "3",
+        status: "T",
+        mainComplaint: "",
+        startDate: null,
+        dischargeDate: null,
+        nextAttendanceDates: [],
+        currentRecommendations: {
+          food: "",
+          water: "",
+          ointment: "",
+          returnWeeks: 0,
+          lightBath: false,
+          rod: false,
+          spiritualTreatment: false,
+        },
+      });
+    } else if (!isOpen) {
+      setPatientData(null);
+    }
+  }, [isOpen, dataLoading, patientQueryData, patientFetchError, patientName]);
 
   // Memoize the initial data to prevent infinite re-renders
   const initialData = useMemo(() => {

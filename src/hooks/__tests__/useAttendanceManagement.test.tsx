@@ -92,9 +92,8 @@ describe("useAttendanceManagement", () => {
       wrapper: createWrapper,
     });
 
-    expect(result.current.selectedDate).toBe(
-      new Date().toISOString().slice(0, 10)
-    );
+    // The selected date will be initialized by the useEffect with the mocked next date
+    expect(result.current.selectedDate).toBe("2024-01-15");
     expect(result.current.loading).toBe(false);
     expect(result.current.dataLoading).toBe(false);
     expect(result.current.error).toBeNull();

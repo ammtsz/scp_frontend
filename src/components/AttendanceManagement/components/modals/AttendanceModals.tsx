@@ -1,9 +1,18 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ConfirmModal from "@/components/common/ConfirmModal/index";
-import PatientEditModal from "@/components/PatientForm/PatientEditModal";
-import { SpiritualTreatmentFormTabbed } from "../Forms/PostAttendanceForms";
-import EndOfDayModal from "../EndOfDay/EndOfDayContainer";
-import NewPatientCheckInModal from "./NewPatientCheckInModal";
+import LoadingFallback from "@/components/common/LoadingFallback";
+
+// Lazy load heavy modal components for better bundle optimization
+const PatientEditModal = lazy(
+  () => import("@/components/PatientForm/PatientEditModal")
+);
+const SpiritualTreatmentFormTabbed = lazy(() =>
+  import("../Forms/PostAttendanceForms").then((module) => ({
+    default: module.SpiritualTreatmentFormTabbed,
+  }))
+);
+const EndOfDayModal = lazy(() => import("../EndOfDay/EndOfDayContainer"));
+const NewPatientCheckInModal = lazy(() => import("./NewPatientCheckInModal"));
 import type {
   SpiritualTreatmentData,
   TreatmentStatus,
@@ -124,61 +133,94 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
 
       {/* Patient Edit Modal */}
       {patientToEdit && (
-        <PatientEditModal
-          isOpen={editPatientModalOpen}
-          onClose={onEditPatientCancel}
-          patientId={patientToEdit.id}
-          patientName={patientToEdit.name}
-          onSuccess={onEditPatientSuccess}
-        />
+        <Suspense
+          fallback={
+            <LoadingFallback
+              message="Carregando edição do paciente..."
+              size="small"
+            />
+          }
+        >
+          <PatientEditModal
+            isOpen={editPatientModalOpen}
+            onClose={onEditPatientCancel}
+            patientId={patientToEdit.id}
+            patientName={patientToEdit.name}
+            onSuccess={onEditPatientSuccess}
+          />
+        </Suspense>
       )}
 
       {/* New Patient Check-in for drag-and-drop of new patients */}
       {patientToCheckIn && (
-        <NewPatientCheckInModal
-          patient={patientToCheckIn}
-          attendanceId={attendanceId}
-          isOpen={true}
-          onClose={onCloseNewPatientCheckIn}
-          onSuccess={onNewPatientSuccess}
-        />
+        <Suspense
+          fallback={
+            <LoadingFallback message="Carregando check-in..." size="small" />
+          }
+        >
+          <NewPatientCheckInModal
+            patient={patientToCheckIn}
+            attendanceId={attendanceId}
+            isOpen={true}
+            onClose={onCloseNewPatientCheckIn}
+            onSuccess={onNewPatientSuccess}
+          />
+        </Suspense>
       )}
 
       {/* Treatment Form Modal (when completing attendance) */}
       {treatmentFormOpen && selectedAttendanceForTreatment && (
-        <SpiritualTreatmentFormTabbed
-          attendanceId={selectedAttendanceForTreatment.id}
-          patientId={selectedAttendanceForTreatment.patientId}
-          patientName={selectedAttendanceForTreatment.patientName}
-          currentTreatmentStatus={
-            selectedAttendanceForTreatment.currentTreatmentStatus
+        <Suspense
+          fallback={
+            <LoadingFallback
+              message="Carregando formulário de tratamento..."
+              size="small"
+            />
           }
-          onSubmit={onTreatmentFormSubmit}
-          onCancel={onTreatmentFormCancel}
-        />
+        >
+          <SpiritualTreatmentFormTabbed
+            attendanceId={selectedAttendanceForTreatment.id}
+            patientId={selectedAttendanceForTreatment.patientId}
+            patientName={selectedAttendanceForTreatment.patientName}
+            currentTreatmentStatus={
+              selectedAttendanceForTreatment.currentTreatmentStatus
+            }
+            onSubmit={onTreatmentFormSubmit}
+            onCancel={onTreatmentFormCancel}
+          />
+        </Suspense>
       )}
 
-      <EndOfDayModal
-        isOpen={endOfDayModalOpen}
-        onClose={onEndOfDayClose}
-        onSubmitEndOfDay={async (absenceJustifications) => {
-          await onEndOfDayFinalize(
-            absenceJustifications.map((item) => ({
-              patientId: item.patientId,
-              patientName: item.patientName,
-              attendanceType: item.attendanceType,
-              justified: item.justified ?? false,
-              justification: item.justification,
-            }))
-          );
-        }}
-        incompleteAttendances={incompleteAttendances}
-        scheduledAbsences={scheduledAbsences}
-        completedAttendances={completedAttendances}
-        selectedDate={selectedDate}
-        onHandleCompletion={onHandleCompletion}
-        onReschedule={onReschedule}
-      />
+      <Suspense
+        fallback={
+          <LoadingFallback
+            message="Carregando finalizador do dia..."
+            size="small"
+          />
+        }
+      >
+        <EndOfDayModal
+          isOpen={endOfDayModalOpen}
+          onClose={onEndOfDayClose}
+          onSubmitEndOfDay={async (absenceJustifications) => {
+            await onEndOfDayFinalize(
+              absenceJustifications.map((item) => ({
+                patientId: item.patientId,
+                patientName: item.patientName,
+                attendanceType: item.attendanceType,
+                justified: item.justified ?? false,
+                justification: item.justification,
+              }))
+            );
+          }}
+          incompleteAttendances={incompleteAttendances}
+          scheduledAbsences={scheduledAbsences}
+          completedAttendances={completedAttendances}
+          selectedDate={selectedDate}
+          onHandleCompletion={onHandleCompletion}
+          onReschedule={onReschedule}
+        />
+      </Suspense>
     </>
   );
 };

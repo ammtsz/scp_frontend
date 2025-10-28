@@ -1,11 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ConfirmModal from "@/components/common/ConfirmModal/index";
-import NewAttendanceFormModal from "@/components/AttendanceManagement/components/Modals/NewAttendanceFormModal";
 import Switch from "@/components/common/Switch";
 import AgendaColumn from "./AgendaColumn";
 import { useAgendaCalendar } from "./useAgendaCalendar";
+import LoadingFallback from "@/components/common/LoadingFallback";
+
+// Lazy load heavy modal component for better bundle optimization
+const NewAttendanceFormModal = lazy(
+  () =>
+    import(
+      "@/components/AttendanceManagement/components/Modals/NewAttendanceFormModal"
+    )
+);
 
 const AgendaCalendar: React.FC = () => {
   const {
@@ -168,16 +176,25 @@ const AgendaCalendar: React.FC = () => {
         onConfirm={handleConfirmRemove}
       />
       {showNewAttendance && (
-        <NewAttendanceFormModal
-          onClose={() => setShowNewAttendance(false)}
-          onSuccess={handleFormSuccess}
-          title="Novo Agendamento"
-          subtitle="Agendar atendimento para paciente"
-          showDateField={true}
-          validationDate={
-            selectedDate || new Date().toISOString().split("T")[0]
+        <Suspense
+          fallback={
+            <LoadingFallback
+              message="Carregando formulário de agendamento..."
+              size="small"
+            />
           }
-        />
+        >
+          <NewAttendanceFormModal
+            onClose={() => setShowNewAttendance(false)}
+            onSuccess={handleFormSuccess}
+            title="Novo Agendamento"
+            subtitle="Agendar atendimento para paciente"
+            showDateField={true}
+            validationDate={
+              selectedDate || new Date().toISOString().split("T")[0]
+            }
+          />
+        </Suspense>
       )}
     </div>
   );

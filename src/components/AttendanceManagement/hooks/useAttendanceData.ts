@@ -10,15 +10,21 @@
 
 import { useState, useCallback } from "react";
 import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
-import { usePatients } from "@/hooks/usePatientQueries";
+import { usePatients, useCreatePatient } from "@/hooks/usePatientQueries";
+import { 
+  useCreateAttendance, 
+  useCheckInAttendance, 
+  useDeleteAttendance 
+} from "@/hooks/useAttendanceQueries";
 import { 
   AttendanceStatusDetail,
-  AttendanceType,
   Priority,
   PatientBasic,
   AttendanceByDate 
 } from "@/types/types";
-import { AttendanceService, PatientService } from "../services";
+import { AttendanceType } from "@/api/types";
+import { validatePatientData, calculateAge } from "@/utils/patientUtils";
+import { transformPriorityToApi } from "@/utils/apiTransformers";
 import { sortPatientsByPriority } from "@/utils/businessRules";
 
 export interface UseAttendanceDataProps {
@@ -92,9 +98,14 @@ export const useAttendanceData = ({
   const {
     data: patients = [],
     isLoading: patientsLoading,
-    error: patientsError,
-    refetch: refreshPatients
+    error: patientsError
   } = usePatients();
+
+  // React Query mutations for better cache management
+  const createAttendanceMutation = useCreateAttendance();
+  const checkInAttendanceMutation = useCheckInAttendance();
+  const deleteAttendanceMutation = useDeleteAttendance();
+  const createPatientMutation = useCreatePatient();
 
   // Consolidated loading and error states
   const loading = attendancesLoading || patientsLoading || processingAttendance;
@@ -111,27 +122,22 @@ export const useAttendanceData = ({
     try {
       setProcessingAttendance(true);
       
-      const result = await AttendanceService.createAttendance({
+      await createAttendanceMutation.mutateAsync({
         patientId: params.patientId,
         attendanceType: params.attendanceType,
         scheduledDate: params.scheduledDate
       });
 
-      if (result.success) {
-        await refreshCurrentDate();
-        onCheckInProcessed?.();
-        return true;
-      } else {
-        console.error("Failed to create attendance:", result.error);
-        return false;
-      }
+      await refreshCurrentDate();
+      onCheckInProcessed?.();
+      return true;
     } catch (error) {
       console.error("Error creating attendance:", error);
       return false;
     } finally {
       setProcessingAttendance(false);
     }
-  }, [refreshCurrentDate, onCheckInProcessed]);
+  }, [refreshCurrentDate, onCheckInProcessed, createAttendanceMutation]);
 
   /**
    * Check in a patient for their attendance
@@ -143,25 +149,20 @@ export const useAttendanceData = ({
     try {
       setProcessingAttendance(true);
       
-      const result = await AttendanceService.checkInAttendance({
+      await checkInAttendanceMutation.mutateAsync({
         attendanceId: params.attendanceId,
         patientName: params.patientName
       });
 
-      if (result.success) {
-        await refreshCurrentDate();
-        return true;
-      } else {
-        console.error("Failed to check in:", result.error);
-        return false;
-      }
+      await refreshCurrentDate();
+      return true;
     } catch (error) {
       console.error("Error checking in:", error);
       return false;
     } finally {
       setProcessingAttendance(false);
     }
-  }, [refreshCurrentDate]);
+  }, [refreshCurrentDate, checkInAttendanceMutation]);
 
   /**
    * Create a new patient
@@ -177,7 +178,7 @@ export const useAttendanceData = ({
       setProcessingAttendance(true);
       
       // Validate patient data
-      const validation = PatientService.validatePatientData({
+      const validation = validatePatientData({
         name: params.name,
         phone: params.phone,
         birthDate: params.birthDate
@@ -190,46 +191,45 @@ export const useAttendanceData = ({
         };
       }
 
-      const result = await PatientService.createPatient(params);
+      const newPatientData = await createPatientMutation.mutateAsync({
+        name: params.name.trim(),
+        phone: params.phone?.trim() || undefined,
+        priority: transformPriorityToApi(params.priority),
+        birth_date: params.birthDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+        main_complaint: params.mainComplaint?.trim() || undefined,
+      });
 
-      if (result.success) {
-        await refreshPatients();
+      // React Query automatically refreshes patient lists, no manual refresh needed
+      
+      // Trigger new patient detection if callback provided
+      if (onNewPatientDetected && newPatientData) {
+        const newPatient = {
+          id: newPatientData.id.toString(),
+          name: newPatientData.name,
+          phone: newPatientData.phone || "",
+          priority: params.priority,
+          status: "T", // Default status
+          age: calculateAge(params.birthDate),
+          attendanceType: "spiritual" as AttendanceType,
+          missingAppointmentsStreak: 0
+        } as PatientBasic;
         
-        // Trigger new patient detection if callback provided
-        if (onNewPatientDetected && result.data) {
-          const newPatient = {
-            id: result.data.id.toString(),
-            name: result.data.name,
-            phone: result.data.phone || "",
-            priority: params.priority,
-            status: "T", // Default status
-            age: PatientService.calculateAge(params.birthDate),
-            attendanceType: "spiritual" as AttendanceType,
-            missingAppointmentsStreak: 0
-          } as PatientBasic;
-          
-          onNewPatientDetected(newPatient);
-        }
-        
-        return {
-          success: true,
-          patient: result.data ? {
-            id: result.data.id.toString(),
-            name: result.data.name,
-            phone: result.data.phone || "",
-            priority: params.priority,
-            status: "T",
-            age: PatientService.calculateAge(params.birthDate),
-            attendanceType: "spiritual" as AttendanceType,
-            missingAppointmentsStreak: 0
-          } as PatientBasic : undefined
-        };
-      } else {
-        return {
-          success: false,
-          error: result.error || "Failed to create patient"
-        };
+        onNewPatientDetected(newPatient);
       }
+      
+      return {
+        success: true,
+        patient: newPatientData ? {
+          id: newPatientData.id.toString(),
+          name: newPatientData.name,
+          phone: newPatientData.phone || "",
+          priority: params.priority,
+          status: "T",
+          age: calculateAge(params.birthDate),
+          attendanceType: "spiritual" as AttendanceType,
+          missingAppointmentsStreak: 0
+        } as PatientBasic : undefined
+      };
     } catch (error) {
       console.error("Error creating patient:", error);
       return {
@@ -239,7 +239,7 @@ export const useAttendanceData = ({
     } finally {
       setProcessingAttendance(false);
     }
-  }, [refreshPatients, onNewPatientDetected]);
+  }, [createPatientMutation, onNewPatientDetected]);
 
   /**
    * Delete an attendance
@@ -248,32 +248,25 @@ export const useAttendanceData = ({
     try {
       setProcessingAttendance(true);
       
-      const result = await AttendanceService.deleteAttendance(attendanceId);
+      await deleteAttendanceMutation.mutateAsync(attendanceId);
 
-      if (result.success) {
-        await refreshCurrentDate();
-        return true;
-      } else {
-        console.error("Failed to delete attendance:", result.error);
-        return false;
-      }
+      await refreshCurrentDate();
+      return true;
     } catch (error) {
       console.error("Error deleting attendance:", error);
       return false;
     } finally {
       setProcessingAttendance(false);
     }
-  }, [refreshCurrentDate]);
+  }, [refreshCurrentDate, deleteAttendanceMutation]);
 
   /**
    * Refresh all data
    */
   const refreshData = useCallback(async () => {
-    await Promise.all([
-      refreshCurrentDate(),
-      refreshPatients()
-    ]);
-  }, [refreshCurrentDate, refreshPatients]);
+    // React Query automatically refreshes patient lists, only refresh attendances
+    await refreshCurrentDate();
+  }, [refreshCurrentDate]);
 
   /**
    * Get incomplete attendances from current data

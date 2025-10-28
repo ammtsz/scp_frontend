@@ -10,7 +10,7 @@
  * - Individual Selectors: Performance optimization
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   useAttendancesByDate,
   useNextAttendanceDate,
@@ -156,6 +156,18 @@ export function useAttendanceManagement(): UseAttendanceManagementReturn {
       (attendancesError as Error).message : null;
     setError(errorMessage);
   }, [attendancesError, setError]);
+  
+  // Track if we've initialized the date to prevent infinite loops
+  const dateInitialized = useRef(false);
+  
+  // Initialize selected date on mount
+  useEffect(() => {
+    if (!dateInitialized.current && nextDate && selectedDate === new Date().toISOString().slice(0, 10)) {
+      // Only set the next date if we're still on today's date (initial state)
+      setSelectedDate(nextDate);
+      dateInitialized.current = true;
+    }
+  }, [nextDate, selectedDate, setSelectedDate]);
   
   // Load attendances by date
   const loadAttendancesByDate = useCallback(async (date: string): Promise<AttendanceByDate | null> => {

@@ -186,6 +186,11 @@ export function useCreateAttendance() {
       queryClient.invalidateQueries({ 
         queryKey: attendanceKeys.nextDate() 
       });
+      
+      // Invalidate agenda queries so agenda page refreshes automatically
+      queryClient.invalidateQueries({ 
+        queryKey: ['agenda'] 
+      });
     },
     onError: (error) => {
       console.error("Error creating attendance:", error);
@@ -217,6 +222,11 @@ export function useUpdateAttendance() {
       // Invalidate all attendance queries as we don't know which date was affected
       queryClient.invalidateQueries({ 
         queryKey: attendanceKeys.all 
+      });
+      
+      // Also invalidate agenda queries since attendance updates can affect agenda view
+      queryClient.invalidateQueries({ 
+        queryKey: ['agenda'] 
       });
     },
     onError: (error) => {
@@ -324,6 +334,11 @@ export function useDeleteAttendance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ 
         queryKey: attendanceKeys.all 
+      });
+      
+      // Also invalidate agenda queries since deleting attendances affects agenda view
+      queryClient.invalidateQueries({ 
+        queryKey: ['agenda'] 
       });
     },
     onError: (error) => {

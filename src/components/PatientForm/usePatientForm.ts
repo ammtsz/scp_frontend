@@ -7,12 +7,11 @@ import {
   Status,
 } from "@/types/types";
 
-import { createAttendance } from "@/api/attendances";
 import { formatPhoneNumber } from "@/utils/formHelpers";
 import { transformPriorityToApi, transformStatusToApi } from "@/utils/apiTransformers";
-import type { CreatePatientRequest, CreateAttendanceRequest, AttendanceType } from "@/api/types";
+import type { CreatePatientRequest, AttendanceType } from "@/api/types";
 import { useCreatePatient } from "@/hooks/usePatientQueries";
-import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
+import { useAddPatientToAgenda } from "@/hooks/useAgendaQueries";
 
 const initialRecommendations: Recommendations = {
   food: "",
@@ -46,7 +45,7 @@ export function usePatientForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const createPatientMutation = useCreatePatient();
-  const { refreshCurrentDate } = useAttendanceManagement();
+  const addPatientToAgendaMutation = useAddPatientToAgenda();
 
   // Helper function to safely create a Date from string input
   const createSafeDate = (dateString: string): Date => {
@@ -160,22 +159,17 @@ export function usePatientForm() {
               if (attendanceCreated) break;
               
               try {
-                const attendanceData: CreateAttendanceRequest = {
+                // Use the agenda mutation to ensure proper cache invalidation
+                await addPatientToAgendaMutation.mutateAsync({
                   patient_id: createdPatient?.id || 0,
                   type: "spiritual" as AttendanceType,
                   scheduled_date: attendanceDate.toISOString().split('T')[0],
                   scheduled_time: time,
                   notes: "Agendamento criado durante cadastro do paciente"
-                };
+                });
                 
-                const attendanceResult = await createAttendance(attendanceData);
-                if (attendanceResult.success) {
-                  attendanceCreated = true;
-                  // Refresh attendances to show the new appointment
-                  await refreshCurrentDate();
-                } else {
-                  console.log(`Slot ${time} não disponível, tentando próximo...`);
-                }
+                attendanceCreated = true;
+                console.log(`Agendamento criado para ${time}`);
               } catch (slotError) {
                 console.log(`Erro no slot ${time}:`, slotError);
               }

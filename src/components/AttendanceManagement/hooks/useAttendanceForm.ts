@@ -6,12 +6,18 @@
  */
 
 import { useState, useCallback } from "react";
-import { Priority, AttendanceType, PatientBasic } from "@/types/types";
+import { useQueryClient } from "@tanstack/react-query";
+import { Priority, PatientBasic } from "@/types/types";
+import { AttendanceType } from "@/api/types";
 import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
-import { usePatients } from "@/hooks/usePatientQueries";
-import { AttendanceService, PatientService } from "../services";
+import { usePatients, useCreatePatient } from "@/hooks/usePatientQueries";
+import { 
+  useCreateAttendance, 
+  useCheckInAttendance 
+} from "@/hooks/useAttendanceQueries";
 import { isPatientAlreadyScheduled } from "@/utils/businessRules";
 import { getNextAvailableDate } from "@/utils/dateHelpers";
+import { transformPriorityToApi } from "@/utils/apiTransformers";
 import { SCHEDULED_TIME } from "@/utils/constants";
 
 export interface UseAttendanceFormProps {
@@ -67,8 +73,14 @@ export const useAttendanceForm = ({
   onFormSuccess
 }: UseAttendanceFormProps = {}): UseAttendanceFormReturn => {
   
-  const { data: patients = [], refetch: refreshPatients } = usePatients();
+  const queryClient = useQueryClient();
+  const { data: patients = [] } = usePatients();
   const { refreshCurrentDate, attendancesByDate } = useAttendanceManagement();
+  
+  // React Query mutations for better cache management
+  const createAttendanceMutation = useCreateAttendance();
+  const checkInAttendanceMutation = useCheckInAttendance();
+  const createPatientMutation = useCreatePatient();
   
   // Form state
   const [search, setSearch] = useState("");
@@ -148,23 +160,20 @@ export const useAttendanceForm = ({
           return false;
         }
 
-        // Create new patient using service
-        const patientResult = await PatientService.createPatient({
+        // Create new patient using React Query mutation
+        const newPatient = await createPatientMutation.mutateAsync({
           name,
-          priority,
-          birthDate: new Date(), // This should come from a form field in real implementation
-          mainComplaint: notes
+          priority: transformPriorityToApi(priority),
+          birth_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+          main_complaint: notes
         });
 
-        if (!patientResult.success) {
-          setError(`Erro ao cadastrar paciente: ${patientResult.error}`);
-          return false;
+        if (!newPatient) {
+          throw new Error('Erro ao criar paciente: dados não retornados');
         }
-
-        patientId = patientResult.data!.id.toString();
+        patientId = newPatient.id.toString();
         
-        // Refresh patients list to include the new patient
-        await refreshPatients();
+        // React Query automatically invalidates patient lists, no manual refresh needed
       } else {
         const patient = patients.find((p) => p.name === selectedPatient);
         if (!patient) {
@@ -179,26 +188,31 @@ export const useAttendanceForm = ({
 
       // Create attendances for each selected type
       const attendancePromises = selectedTypes.map(async (type) => {
-        const createResult = await AttendanceService.createAttendance({
-          patientId: parseInt(patientId),
-          attendanceType: type as AttendanceType,
-          scheduledDate: nextAvailableDate
-        });
+        try {
+          const createResult = await createAttendanceMutation.mutateAsync({
+            patientId: parseInt(patientId),
+            attendanceType: type as AttendanceType,
+            scheduledDate: nextAvailableDate
+          });
 
-        // If creation succeeded and autoCheckIn is enabled, check in the patient
-        if (createResult.success && autoCheckIn) {
-          try {
-            await AttendanceService.checkInAttendance({
-              attendanceId: createResult.data!.id,
-              patientName: name
-            });
-          } catch (error) {
-            console.warn(`Error during check-in for attendance ${createResult.data!.id}:`, error);
-            // Continue with the original creation result
+          // If creation succeeded and autoCheckIn is enabled, check in the patient
+          if (createResult && autoCheckIn) {
+            try {
+              await checkInAttendanceMutation.mutateAsync({
+                attendanceId: createResult.id,
+                patientName: name
+              });
+            } catch (error) {
+              console.warn(`Error during check-in for attendance ${createResult.id}:`, error);
+              // Continue with the original creation result
+            }
           }
-        }
 
-        return createResult;
+          return { success: true, data: createResult };
+        } catch (error) {
+          console.error("Error creating attendance:", error);
+          return { success: false, error: error instanceof Error ? error.message : String(error) };
+        }
       });
 
       const results = await Promise.all(attendancePromises);
@@ -220,6 +234,11 @@ export const useAttendanceForm = ({
         // Refresh attendances to show any successful records
         await refreshCurrentDate();
         
+        // Also invalidate agenda queries in case some attendances were created
+        queryClient.invalidateQueries({ 
+          queryKey: ['agenda'] 
+        });
+        
         return false;
       } else {
         const isToday = nextAvailableDate === new Date().toISOString().split('T')[0];
@@ -230,6 +249,11 @@ export const useAttendanceForm = ({
         
         // Refresh attendances to show the new records
         await refreshCurrentDate();
+        
+        // Also invalidate agenda queries so agenda page refreshes automatically
+        queryClient.invalidateQueries({ 
+          queryKey: ['agenda'] 
+        });
 
         // Call external callback if provided
         if (onRegisterNewAttendance) {
@@ -264,11 +288,14 @@ export const useAttendanceForm = ({
     attendancesByDate,
     validationDate,
     autoCheckIn,
-    refreshPatients,
     refreshCurrentDate,
+    queryClient,
     onRegisterNewAttendance,
     onFormSuccess,
-    resetForm
+    resetForm,
+    createAttendanceMutation,
+    checkInAttendanceMutation,
+    createPatientMutation
   ]);
 
   return {

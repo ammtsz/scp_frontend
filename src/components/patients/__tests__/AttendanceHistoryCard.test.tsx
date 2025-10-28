@@ -83,8 +83,8 @@ describe("AttendanceHistoryCard", () => {
     render(<AttendanceHistoryCard patient={mockPatient} />);
 
     // Should show both attendances
-    expect(screen.getByText("spiritual")).toBeInTheDocument();
-    expect(screen.getByText("lightBath")).toBeInTheDocument();
+    expect(screen.getByText("Consulta Espiritual")).toBeInTheDocument();
+    expect(screen.getByText("Banho de Luz")).toBeInTheDocument();
   });
 
   it("displays attendance notes when available", () => {
@@ -146,8 +146,8 @@ describe("AttendanceHistoryCard", () => {
 
     // This is more of an implementation test - checking that we don't get React key warnings
     // The actual key usage is handled internally by React
-    expect(screen.getByText("spiritual")).toBeInTheDocument();
-    expect(screen.getByText("lightBath")).toBeInTheDocument();
+    expect(screen.getByText("Consulta Espiritual")).toBeInTheDocument();
+    expect(screen.getByText("Banho de Luz")).toBeInTheDocument();
   });
 
   it("handles attendances without recommendations", () => {

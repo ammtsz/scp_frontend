@@ -122,11 +122,11 @@ describe("PatientNotesCard", () => {
     render(<PatientNotesCard {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText("✏️ Nova Nota")).toBeInTheDocument();
+      expect(screen.getByText("✏️ Nova")).toBeInTheDocument();
     });
 
     // Click "Nova Nota" button
-    fireEvent.click(screen.getByText("✏️ Nova Nota"));
+    fireEvent.click(screen.getByText("✏️ Nova"));
 
     // Form should appear
     expect(screen.getByPlaceholderText("Digite a nota...")).toBeInTheDocument();
@@ -263,11 +263,11 @@ describe("PatientNotesCard", () => {
     render(<PatientNotesCard {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText("✏️ Nova Nota")).toBeInTheDocument();
+      expect(screen.getByText("✏️ Nova")).toBeInTheDocument();
     });
 
     // Click "Nova Nota" button
-    fireEvent.click(screen.getByText("✏️ Nova Nota"));
+    fireEvent.click(screen.getByText("✏️ Nova"));
 
     // Submit button should be disabled when content is empty
     const submitButton = screen.getByText("Salvar Nota");
@@ -288,11 +288,11 @@ describe("PatientNotesCard", () => {
     render(<PatientNotesCard {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText("✏️ Nova Nota")).toBeInTheDocument();
+      expect(screen.getByText("✏️ Nova")).toBeInTheDocument();
     });
 
     // Click "Nova Nota" button
-    fireEvent.click(screen.getByText("✏️ Nova Nota"));
+    fireEvent.click(screen.getByText("✏️ Nova"));
 
     // Character count should start at 0
     expect(screen.getByText("0/2000 caracteres")).toBeInTheDocument();

@@ -17,7 +17,12 @@ describe("TreatmentStatusBadge", () => {
     expect(screen.getByText("💡")).toBeInTheDocument();
 
     const badge = screen.getByText("Banho de luz").parentElement;
-    expect(badge).toHaveClass("ds-badge-status-active");
+    expect(badge).toHaveClass(
+      "ds-badge",
+      "bg-green-50",
+      "text-green-800",
+      "border-green-200"
+    );
   });
 
   test("renders inactive treatment badge correctly", () => {
@@ -27,7 +32,12 @@ describe("TreatmentStatusBadge", () => {
     expect(screen.getByText("🔮")).toBeInTheDocument();
 
     const badge = screen.getByText("Bastão").parentElement;
-    expect(badge).toHaveClass("ds-badge-status-inactive");
+    expect(badge).toHaveClass(
+      "ds-badge",
+      "bg-gray-50",
+      "text-gray-600",
+      "border-gray-200"
+    );
   });
 
   test("applies custom className", () => {
@@ -87,7 +97,8 @@ describe("PatientStatusOverview", () => {
     );
 
     expect(screen.getByText("Status do Paciente")).toBeInTheDocument();
-    expect(screen.getByText("🚨 Emergência")).toBeInTheDocument();
+    expect(screen.getByText("🚨")).toBeInTheDocument();
+    expect(screen.getByText("Emergência")).toBeInTheDocument();
     expect(screen.getByText("5")).toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText("25/10/2025")).toBeInTheDocument();
@@ -102,7 +113,8 @@ describe("PatientStatusOverview", () => {
       />
     );
 
-    expect(screen.getByText("✅ Normal")).toBeInTheDocument();
+    expect(screen.getByText("✅")).toBeInTheDocument();
+    expect(screen.getByText("Normal")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
   });
@@ -116,7 +128,8 @@ describe("PatientStatusOverview", () => {
       />
     );
 
-    expect(screen.getByText("⚠️ Intermediário")).toBeInTheDocument();
+    expect(screen.getByText("⚠️")).toBeInTheDocument();
+    expect(screen.getByText("Intermediário")).toBeInTheDocument();
     expect(screen.queryByText("Próximo atendimento:")).not.toBeInTheDocument();
   });
 
@@ -129,6 +142,7 @@ describe("PatientStatusOverview", () => {
       />
     );
 
-    expect(screen.getByText("📋 unknown")).toBeInTheDocument();
+    expect(screen.getByText("📋")).toBeInTheDocument();
+    expect(screen.getByText("unknown")).toBeInTheDocument();
   });
 });

@@ -116,15 +116,15 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
 
   // Auto-scroll to top on error
   useEffect(() => {
-    if (error) {
+    if (error || fetchError) {
       const modalContent = document.querySelector(
-        '[role="dialog"] .overflow-y-auto'
+        ".flex-1.bg-white.px-6.py-6.overflow-y-auto"
       );
       if (modalContent) {
         modalContent.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
-  }, [error]);
+  }, [error, fetchError]);
 
   const renderTabContent = () => {
     switch (activeTab) {

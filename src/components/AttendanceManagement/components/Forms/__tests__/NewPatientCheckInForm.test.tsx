@@ -1,10 +1,10 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import NewPatientCheckInForm from "../NewPatientCheckInForm";
 import { Patient } from "@/types/types";
-import * as attendancesApi from "@/api/attendances";
-import * as patientsApi from "@/api/patients";
+
 import {
   PatientPriority,
   TreatmentStatus,
@@ -12,25 +12,35 @@ import {
   AttendanceStatus,
 } from "@/api/types";
 // Mock the APIs
-jest.mock("@/api/attendances");
 jest.mock("@/api/patients");
-jest.mock("@/hooks/useAttendanceQueries", () => ({
-  useAttendancesByDate: () => ({
-    refetch: jest.fn(),
+
+// Create mock functions for React Query mutations
+const mockCreateAttendanceMutateAsync = jest.fn();
+const mockCheckInAttendanceMutateAsync = jest.fn();
+const mockRefreshCurrentDate = jest.fn();
+
+jest.mock("@/hooks/useAttendanceManagement", () => ({
+  useAttendanceManagement: () => ({
+    refreshCurrentDate: mockRefreshCurrentDate,
   }),
 }));
 
-const mockCreateAttendance =
-  attendancesApi.createAttendance as jest.MockedFunction<
-    typeof attendancesApi.createAttendance
-  >;
-const mockCheckInAttendance =
-  attendancesApi.checkInAttendance as jest.MockedFunction<
-    typeof attendancesApi.checkInAttendance
-  >;
-const mockUpdatePatient = patientsApi.updatePatient as jest.MockedFunction<
-  typeof patientsApi.updatePatient
->;
+jest.mock("@/hooks/useAttendanceQueries", () => ({
+  useCreateAttendance: () => ({
+    mutateAsync: mockCreateAttendanceMutateAsync,
+  }),
+  useCheckInAttendance: () => ({
+    mutateAsync: mockCheckInAttendanceMutateAsync,
+  }),
+}));
+
+// Mock useUpdatePatient hook
+const mockUpdatePatientMutateAsync = jest.fn();
+jest.mock("@/hooks/usePatientQueries", () => ({
+  useUpdatePatient: () => ({
+    mutateAsync: mockUpdatePatientMutateAsync,
+  }),
+}));
 
 const mockPatient: Patient = {
   id: "1",
@@ -63,13 +73,26 @@ const defaultProps = {
 };
 
 const renderComponent = (props = {}) => {
-  return render(<NewPatientCheckInForm {...defaultProps} {...props} />);
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <NewPatientCheckInForm {...defaultProps} {...props} />
+    </QueryClientProvider>
+  );
 };
 
 describe("NewPatientCheckInForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUpdatePatient.mockResolvedValue({
+
+    // Mock successful patient update via React Query hook
+    mockUpdatePatientMutateAsync.mockResolvedValue({
       success: true,
       value: {
         id: 1,
@@ -82,33 +105,30 @@ describe("NewPatientCheckInForm", () => {
         updated_at: "2025-01-15T00:00:00Z",
       },
     });
-    mockCreateAttendance.mockResolvedValue({
-      success: true,
-      value: {
-        id: 1,
-        patient_id: 1,
-        type: AttendanceType.SPIRITUAL,
-        status: AttendanceStatus.SCHEDULED,
-        scheduled_date: "2025-01-15",
-        scheduled_time: "09:00",
-        created_at: "2025-01-15T00:00:00Z",
-        updated_at: "2025-01-15T00:00:00Z",
-      },
+
+    // Mock successful attendance creation
+    mockCreateAttendanceMutateAsync.mockResolvedValue({
+      id: 123,
+      patientId: 1,
+      type: AttendanceType.SPIRITUAL,
+      status: AttendanceStatus.SCHEDULED,
+      scheduledDate: "2025-01-15",
+      scheduledTime: "09:00",
     });
-    mockCheckInAttendance.mockResolvedValue({
-      success: true,
-      value: {
-        id: 1,
-        patient_id: 1,
-        type: AttendanceType.SPIRITUAL,
-        status: AttendanceStatus.CHECKED_IN,
-        scheduled_date: "2025-01-15",
-        scheduled_time: "09:00",
-        checked_in_time: "09:00:00",
-        created_at: "2025-01-15T00:00:00Z",
-        updated_at: "2025-01-15T00:00:00Z",
-      },
+
+    // Mock successful check-in
+    mockCheckInAttendanceMutateAsync.mockResolvedValue({
+      id: 123,
+      patientId: 1,
+      type: AttendanceType.SPIRITUAL,
+      status: AttendanceStatus.CHECKED_IN,
+      scheduledDate: "2025-01-15",
+      scheduledTime: "09:00",
+      checkedInTime: "09:00:00",
     });
+
+    // Mock refresh function
+    mockRefreshCurrentDate.mockResolvedValue(undefined);
   });
 
   it("renders form fields with patient data", () => {
@@ -154,16 +174,16 @@ describe("NewPatientCheckInForm", () => {
     fireEvent.click(screen.getByText("Fazer Check-in"));
 
     await waitFor(() => {
-      expect(mockUpdatePatient).toHaveBeenCalledWith(
-        "1",
-        expect.objectContaining({
+      expect(mockUpdatePatientMutateAsync).toHaveBeenCalledWith({
+        patientId: "1",
+        data: expect.objectContaining({
           name: "João Silva",
           phone: "(11) 99999-9999",
           birth_date: "1990-01-01",
-        })
-      );
-      expect(mockCreateAttendance).toHaveBeenCalled();
-      expect(mockCheckInAttendance).toHaveBeenCalled();
+        }),
+      });
+      expect(mockCreateAttendanceMutateAsync).toHaveBeenCalled();
+      expect(mockCheckInAttendanceMutateAsync).toHaveBeenCalled();
     });
   });
 
@@ -173,17 +193,19 @@ describe("NewPatientCheckInForm", () => {
     fireEvent.click(screen.getByText("Fazer Check-in"));
 
     await waitFor(() => {
-      expect(mockUpdatePatient).toHaveBeenCalled();
-      expect(mockCreateAttendance).not.toHaveBeenCalled();
-      expect(mockCheckInAttendance).toHaveBeenCalledWith("123");
+      expect(mockUpdatePatientMutateAsync).toHaveBeenCalled();
+      expect(mockCreateAttendanceMutateAsync).not.toHaveBeenCalled();
+      expect(mockCheckInAttendanceMutateAsync).toHaveBeenCalledWith({
+        attendanceId: 123,
+        patientName: "João Silva",
+      });
     });
   });
 
   it("handles API errors gracefully", async () => {
-    mockUpdatePatient.mockResolvedValue({
-      success: false,
-      error: "Patient update failed",
-    });
+    mockUpdatePatientMutateAsync.mockRejectedValue(
+      new Error("Patient update failed")
+    );
 
     renderComponent();
 
@@ -191,7 +213,7 @@ describe("NewPatientCheckInForm", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Erro ao atualizar informações do paciente/)
+        screen.getByText(/Erro ao processar check-in/)
       ).toBeInTheDocument();
     });
   });
@@ -224,7 +246,7 @@ describe("NewPatientCheckInForm", () => {
 
   it("disables form during submission", async () => {
     // Mock a slow API call
-    mockUpdatePatient.mockImplementation(
+    mockUpdatePatientMutateAsync.mockImplementation(
       () =>
         new Promise((resolve) =>
           setTimeout(

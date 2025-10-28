@@ -13,10 +13,8 @@ describe("PatientDetailSkeleton", () => {
   it("renders cards by default", () => {
     const { container } = render(<PatientDetailSkeleton />);
 
-    // Should have multiple skeleton cards
-    const skeletonCards = container.querySelectorAll(
-      ".bg-white.rounded-lg.shadow-sm.border"
-    );
+    // Should have multiple skeleton cards (using design system classes)
+    const skeletonCards = container.querySelectorAll(".ds-card");
     expect(skeletonCards.length).toBeGreaterThan(1);
   });
 
@@ -24,9 +22,7 @@ describe("PatientDetailSkeleton", () => {
     const { container } = render(<PatientDetailSkeleton showCards={false} />);
 
     // Should only have the header card, not the detailed cards
-    const skeletonCards = container.querySelectorAll(
-      ".bg-white.rounded-lg.shadow-sm.border"
-    );
+    const skeletonCards = container.querySelectorAll(".ds-card");
     expect(skeletonCards.length).toBe(1); // Only header card
   });
 
@@ -46,9 +42,7 @@ describe("PatientDetailSkeleton", () => {
     expect(leftColumn).toBeInTheDocument();
 
     // Should have multiple cards in left column
-    const cardsInLeftColumn = leftColumn?.querySelectorAll(
-      ".bg-white.rounded-lg.shadow-sm.border"
-    );
+    const cardsInLeftColumn = leftColumn?.querySelectorAll(".ds-card");
     expect(cardsInLeftColumn?.length).toBe(3); // Current treatment, history, future appointments
   });
 
@@ -56,9 +50,7 @@ describe("PatientDetailSkeleton", () => {
     const { container } = render(<PatientDetailSkeleton />);
 
     // Should have right column cards
-    const rightColumnCards = container.querySelectorAll(
-      ".space-y-6 .bg-white.rounded-lg.shadow-sm.border"
-    );
+    const rightColumnCards = container.querySelectorAll(".space-y-6 .ds-card");
     expect(rightColumnCards.length).toBeGreaterThan(1);
   });
 

@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { Patient, AttendanceType, Priority } from "@/types/types";
-import { createAttendance, checkInAttendance } from "@/api/attendances";
-import { updatePatient } from "@/api/patients";
-import { useAttendancesByDate } from "@/hooks/useAttendanceQueries";
-
+import { Patient, Priority } from "@/types/types";
+import { AttendanceType } from "@/api/types";
+import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
 import {
-  transformAttendanceTypeToApi,
-  transformPriorityToApi,
-} from "@/utils/apiTransformers";
+  useCreateAttendance,
+  useCheckInAttendance,
+} from "@/hooks/useAttendanceQueries";
+import { useUpdatePatient } from "@/hooks/usePatientQueries";
+
+import { transformPriorityToApi } from "@/utils/apiTransformers";
 import { TreatmentStatus } from "@/api/types";
 import { formatPhoneNumber, formatDateForInput } from "@/utils/formHelpers";
 import ErrorDisplay from "@/components/common/ErrorDisplay";
@@ -33,9 +34,10 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const { refetch: refreshCurrentDate } = useAttendancesByDate(
-    new Date().toISOString().split("T")[0]
-  );
+  const { refreshCurrentDate } = useAttendanceManagement();
+  const createAttendanceMutation = useCreateAttendance();
+  const checkInAttendanceMutation = useCheckInAttendance();
+  const updatePatientMutation = useUpdatePatient();
 
   // Form state for patient information
   const [formData, setFormData] = useState({
@@ -97,57 +99,32 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
         treatment_status: TreatmentStatus.IN_TREATMENT, // Change status from "N" (new) to "T" (in treatment)
       };
 
-      const updateResult = await updatePatient(patient.id, updateData);
-
-      if (!updateResult.success) {
-        console.error("Patient update failed:", updateResult);
-        setError(
-          `Erro ao atualizar informações do paciente: ${
-            updateResult.error || "Erro desconhecido"
-          }`
-        );
-        return;
-      }
+      await updatePatientMutation.mutateAsync({
+        patientId: patient.id,
+        data: updateData,
+      });
 
       // Check if we have an existing attendance to check in, or need to create a new one
       if (attendanceId) {
         // Check in the existing attendance
-        const checkInResult = await checkInAttendance(attendanceId.toString());
-        if (!checkInResult.success) {
-          setError(
-            `Erro ao fazer check-in: ${
-              checkInResult.error || "Erro desconhecido"
-            }`
-          );
-          return;
-        }
+        await checkInAttendanceMutation.mutateAsync({
+          attendanceId: attendanceId,
+          patientName: formData.name.trim(),
+        });
       } else {
         // Create a new spiritual consultation attendance (default for new patients)
-        const today = new Date();
-        const now = new Date();
-
-        // Create attendance
-        const createResult = await createAttendance({
-          patient_id: parseInt(patient.id),
-          type: transformAttendanceTypeToApi("spiritual" as AttendanceType),
-          scheduled_date: today.toISOString().split("T")[0], // YYYY-MM-DD
-          scheduled_time: now.toTimeString().split(" ")[0].substring(0, 5), // HH:mm
+        const newAttendance = await createAttendanceMutation.mutateAsync({
+          patientId: parseInt(patient.id),
+          attendanceType: AttendanceType.SPIRITUAL,
+          scheduledDate: new Date().toISOString().split("T")[0], // YYYY-MM-DD
         });
 
-        if (createResult.success && createResult.value?.id) {
-          // Immediately check in the new attendance
-          const checkInResult = await checkInAttendance(
-            createResult.value.id.toString()
-          );
-          if (!checkInResult.success) {
-            console.warn(
-              `Failed to check in attendance ${createResult.value.id}:`,
-              checkInResult.error
-            );
-          }
-        } else {
-          setError("Erro ao criar atendimento. Tente novamente.");
-          return;
+        // Immediately check in the new attendance if created successfully
+        if (newAttendance?.id) {
+          await checkInAttendanceMutation.mutateAsync({
+            attendanceId: newAttendance.id,
+            patientName: formData.name.trim(),
+          });
         }
       }
 

@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "analyze": "ANALYZE=true npm run build",
+    "bundle-report": "npm run analyze && echo 'Bundle reports generated at:' && echo '  Client: file://$PWD/.next/analyze/client.html' && echo '  Server: file://$PWD/.next/analyze/nodejs.html'",
+    "bundle-size": "npm run build 2>&1 | grep -A 20 'Route (app)' || true"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.5",
