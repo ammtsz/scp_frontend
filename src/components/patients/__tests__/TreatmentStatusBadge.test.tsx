@@ -4,7 +4,6 @@ import "@testing-library/jest-dom";
 import {
   TreatmentStatusBadge,
   PatientStatusOverview,
-  TreatmentProgressBar,
 } from "../TreatmentStatusBadge";
 
 describe("TreatmentStatusBadge", () => {
@@ -51,37 +50,6 @@ describe("TreatmentStatusBadge", () => {
 
     const badge = screen.getByText("Test").parentElement;
     expect(badge).toHaveClass("custom-class");
-  });
-});
-
-describe("TreatmentProgressBar", () => {
-  test("renders progress bar with correct percentage", () => {
-    render(
-      <TreatmentProgressBar
-        current={3}
-        total={10}
-        label="Consultas realizadas"
-      />
-    );
-
-    expect(screen.getByText("Consultas realizadas")).toBeInTheDocument();
-    expect(screen.getByText("3/10")).toBeInTheDocument();
-  });
-
-  test("handles zero total correctly", () => {
-    render(
-      <TreatmentProgressBar current={0} total={0} label="Sem consultas" />
-    );
-
-    expect(screen.getByText("0/0")).toBeInTheDocument();
-  });
-
-  test("renders 100% progress correctly", () => {
-    render(
-      <TreatmentProgressBar current={5} total={5} label="Tratamento completo" />
-    );
-
-    expect(screen.getByText("5/5")).toBeInTheDocument();
   });
 });
 

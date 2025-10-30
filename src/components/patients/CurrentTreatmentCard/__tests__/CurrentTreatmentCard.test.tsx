@@ -1,16 +1,25 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "../../../test/testUtils";
-import { CurrentTreatmentCard } from "../CurrentTreatmentCard";
+import { render, screen, fireEvent, waitFor } from "../../../../test/testUtils";
+import { CurrentTreatmentCard } from "..";
 import { Patient } from "@/types/types";
 import {
   useTreatmentSessions,
   useDeleteTreatmentSession,
-} from "../../../hooks/useTreatmentSessionsQueries";
-import { useTreatmentRecords } from "../../../hooks/useTreatmentRecords";
+} from "../../../../hooks/useTreatmentSessionsQueries";
+import { useTreatmentRecords } from "../../../../hooks/useTreatmentRecords";
 
 // Mock the React Query hook
-jest.mock("../../../hooks/usePatientQueries", () => ({
+jest.mock("../../../../hooks/usePatientQueries", () => ({
   useUpdatePatient: jest.fn(() => ({
+    mutate: jest.fn(),
+    isPending: false,
+    error: null,
+  })),
+}));
+
+// Mock the attendance queries
+jest.mock("../../../../hooks/useAttendanceQueries", () => ({
+  useCreateAttendance: jest.fn(() => ({
     mutate: jest.fn(),
     isPending: false,
     error: null,
@@ -21,7 +30,7 @@ jest.mock("../../../hooks/usePatientQueries", () => ({
 const mockMutateAsync = jest.fn();
 const mockRefetch = jest.fn();
 
-jest.mock("../../../hooks/useTreatmentSessionsQueries", () => ({
+jest.mock("../../../../hooks/useTreatmentSessionsQueries", () => ({
   useTreatmentSessions: jest.fn(() => ({
     treatmentSessions: [],
     loading: false,
@@ -36,28 +45,19 @@ jest.mock("../../../hooks/useTreatmentSessionsQueries", () => ({
 }));
 
 // Mock the treatment records hook
-jest.mock("../../../hooks/useTreatmentRecords", () => ({
+jest.mock("../../../../hooks/useTreatmentRecords", () => ({
   useTreatmentRecords: jest.fn(() => ({
     data: [],
     isLoading: false,
     error: null,
   })),
   useCreateTreatmentRecord: jest.fn(() => ({
-    mutateAsync: jest.fn(),
+    mutate: jest.fn(),
     isPending: false,
     error: null,
   })),
   useUpdateTreatmentRecord: jest.fn(() => ({
-    mutateAsync: jest.fn(),
-    isPending: false,
-    error: null,
-  })),
-}));
-
-// Mock attendance queries hooks
-jest.mock("../../../hooks/useAttendanceQueries", () => ({
-  useCreateAttendance: jest.fn(() => ({
-    mutateAsync: jest.fn(),
+    mutate: jest.fn(),
     isPending: false,
     error: null,
   })),
@@ -274,9 +274,9 @@ describe("CurrentTreatmentCard", () => {
     it("shows delete error when deletion fails", () => {
       // Mock the hook to return an error state
       (useDeleteTreatmentSession as jest.Mock).mockReturnValue({
-        mutateAsync: mockMutateAsync,
         isPending: false,
         error: { message: "Erro ao remover sessão" },
+        mutateAsync: mockMutateAsync,
       });
 
       render(<CurrentTreatmentCard patient={mockPatient} />);
@@ -292,9 +292,9 @@ describe("CurrentTreatmentCard", () => {
     it("disables delete buttons when deletion is in progress", () => {
       // Mock the hook to return deleting state
       (useDeleteTreatmentSession as jest.Mock).mockReturnValue({
-        mutateAsync: mockMutateAsync,
         isPending: true,
         error: null,
+        mutateAsync: mockMutateAsync,
       });
 
       // Mock the hook to return treatment sessions
@@ -328,9 +328,9 @@ describe("CurrentTreatmentCard", () => {
 
       // Ensure delete hook is not in deleting state
       (useDeleteTreatmentSession as jest.Mock).mockReturnValue({
-        mutateAsync: mockMutateAsync,
         isPending: false,
         error: null,
+        mutateAsync: mockMutateAsync,
       });
 
       render(<CurrentTreatmentCard patient={mockPatient} />);

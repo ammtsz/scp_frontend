@@ -102,4 +102,47 @@ export const getNextAvailableDate = async (): Promise<string> => {
   return nextTuesday.toISOString().split('T')[0];
 };
 
-// Future: Implement date calculations for scheduling and history as needed
+/**
+ * Safe date formatting that handles both Date objects and string dates
+ * @param date - Date object or string date
+ * @returns Formatted date string in DD/MM/YYYY format or error message
+ */
+export const formatDateSafe = (date: Date | string): string => {
+  try {
+    // Handle both Date objects and string dates
+    const dateObj = date instanceof Date ? date : new Date(date);
+
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) {
+      return "Data inválida";
+    }
+
+    return formatDateBR(dateObj.toISOString());
+  } catch {
+    return "Data inválida";
+  }
+};
+
+/**
+ * Calculate days until a scheduled date
+ * @param scheduledDate - Date object or string date
+ * @returns Number of days until the scheduled date (0 or positive)
+ */
+export const getDaysUntil = (scheduledDate: Date | string): number => {
+  try {
+    const today = new Date();
+    const scheduled = new Date(scheduledDate);
+
+    if (isNaN(scheduled.getTime())) {
+      return 0;
+    }
+
+    const diffTime = scheduled.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
+  } catch {
+    return 0;
+  }
+};
+
+// Future: Implement additional date calculations for scheduling and history as needed

@@ -10,7 +10,7 @@ interface TreatmentStatusBadgeProps {
 export const TreatmentStatusBadge: React.FC<TreatmentStatusBadgeProps> = ({
   isActive,
   label,
-  icon = "📋",
+  icon,
   className = "",
 }) => {
   const statusClasses = isActive
@@ -19,40 +19,9 @@ export const TreatmentStatusBadge: React.FC<TreatmentStatusBadgeProps> = ({
 
   return (
     <span className={`ds-badge ${statusClasses} ${className}`}>
-      <span>{icon}</span>
+      {icon && <span>{icon}</span>}
       <span>{label}</span>
     </span>
-  );
-};
-
-interface TreatmentProgressBarProps {
-  current: number;
-  total: number;
-  label: string;
-}
-
-export const TreatmentProgressBar: React.FC<TreatmentProgressBarProps> = ({
-  current,
-  total,
-  label,
-}) => {
-  const percentage = total > 0 ? (current / total) * 100 : 0;
-
-  return (
-    <div className="w-full">
-      <div className="flex justify-between items-center mb-1">
-        <span className="ds-text-label">{label}</span>
-        <span className="ds-text-caption">
-          {current}/{total}
-        </span>
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div
-          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-    </div>
   );
 };
 

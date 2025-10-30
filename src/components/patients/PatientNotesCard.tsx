@@ -146,13 +146,13 @@ export const PatientNotesCard: React.FC<PatientNotesCardProps> = ({
       <div className="ds-card-body">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center flex-shrink-0">
-            📝 Notas
+            Notas
           </h2>
           <button
             onClick={() => setIsAddingNote(true)}
             className="bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-2 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 flex-shrink-0"
           >
-            ✏️ Nova
+            + Adicionar
           </button>
         </div>
 
@@ -219,7 +219,7 @@ export const PatientNotesCard: React.FC<PatientNotesCardProps> = ({
               Nenhuma nota adicionada ainda.
             </p>
             <p className="ds-text-caption mt-1">
-              Clique em &quot;Nova Nota&quot; para adicionar observações
+              Clique em &quot;+ Adicionar&quot; para adicionar observações
               importantes.
             </p>
           </div>

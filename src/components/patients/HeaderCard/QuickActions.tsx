@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   PatientResponseDto,
@@ -13,6 +13,8 @@ import {
   useCheckInAttendance,
   useCompleteAttendance,
 } from "@/hooks/useAttendanceQueries";
+import TreatmentRecommendationsModal from "@/components/patients/TreatmentRecommendationsModal";
+import { convertToPatient, generatePatientSummary } from "@/utils/patientUtils";
 
 interface QuickActionsProps {
   patient: PatientResponseDto | Patient;
@@ -25,6 +27,11 @@ export default function QuickActions({
   latestAttendance,
   onAttendanceUpdate,
 }: QuickActionsProps) {
+  console.log({ latestAttendance });
+  // Modal state
+  const [isRecommendationsModalOpen, setIsRecommendationsModalOpen] =
+    useState(false);
+
   // React Query mutations for better cache management
   const createAttendanceMutation = useCreateAttendance();
   const checkInAttendanceMutation = useCheckInAttendance();
@@ -114,23 +121,23 @@ export default function QuickActions({
 
   return (
     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-      {/* Edit Patient */}
-      <Link
-        href={`/patients/${patient.id}/edit`}
-        className="inline-flex items-center justify-center px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md text-sm font-semibold transition-colors min-h-[44px] flex-1 sm:flex-none text-center"
-      >
-        ✏️ Editar
-      </Link>
-
       {/* Create New Attendance */}
       <button
-        className="ds-button-primary flex-1 sm:flex-none"
+        className="ds-button-secondary flex-1 sm:flex-none"
         onClick={handleCreateAttendance}
         disabled={createAttendanceMutation.isPending}
       >
         {createAttendanceMutation.isPending
           ? "⏳ Criando..."
           : "📅 Novo Agendamento"}
+      </button>
+
+      {/* Create Recommendations */}
+      <button
+        className="ds-button-secondary flex-1 sm:flex-none"
+        onClick={() => setIsRecommendationsModalOpen(true)}
+      >
+        📋 Criar Recomendações
       </button>
 
       {/* Check-in (only if scheduled) */}
@@ -159,171 +166,38 @@ export default function QuickActions({
         </button>
       )}
 
-      {/* Export Summary */}
-      <button
-        className="ds-button-outline flex-1 sm:flex-none"
-        onClick={handleExportSummary}
+      {/* Edit Patient */}
+      <Link
+        href={`/patients/${patient.id}/edit`}
+        className="inline-flex items-center justify-center px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md text-sm font-semibold transition-colors min-h-[44px] flex-1 sm:flex-none text-center"
       >
-        📄 Exportar
-      </button>
+        ✏️ Editar
+      </Link>
+
+      {/* Export Summary - unavailable for now */}
+      {false && (
+        <button
+          className="ds-button-outline flex-1 sm:flex-none"
+          onClick={handleExportSummary}
+        >
+          📄 Exportar
+        </button>
+      )}
+
+      {/* Treatment Recommendations Modal */}
+      {isRecommendationsModalOpen && (
+        <TreatmentRecommendationsModal
+          isOpen={isRecommendationsModalOpen}
+          onClose={() => setIsRecommendationsModalOpen(false)}
+          patient={convertToPatient(patient)}
+          onSuccess={() => {
+            setIsRecommendationsModalOpen(false);
+            if (onAttendanceUpdate) {
+              onAttendanceUpdate();
+            }
+          }}
+        />
+      )}
     </div>
   );
-}
-
-function generatePatientSummary(
-  patient: PatientResponseDto | Patient,
-  latestAttendance?: AttendanceResponseDto
-): string {
-  const now = new Date();
-  const formattedDate = now.toLocaleDateString("pt-BR");
-  const formattedTime = now.toLocaleTimeString("pt-BR");
-
-  // Type guard to check if it's a PatientResponseDto
-  const isPatientResponseDto = (
-    p: PatientResponseDto | Patient
-  ): p is PatientResponseDto => {
-    return "treatment_status" in p;
-  };
-
-  const isDto = isPatientResponseDto(patient);
-
-  return `
-RESUMO DO PACIENTE
-==================
-
-Gerado em: ${formattedDate} às ${formattedTime}
-
-INFORMAÇÕES PESSOAIS
--------------------
-Nome: ${patient.name}
-Telefone: ${patient.phone || "Não informado"}
-Prioridade: ${getPriorityLabel(patient.priority.toString())}
-${
-  isDto
-    ? `Status do Tratamento: ${getTreatmentStatusLabel(
-        patient.treatment_status
-      )}`
-    : ""
-}
-${
-  isDto && patient.birth_date
-    ? `Data de Nascimento: ${new Date(patient.birth_date).toLocaleDateString(
-        "pt-BR"
-      )}`
-    : ""
-}
-${
-  isDto
-    ? `Data de Início: ${new Date(patient.start_date).toLocaleDateString(
-        "pt-BR"
-      )}`
-    : ""
-}
-${isDto ? `Sequência de Faltas: ${patient.missing_appointments_streak}` : ""}
-
-QUEIXA PRINCIPAL
----------------
-${
-  (isDto ? patient.main_complaint : (patient as Patient).mainComplaint) ||
-  "Não informada"
-}
-
-ÚLTIMO ATENDIMENTO
------------------
-${
-  latestAttendance
-    ? `
-Tipo: ${getAttendanceTypeLabel(latestAttendance.type)}
-Status: ${getStatusLabel(latestAttendance.status)}
-Data Agendada: ${
-        latestAttendance.scheduled_date
-          ? new Date(latestAttendance.scheduled_date).toLocaleDateString(
-              "pt-BR"
-            )
-          : "Não informada"
-      }
-Observações: ${latestAttendance.notes || "Nenhuma observação"}
-`
-    : "Nenhum atendimento registrado"
-}
-
-${
-  isDto
-    ? `
-INFORMAÇÕES ADICIONAIS
----------------------
-Data de Alta: ${
-        patient.discharge_date
-          ? new Date(patient.discharge_date).toLocaleDateString("pt-BR")
-          : "Não aplicável"
-      }
-Criado em: ${new Date(patient.created_at).toLocaleDateString("pt-BR")}
-Última Atualização: ${new Date(patient.updated_at).toLocaleDateString("pt-BR")}
-`
-    : ""
-}
-
----
-Este resumo foi gerado automaticamente pelo sistema MVP Center.
-`.trim();
-}
-
-function getPriorityLabel(priority: string): string {
-  switch (priority) {
-    case "1":
-      return "Emergência (1)";
-    case "2":
-      return "Intermediária (2)";
-    case "3":
-      return "Normal (3)";
-    default:
-      return priority;
-  }
-}
-
-function getTreatmentStatusLabel(status: string): string {
-  switch (status) {
-    case "N":
-      return "Novo Paciente";
-    case "T":
-      return "Em Tratamento";
-    case "A":
-      return "Alta";
-    case "F":
-      return "Ausente";
-    default:
-      return status;
-  }
-}
-
-function getAttendanceTypeLabel(type: string): string {
-  switch (type) {
-    case "spiritual":
-      return "Consulta Espiritual";
-    case "light_bath":
-      return "Banho de Luz";
-    case "rod":
-      return "Tratamento com Bastão";
-    default:
-      return type;
-  }
-}
-
-function getStatusLabel(status: string): string {
-  switch (status) {
-    case "scheduled":
-      return "Agendado";
-    case "checked_in":
-      return "Check-in Realizado";
-    case "in_progress":
-      return "Em Atendimento";
-    case "completed":
-      return "Concluído";
-    case "cancelled":
-      return "Cancelado";
-    case "missed":
-      return "Perdido";
-    default:
-      return status;
-  }
 }

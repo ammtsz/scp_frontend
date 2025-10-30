@@ -1,41 +1,119 @@
 import React from "react";
-import { Patient, PreviousAttendance } from "@/types/types";
+import { Patient } from "@/types/types";
 import { formatDateBR } from "@/utils/dateHelpers";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { usePatientAttendances } from "@/hooks/usePatientQueries";
+import { useTreatmentSessions } from "@/hooks/useTreatmentSessionsQueries";
+import { useTreatmentRecords } from "@/hooks/useTreatmentRecords";
+import { transformAttendanceToPrevious } from "@/utils/apiTransformers";
+import { usePagination } from "@/hooks/usePagination";
+import { ShowMoreButton } from "@/components/common/ShowMoreButton";
+import {
+  groupAttendancesByDate,
+  getTreatmentTypesLabel,
+  type GroupedAttendance,
+} from "@/utils/attendanceHelpers";
+import {
+  LightBathDetails,
+  RodDetails,
+  NotesBox,
+  RecommendationsBox,
+  TreatmentDetailsContainer,
+} from "@/components/common/TreatmentDetailBoxes";
+import {
+  ErrorState,
+  AttendanceHistoryEmpty,
+} from "@/components/common/CardStates";
 
 interface AttendanceHistoryCardProps {
   patient: Patient;
-  loading?: boolean;
-  error?: string | null;
 }
 
 export const AttendanceHistoryCard: React.FC<AttendanceHistoryCardProps> = ({
   patient,
-  loading = false,
-  error = null,
 }) => {
-  const formatAttendanceDate = (date: Date | string): string => {
-    try {
-      // Handle both Date objects and string dates
-      const dateObj = date instanceof Date ? date : new Date(date);
+  // Use separate attendance query for real-time updates and better cache management
+  const {
+    data: attendancesData,
+    isLoading: attendancesLoading,
+    error: attendancesError,
+    refetch: refetchAttendances,
+  } = usePatientAttendances(patient.id);
 
-      // Check if date is valid
-      if (isNaN(dateObj.getTime())) {
-        return "Data inválida";
-      }
+  // Fetch treatment sessions for this patient
+  const {
+    treatmentSessions,
+    loading: treatmentSessionsLoading,
+    error: treatmentSessionsError,
+    refetch: refetchTreatmentSessions,
+  } = useTreatmentSessions(parseInt(patient.id));
 
-      return formatDateBR(dateObj.toISOString());
-    } catch {
-      return "Data inválida";
-    }
-  };
+  // Fetch treatment records to get recommendations data
+  const { data: treatmentRecords = [] } = useTreatmentRecords();
+
+  // Transform raw attendance data to previous attendances format
+  const enhancedPreviousAttendances = React.useMemo(() => {
+    if (!attendancesData) return patient.previousAttendances;
+
+    // Filter completed attendances and transform them
+    const completedAttendances = attendancesData
+      .filter((attendance) => attendance.status === "completed")
+      .sort(
+        (a, b) =>
+          new Date(b.scheduled_date + "T00:00:00").getTime() -
+          new Date(a.scheduled_date + "T00:00:00").getTime()
+      )
+      .map(transformAttendanceToPrevious);
+
+    return completedAttendances;
+  }, [attendancesData, patient.previousAttendances]);
+
+  // Group attendances with treatment session data
+  const groupedAttendances = React.useMemo(() => {
+    return groupAttendancesByDate(
+      enhancedPreviousAttendances,
+      treatmentSessions,
+      treatmentRecords
+    );
+  }, [enhancedPreviousAttendances, treatmentSessions, treatmentRecords]);
+
+  // Implement pagination for better performance
+  const {
+    visibleItems: visibleGroupedAttendances,
+    hasMoreItems,
+    showMore,
+    totalItems,
+    visibleCount,
+  } = usePagination({
+    items: groupedAttendances,
+    initialPageSize: 2,
+    incrementSize: 10,
+  });
+
+  // Use enhanced data if available, fallback to patient data
+  const loading = attendancesLoading || treatmentSessionsLoading;
+  const error = attendancesError?.message || treatmentSessionsError || null;
 
   return (
     <div className="ds-card">
       <div className="ds-card-body">
-        <h2 className="ds-text-heading-2 mb-4 flex items-center">
-          📋 Histórico de Atendimentos
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="ds-text-heading-2 flex items-center">
+            📋 Histórico de Atendimentos
+          </h2>
+          {!loading && (
+            <button
+              onClick={() => {
+                refetchAttendances();
+                refetchTreatmentSessions();
+              }}
+              className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded transition-colors"
+              title="Atualizar histórico"
+            >
+              🔄 Atualizar
+            </button>
+          )}
+        </div>
 
         {loading && (
           <LoadingSpinner
@@ -45,45 +123,32 @@ export const AttendanceHistoryCard: React.FC<AttendanceHistoryCardProps> = ({
         )}
 
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center">
-              <div className="text-red-500 mr-3">⚠️</div>
-              <div>
-                <p className="text-red-800 font-medium">
-                  Erro ao carregar histórico
-                </p>
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            </div>
-          </div>
+          <ErrorState
+            title="Erro ao carregar histórico"
+            message={error}
+            onRetry={() => {
+              refetchAttendances();
+              refetchTreatmentSessions();
+            }}
+          />
         )}
 
         {!loading && !error && (
           <div className="space-y-3">
-            {patient.previousAttendances.map(
-              (attendance: PreviousAttendance, index: number) => (
+            {visibleGroupedAttendances.map(
+              (groupedAttendance: GroupedAttendance, index: number) => (
                 <div
-                  key={attendance.attendanceId || `attendance-${index}`}
-                  className={`p-4 rounded-lg border ${
-                    index === 0
-                      ? "bg-blue-50 border-blue-200"
-                      : "bg-gray-50 border-gray-200"
-                  }`}
+                  key={`attendance-${groupedAttendance.date.toISOString()}-${index}`}
+                  className={`p-4 rounded-lg border bg-gray-50 border-gray-300`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`w-3 h-3 rounded-full ${
-                          index === 0 ? "bg-blue-500" : "bg-gray-400"
-                        }`}
-                      ></div>
                       <div>
                         <div className="font-medium text-gray-900">
-                          {formatAttendanceDate(attendance.date)}
+                          {formatDateBR(groupedAttendance.date.toISOString())}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {getAttendanceTypeLabel(attendance.type) ||
-                            "Tipo não especificado"}
+                          {getTreatmentTypesLabel(groupedAttendance.treatments)}
                         </div>
                       </div>
                     </div>
@@ -95,96 +160,80 @@ export const AttendanceHistoryCard: React.FC<AttendanceHistoryCardProps> = ({
                     </div>
                   </div>
 
-                  {attendance.notes && (
-                    <div className="mt-3 p-3 bg-white rounded border border-gray-200">
-                      <div className="text-sm text-gray-700">
-                        <strong>Notas:</strong> {attendance.notes}
-                      </div>
+                  {/* Notes */}
+                  {groupedAttendance.notes && (
+                    <div className="mt-3">
+                      <NotesBox notes={groupedAttendance.notes} />
                     </div>
                   )}
 
-                  {attendance.recommendations && (
-                    <div className="mt-3 p-3 bg-purple-50 rounded border border-purple-200">
-                      <div className="text-sm text-purple-900 font-medium mb-2">
-                        Recomendações:
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <strong>Alimentação:</strong>{" "}
-                          {attendance.recommendations.food ||
-                            "Não especificado"}
-                        </div>
-                        <div>
-                          <strong>Água:</strong>{" "}
-                          {attendance.recommendations.water ||
-                            "Não especificado"}
-                        </div>
-                        <div>
-                          <strong>Pomada:</strong>{" "}
-                          {attendance.recommendations.ointment ||
-                            "Não especificado"}
-                        </div>
-                        <div>
-                          <strong>Retorno:</strong>{" "}
-                          {attendance.recommendations.returnWeeks
-                            ? `${attendance.recommendations.returnWeeks} semanas`
-                            : "Não especificado"}
-                        </div>
-                      </div>
+                  {/* Treatment Details */}
+                  {(groupedAttendance.treatments.lightBath ||
+                    groupedAttendance.treatments.rod) && (
+                    <TreatmentDetailsContainer>
+                      {/* Light Bath Details */}
+                      {groupedAttendance.treatments.lightBath && (
+                        <LightBathDetails
+                          bodyLocations={
+                            groupedAttendance.treatments.lightBath.bodyLocations
+                          }
+                          color={groupedAttendance.treatments.lightBath.color}
+                          duration={
+                            groupedAttendance.treatments.lightBath.duration
+                          }
+                          sessions={
+                            groupedAttendance.treatments.lightBath.sessions
+                          }
+                          showSessions={false}
+                        />
+                      )}
+
+                      {/* Rod Details */}
+                      {groupedAttendance.treatments.rod && (
+                        <RodDetails
+                          bodyLocations={
+                            groupedAttendance.treatments.rod.bodyLocations
+                          }
+                          sessions={groupedAttendance.treatments.rod.sessions}
+                          showSessions={false}
+                        />
+                      )}
+                    </TreatmentDetailsContainer>
+                  )}
+
+                  {/* Recommendations */}
+                  {groupedAttendance.treatments.spiritual?.recommendations && (
+                    <div className="mt-3">
+                      <RecommendationsBox
+                        recommendations={
+                          groupedAttendance.treatments.spiritual.recommendations
+                        }
+                      />
                     </div>
                   )}
                 </div>
               )
             )}
+
+            {/* Show More Button */}
+            {hasMoreItems && (
+              <ShowMoreButton
+                onClick={showMore}
+                totalItems={totalItems}
+                visibleCount={visibleCount}
+                itemLabel="atendimentos"
+                disabled={loading}
+              />
+            )}
           </div>
         )}
 
-        {!loading && !error && patient.previousAttendances.length === 0 && (
-          <div className="text-center py-8">
-            <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <div className="text-2xl">📝</div>
-            </div>
-            <div className="font-medium text-gray-900 mb-2">
-              Nenhum atendimento concluído
-            </div>
-            <div className="text-sm text-gray-600 mb-4 max-w-sm mx-auto">
-              Este é um novo paciente ou ainda não possui atendimentos
-              concluídos. O histórico será exibido aqui após a conclusão dos
-              atendimentos.
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-              <div className="flex items-start gap-3">
-                <div className="text-blue-500 text-lg">💡</div>
-                <div className="text-sm">
-                  <div className="font-medium text-blue-900 mb-1">
-                    Próximos passos:
-                  </div>
-                  <div className="text-blue-800">
-                    {patient.nextAttendanceDates.length > 0
-                      ? `Próximo atendimento agendado para ${new Date(
-                          patient.nextAttendanceDates[0].date
-                        ).toLocaleDateString("pt-BR")}`
-                      : "Agendar primeiro atendimento para iniciar o tratamento"}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        {!loading && !error && totalItems === 0 && (
+          <AttendanceHistoryEmpty patient={patient} />
         )}
       </div>
     </div>
   );
 };
 
-// Helper function to translate attendance types to Portuguese
-function getAttendanceTypeLabel(type: string): string {
-  const typeLabels: Record<string, string> = {
-    spiritual: "Consulta Espiritual",
-    lightBath: "Banho de Luz",
-    light_bath: "Banho de Luz",
-    rod: "Tratamento com Bastão",
-    combined: "Tratamento Combinado",
-  };
-
-  return typeLabels[type] || type;
-}
+// Helper function to get treatment types label from grouped attendance

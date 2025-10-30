@@ -119,7 +119,7 @@ export const transformSinglePatientFromApi = (apiPatient: PatientResponseDto): P
 export const transformAttendanceToPrevious = (apiAttendance: AttendanceResponseDto): PreviousAttendance => {
   return {
     attendanceId: apiAttendance.id.toString(),
-    date: new Date(apiAttendance.scheduled_date),
+    date: new Date(apiAttendance.scheduled_date + 'T00:00:00'), // Timezone-agnostic: parse as local time
     type: transformAttendanceType(apiAttendance.type),
     notes: apiAttendance.notes || '',
     recommendations: null // TODO: We need to implement recommendations mapping when backend provides this data
@@ -129,7 +129,7 @@ export const transformAttendanceToPrevious = (apiAttendance: AttendanceResponseD
 // Transform attendance API data to next attendance format
 export const transformAttendanceToNext = (apiAttendance: AttendanceResponseDto): { date: Date, type: AttendanceType } => {
   return {
-    date: new Date(apiAttendance.scheduled_date),
+    date: new Date(apiAttendance.scheduled_date + 'T00:00:00'), // Timezone-agnostic: parse as local time
     type: transformAttendanceType(apiAttendance.type)
   };
 };
@@ -152,7 +152,7 @@ export const transformPatientWithAttendances = (
   // Filter completed attendances and transform them
   const previousAttendances = attendances
     .filter(attendance => attendance.status === 'completed')
-    .sort((a, b) => new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime())
+    .sort((a, b) => new Date(b.scheduled_date + 'T00:00:00').getTime() - new Date(a.scheduled_date + 'T00:00:00').getTime())
     .map(transformAttendanceToPrevious);
   
   // Filter future attendances (scheduled, checked_in, in_progress) and transform them
@@ -162,12 +162,12 @@ export const transformPatientWithAttendances = (
   const nextAttendanceDates = attendances
     .filter(attendance => {
       const isNotCompleted = ['scheduled', 'checked_in', 'in_progress'].includes(attendance.status);
-      const attendanceDate = new Date(attendance.scheduled_date);
+      const attendanceDate = new Date(attendance.scheduled_date + 'T00:00:00');
       attendanceDate.setHours(0, 0, 0, 0);
       const isFuture = attendanceDate >= currentDate;
       return isNotCompleted && isFuture;
     })
-    .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime())
+    .sort((a, b) => new Date(a.scheduled_date + 'T00:00:00').getTime() - new Date(b.scheduled_date + 'T00:00:00').getTime())
     .map(transformAttendanceToNext);
     
   return {

@@ -7,7 +7,7 @@ import {
   LazyHeaderCard,
   LazyCurrentTreatmentCard,
   LazyAttendanceHistoryCard,
-  LazyFutureAppointmentsCard,
+  LazyScheduledAttendancesCard,
   LazyPatientNotesCard,
   LazyPatientStatusOverview,
   LazyComponentWrapper,
@@ -178,16 +178,12 @@ export default function PatientDetailPage() {
             </LazyComponentWrapper>
 
             <LazyComponentWrapper>
-              <LazyFutureAppointmentsCard patient={patient} />
+              <LazyScheduledAttendancesCard patient={patient} />
             </LazyComponentWrapper>
           </div>
 
           {/* Desktop: Right Sidebar */}
           <div className="hidden xl:block order-3 space-y-4 sm:space-y-6">
-            <LazyComponentWrapper>
-              <LazyPatientNotesCard patientId={patient.id} />
-            </LazyComponentWrapper>
-
             <LazyComponentWrapper>
               <LazyPatientStatusOverview
                 priority={patient.priority}
@@ -205,6 +201,10 @@ export default function PatientDetailPage() {
                     : "Não agendado"
                 }
               />
+            </LazyComponentWrapper>
+
+            <LazyComponentWrapper>
+              <LazyPatientNotesCard patientId={patient.id} />
             </LazyComponentWrapper>
           </div>
         </div>

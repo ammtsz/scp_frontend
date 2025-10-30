@@ -17,7 +17,6 @@ describe("TreatmentProgressBar", () => {
 
       expect(screen.getByText("100%")).toBeInTheDocument();
       expect(screen.getByText("Tratamento Concluído")).toBeInTheDocument();
-      expect(screen.getByText("✅")).toBeInTheDocument();
       expect(screen.getByText("Concluído")).toBeInTheDocument();
     });
 
@@ -26,7 +25,6 @@ describe("TreatmentProgressBar", () => {
 
       expect(screen.getByText("0%")).toBeInTheDocument();
       expect(screen.getByText("Tratamento Iniciado")).toBeInTheDocument();
-      expect(screen.getByText("🚀")).toBeInTheDocument();
     });
 
     it("handles zero total sessions", () => {
@@ -46,7 +44,7 @@ describe("TreatmentProgressBar", () => {
         />
       );
 
-      const progressContainer = container.querySelector(".bg-yellow-100");
+      const progressContainer = container.querySelector(".bg-yellow-100\\/80");
       expect(progressContainer).toBeInTheDocument();
     });
 
@@ -55,7 +53,7 @@ describe("TreatmentProgressBar", () => {
         <TreatmentProgressBar completed={2} total={5} treatmentType="rod" />
       );
 
-      const progressContainer = container.querySelector(".bg-purple-100");
+      const progressContainer = container.querySelector(".bg-blue-100\\/80");
       expect(progressContainer).toBeInTheDocument();
     });
 
@@ -95,33 +93,6 @@ describe("TreatmentProgressBar", () => {
 
       expect(container.querySelector(".h-4")).toBeInTheDocument();
       expect(container.querySelector(".text-base")).toBeInTheDocument();
-    });
-  });
-
-  describe("Status Emojis", () => {
-    it("shows rocket emoji for early progress (0-25%)", () => {
-      render(<TreatmentProgressBar completed={1} total={10} />);
-      expect(screen.getByText("🚀")).toBeInTheDocument();
-    });
-
-    it("shows cycle emoji for 25-50% progress", () => {
-      render(<TreatmentProgressBar completed={3} total={10} />);
-      expect(screen.getByText("🔄")).toBeInTheDocument();
-    });
-
-    it("shows chart emoji for 50-75% progress", () => {
-      render(<TreatmentProgressBar completed={6} total={10} />);
-      expect(screen.getByText("📈")).toBeInTheDocument();
-    });
-
-    it("shows target emoji for 75-99% progress", () => {
-      render(<TreatmentProgressBar completed={8} total={10} />);
-      expect(screen.getByText("🎯")).toBeInTheDocument();
-    });
-
-    it("shows checkmark emoji for 100% completion", () => {
-      render(<TreatmentProgressBar completed={10} total={10} />);
-      expect(screen.getByText("✅")).toBeInTheDocument();
     });
   });
 
@@ -197,9 +168,9 @@ describe("TreatmentProgressBar", () => {
       expect(screen.getByText("Concluído")).toBeInTheDocument();
     });
 
-    it("hides milestone indicators for treatments with less than 5 sessions", () => {
+    it("hides milestone indicators for treatments with less than 2 sessions", () => {
       const { container } = render(
-        <TreatmentProgressBar completed={1} total={3} />
+        <TreatmentProgressBar completed={1} total={1} />
       );
 
       // Should not have milestone indicators

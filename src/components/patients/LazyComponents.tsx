@@ -20,9 +20,9 @@ export const LazyAttendanceHistoryCard = React.lazy(() =>
   }))
 );
 
-export const LazyFutureAppointmentsCard = React.lazy(() =>
-  import("@/components/patients/FutureAppointmentsCard").then((module) => ({
-    default: module.FutureAppointmentsCard,
+export const LazyScheduledAttendancesCard = React.lazy(() =>
+  import("@/components/patients/ScheduledAttendancesCard").then((module) => ({
+    default: module.ScheduledAttendancesCard,
   }))
 );
 

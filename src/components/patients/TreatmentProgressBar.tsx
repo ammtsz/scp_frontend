@@ -40,17 +40,19 @@ export const TreatmentProgressBar: React.FC<TreatmentProgressBarProps> = ({
     switch (treatmentType) {
       case "light_bath":
         return {
-          bg: "bg-yellow-100",
+          bg: "bg-white/80",
           fill: "bg-yellow-500",
+          fillBg: "bg-yellow-100/80",
           text: "text-yellow-700",
-          border: "border-yellow-200",
+          border: "border-yellow-100",
         };
       case "rod":
         return {
-          bg: "bg-purple-100",
-          fill: "bg-purple-500",
-          text: "text-purple-700",
-          border: "border-purple-200",
+          bg: "bg-white/80",
+          fill: "bg-blue-500",
+          fillBg: "bg-blue-100/80",
+          text: "text-blue-700",
+          border: "border-blue-100",
         };
       default: // spiritual
         return {
@@ -96,23 +98,6 @@ export const TreatmentProgressBar: React.FC<TreatmentProgressBarProps> = ({
     return `Sessão ${safeCompleted} de ${safeTotal}`;
   };
 
-  // Status emoji based on progress
-  const getStatusEmoji = () => {
-    if (completed === total && total > 0) {
-      return "✅";
-    }
-    if (progressPercentage >= 75) {
-      return "🎯";
-    }
-    if (progressPercentage >= 50) {
-      return "📈";
-    }
-    if (progressPercentage >= 25) {
-      return "🔄";
-    }
-    return "🚀";
-  };
-
   return (
     <div
       className={`${colors.bg} ${colors.border} border rounded-lg ${config.padding}`}
@@ -122,7 +107,6 @@ export const TreatmentProgressBar: React.FC<TreatmentProgressBarProps> = ({
         <div
           className={`font-medium ${colors.text} ${config.text} flex items-center gap-1`}
         >
-          <span>{getStatusEmoji()}</span>
           <span>{getStatusText()}</span>
         </div>
         <div className={`${colors.text} ${config.text} font-semibold`}>
@@ -131,45 +115,17 @@ export const TreatmentProgressBar: React.FC<TreatmentProgressBarProps> = ({
       </div>
 
       {/* Progress bar */}
-      <div className={`w-full ${colors.bg} rounded-full ${config.height} mb-2`}>
+      <div
+        className={`w-full ${colors.fillBg} rounded-full ${config.height} mb-2`}
+      >
         <div
           className={`${colors.fill} ${config.height} rounded-full transition-all duration-300 ease-in-out`}
           style={{ width: `${progressPercentage}%` }}
         />
       </div>
 
-      {/* Session details */}
-      {showDetails && sessionDetails && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {sessionDetails.upcoming > 0 && (
-            <div
-              className={`${config.text} text-gray-600 flex items-center gap-1`}
-            >
-              <span>📅</span>
-              <span>{sessionDetails.upcoming} agendadas</span>
-            </div>
-          )}
-          {sessionDetails.missed && sessionDetails.missed > 0 && (
-            <div
-              className={`${config.text} text-orange-600 flex items-center gap-1`}
-            >
-              <span>⚠️</span>
-              <span>{sessionDetails.missed} perdidas</span>
-            </div>
-          )}
-          {sessionDetails.cancelled && sessionDetails.cancelled > 0 && (
-            <div
-              className={`${config.text} text-red-600 flex items-center gap-1`}
-            >
-              <span>❌</span>
-              <span>{sessionDetails.cancelled} canceladas</span>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Milestone indicators */}
-      {safeTotal >= 5 && (
+      {safeTotal >= 2 && (
         <div className="flex justify-between mt-2 text-xs text-gray-500">
           <span
             className={
@@ -205,6 +161,36 @@ export const TreatmentProgressBar: React.FC<TreatmentProgressBarProps> = ({
           >
             Concluído
           </span>
+        </div>
+      )}
+
+      {/* Session details */}
+      {showDetails && sessionDetails && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {sessionDetails.upcoming > 0 ? (
+            <div
+              className={`${config.text} text-gray-600 flex items-center gap-1`}
+            >
+              <span>📅</span>
+              <span>{sessionDetails.upcoming} agendadas</span>
+            </div>
+          ) : null}
+          {sessionDetails.missed && sessionDetails.missed > 0 ? (
+            <div
+              className={`${config.text} text-orange-600 flex items-center gap-1`}
+            >
+              <span>⚠️</span>
+              <span>{sessionDetails.missed} perdidas</span>
+            </div>
+          ) : null}
+          {sessionDetails.cancelled && sessionDetails.cancelled > 0 ? (
+            <div
+              className={`${config.text} text-red-600 flex items-center gap-1`}
+            >
+              <span>❌</span>
+              <span>{sessionDetails.cancelled} canceladas</span>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

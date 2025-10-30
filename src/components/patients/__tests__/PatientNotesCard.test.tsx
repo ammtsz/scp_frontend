@@ -74,7 +74,7 @@ describe("PatientNotesCard", () => {
 
     expect(
       screen.getByText(
-        'Clique em "Nova Nota" para adicionar observações importantes.'
+        'Clique em "+ Adicionar" para adicionar observações importantes.'
       )
     ).toBeInTheDocument();
   });
@@ -122,11 +122,11 @@ describe("PatientNotesCard", () => {
     render(<PatientNotesCard {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText("✏️ Nova")).toBeInTheDocument();
+      expect(screen.getByText("+ Adicionar")).toBeInTheDocument();
     });
 
-    // Click "Nova Nota" button
-    fireEvent.click(screen.getByText("✏️ Nova"));
+    // Click "+ Adicionar" button
+    fireEvent.click(screen.getByText("+ Adicionar"));
 
     // Form should appear
     expect(screen.getByPlaceholderText("Digite a nota...")).toBeInTheDocument();
@@ -263,11 +263,11 @@ describe("PatientNotesCard", () => {
     render(<PatientNotesCard {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText("✏️ Nova")).toBeInTheDocument();
+      expect(screen.getByText("+ Adicionar")).toBeInTheDocument();
     });
 
-    // Click "Nova Nota" button
-    fireEvent.click(screen.getByText("✏️ Nova"));
+    // Click "+ Adicionar" button
+    fireEvent.click(screen.getByText("+ Adicionar"));
 
     // Submit button should be disabled when content is empty
     const submitButton = screen.getByText("Salvar Nota");
@@ -288,11 +288,11 @@ describe("PatientNotesCard", () => {
     render(<PatientNotesCard {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText("✏️ Nova")).toBeInTheDocument();
+      expect(screen.getByText("+ Adicionar")).toBeInTheDocument();
     });
 
-    // Click "Nova Nota" button
-    fireEvent.click(screen.getByText("✏️ Nova"));
+    // Click "+ Adicionar" button
+    fireEvent.click(screen.getByText("+ Adicionar"));
 
     // Character count should start at 0
     expect(screen.getByText("0/2000 caracteres")).toBeInTheDocument();
