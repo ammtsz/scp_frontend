@@ -65,7 +65,7 @@ describe("TreatmentSessionCard", () => {
 
     expect(screen.getByText("Cabeça")).toBeInTheDocument();
     expect(screen.getByText("azul")).toBeInTheDocument();
-    expect(screen.getByText("30min")).toBeInTheDocument();
+    expect(screen.getByText("30 unidades")).toBeInTheDocument();
     expect(screen.getByTestId("progress-bar")).toHaveTextContent("3/10");
     expect(screen.getByTestId("completion-badge")).toHaveTextContent("30%");
   });

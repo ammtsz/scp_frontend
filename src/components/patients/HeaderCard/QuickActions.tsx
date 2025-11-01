@@ -27,7 +27,6 @@ export default function QuickActions({
   latestAttendance,
   onAttendanceUpdate,
 }: QuickActionsProps) {
-  console.log({ latestAttendance });
   // Modal state
   const [isRecommendationsModalOpen, setIsRecommendationsModalOpen] =
     useState(false);
@@ -120,10 +119,10 @@ export default function QuickActions({
     latestAttendance?.status === "in_progress";
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+    <div className="flex flex-col justify-center md:flex-row gap-2 w-full sm:w-auto">
       {/* Create New Attendance */}
       <button
-        className="ds-button-secondary flex-1 sm:flex-none"
+        className="button ds-button-secondary flex-1 text-nowrap"
         onClick={handleCreateAttendance}
         disabled={createAttendanceMutation.isPending}
       >
@@ -134,7 +133,7 @@ export default function QuickActions({
 
       {/* Create Recommendations */}
       <button
-        className="ds-button-secondary flex-1 sm:flex-none"
+        className="button ds-button-secondary flex-1 text-nowrap"
         onClick={() => setIsRecommendationsModalOpen(true)}
       >
         📋 Criar Recomendações
@@ -143,7 +142,7 @@ export default function QuickActions({
       {/* Check-in (only if scheduled) */}
       {canCheckIn && (
         <button
-          className="ds-button-success flex-1 sm:flex-none"
+          className="button ds-button-success flex-1 text-nowrap"
           onClick={handleCheckIn}
           disabled={checkInAttendanceMutation.isPending}
         >
@@ -156,7 +155,7 @@ export default function QuickActions({
       {/* Complete Attendance (only if checked in or ongoing) */}
       {canComplete && (
         <button
-          className="ds-button-success flex-1 sm:flex-none"
+          className="button ds-button-success flex-1 text-nowrap"
           onClick={handleCompleteAttendance}
           disabled={completeAttendanceMutation.isPending}
         >
@@ -169,7 +168,7 @@ export default function QuickActions({
       {/* Edit Patient */}
       <Link
         href={`/patients/${patient.id}/edit`}
-        className="inline-flex items-center justify-center px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md text-sm font-semibold transition-colors min-h-[44px] flex-1 sm:flex-none text-center"
+        className="button bg-blue-100 text-blue-700 hover:bg-blue-200  transition-colors min-h-[44px] flex-1 text-nowrap"
       >
         ✏️ Editar
       </Link>
@@ -177,7 +176,7 @@ export default function QuickActions({
       {/* Export Summary - unavailable for now */}
       {false && (
         <button
-          className="ds-button-outline flex-1 sm:flex-none"
+          className="button ds-button-outline flex-1 text-nowrap"
           onClick={handleExportSummary}
         >
           📄 Exportar

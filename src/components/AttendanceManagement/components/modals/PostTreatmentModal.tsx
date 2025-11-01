@@ -282,7 +282,7 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
                                 )}`}
                               >
                                 {card.treatmentType === "light_bath"
-                                  ? "💡"
+                                  ? "✨"
                                   : "🔸"}
                               </span>
                               <h3 className="font-semibold text-lg text-gray-900">

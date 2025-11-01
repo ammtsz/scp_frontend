@@ -47,7 +47,7 @@ interface WalkInFormData {
 const attendanceTypes = [
   { value: "spiritual", label: "Consulta Espiritual" },
   { value: "lightBath", label: "Banho de Luz" },
-  { value: "rod", label: "Varitas" },
+  { value: "rod", label: "Bastão" },
 ];
 
 const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({

@@ -138,7 +138,7 @@ describe("CurrentTreatmentCard", () => {
     expect(screen.getByText("🧴 Pomada:")).toBeInTheDocument();
     expect(screen.getByText("✨ Banho de luz:")).toBeInTheDocument();
     expect(screen.getByText("🪄 Bastão:")).toBeInTheDocument();
-    expect(screen.getByText("🧬 Trat. Espiritual:")).toBeInTheDocument();
+    expect(screen.getByText("🥼 Trat. Espiritual:")).toBeInTheDocument();
   });
 
   it("displays recommendation values correctly", () => {
@@ -414,7 +414,7 @@ describe("CurrentTreatmentCard", () => {
       expect(rodElement).toHaveTextContent("nenhuma");
 
       const spiritualTreatmentElement = screen
-        .getByText("🧬 Trat. Espiritual:")
+        .getByText("🥼 Trat. Espiritual:")
         .closest("div");
       expect(spiritualTreatmentElement).toHaveTextContent("Sim");
     });

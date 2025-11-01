@@ -123,7 +123,7 @@ export const SpiritualConsultationDetails: React.FC<
 > = ({ description }) => (
   <DetailBox variant="spiritual">
     <div className="flex items-center gap-2">
-      <span className="text-purple-600">🔮</span>
+      <span className="text-purple-600">🥼</span>
       <div className="font-medium text-purple-800">Consulta Espiritual</div>
     </div>
     {description && (
@@ -182,7 +182,7 @@ export const RecommendationsBox: React.FC<RecommendationsBoxProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
         {recommendations.food && (
           <div className="flex items-start justify-between p-2 bg-white rounded border border-purple-200">
-            <span className="text-gray-600 font-medium text-nowrap text-nowrap">
+            <span className="text-gray-600 font-medium text-nowrap">
               🍎 Alimentação:
             </span>
             <span className="text-gray-800 ml-2 text-right">
@@ -234,7 +234,7 @@ export const RecommendationsBox: React.FC<RecommendationsBoxProps> = ({
         {recommendations.spiritualTreatment && (
           <div className="flex items-start justify-between p-2 bg-white rounded border border-purple-200">
             <span className="text-gray-600 font-medium text-nowrap">
-              🧬 Trat. Espiritual:
+              �️ Trat. Espiritual:
             </span>
             <span className="text-gray-800 ml-2 text-right">Recomendado</span>
           </div>

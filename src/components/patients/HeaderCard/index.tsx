@@ -61,7 +61,7 @@ export const HeaderCard: React.FC<HeaderCardProps> = ({
   return (
     <div className="ds-card mb-6">
       <div className="ds-card-body">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className="flex flex-col gap-8">
           {/* Patient Basic Info */}
           <div className="flex-1">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">

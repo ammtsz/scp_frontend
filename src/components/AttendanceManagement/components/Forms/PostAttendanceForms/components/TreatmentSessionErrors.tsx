@@ -30,7 +30,7 @@ const TreatmentSessionErrors: React.FC<TreatmentSessionErrorsProps> = ({
   customMessage,
 }) => {
   const getTreatmentIcon = (type: "light_bath" | "rod"): string => {
-    return type === "light_bath" ? "💡" : "🔮";
+    return type === "light_bath" ? "✨" : "🪄";
   };
 
   const getTreatmentName = (type: "light_bath" | "rod"): string => {
@@ -127,7 +127,7 @@ const TreatmentSessionErrors: React.FC<TreatmentSessionErrorsProps> = ({
       {/* Recommendations */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg">💡</span>
+          <span className="text-lg">✨</span>
           <h3 className="font-semibold text-yellow-800">Recomendações</h3>
         </div>
         <ul className="text-sm text-yellow-700 space-y-1">
@@ -163,7 +163,7 @@ const TreatmentSessionErrors: React.FC<TreatmentSessionErrorsProps> = ({
 
       {/* Footer Note */}
       <div className="mt-4 text-center text-xs text-gray-500">
-        💡 O registro de tratamento foi salvo com sucesso. Apenas os
+        ✨ O registro de tratamento foi salvo com sucesso. Apenas os
         agendamentos automáticos apresentaram problemas.
       </div>
     </div>

@@ -118,19 +118,19 @@ export const colors = {
       bg: '#f3e8ff',       // purple-50
       text: '#6b21a8',     // purple-800
       border: '#c4b5fd',   // purple-200
-      icon: '🔮'
+      icon: '🥼'
     },
     lightBath: {
       bg: '#fffbeb',       // yellow-50
       text: '#92400e',     // yellow-800
       border: '#fde68a',   // yellow-200
-      icon: '💡'
+      icon: '✨'
     },
     rod: {
-      bg: '#f3e8ff',       // purple-50
-      text: '#6b21a8',     // purple-800
-      border: '#c4b5fd',   // purple-200
-      icon: '⚡'
+      bg: '#eff6ff',       // blue-50
+      text: '#193cb8',     // blue-800
+      border: '#bedbff',   // blue-200
+      icon: '🪄'
     },
   },
 

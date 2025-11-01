@@ -216,56 +216,53 @@ export const groupScheduledAttendancesByDate = (
       };
     }
   });
-
+  
   // Then, enhance with treatment session data for scheduled/future sessions
-  treatmentSessions.forEach((session) => {
-    const sessionDate = new Date(session.start_date + "T00:00:00"); // Timezone-agnostic: parse as local time
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Only include future/scheduled sessions
-    if (
-      sessionDate >= today &&
-      (session.status === "scheduled" || session.status === "active")
-    ) {
-      const dateKey = session.start_date;
-
-      // Find or create attendance for this date
-      let grouped = attendanceMap.get(dateKey);
-      if (!grouped) {
-        grouped = {
-          date: new Date(session.start_date + "T00:00:00"), // Timezone-agnostic: parse as local time
-          attendanceId: session.attendance_id.toString(),
-          notes: "",
-          treatments: {},
-        };
-        attendanceMap.set(dateKey, grouped);
-      }
-
-      // Add treatment session data
-      if (session.treatment_type === "light_bath") {
-        if (!grouped.treatments.lightBath) {
-          grouped.treatments.lightBath = {
-            bodyLocations: [],
-            color: session.color,
-            duration: session.duration_minutes,
-            sessions: 0,
-          };
+  treatmentSessions.forEach((treatment) => {
+    treatment.sessionRecords?.forEach((session) => {
+      
+      const sessionDate = new Date(session.scheduled_date); // Timezone-agnostic: parse as local time
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+  
+      // Only include future/scheduled sessions
+      if (
+        sessionDate >= today &&
+        (session.status === "scheduled")
+      ) {
+        const dateKey = sessionDate.toISOString().split("T")[0];
+  
+        // Find or create attendance for this date
+        const grouped = attendanceMap.get(dateKey);
+        if (grouped) {
+          if (treatment.treatment_type === "light_bath") {
+            if (!grouped.treatments.lightBath) {
+              grouped.treatments.lightBath = {
+                bodyLocations: [],
+                color: treatment.color,
+                duration: treatment.duration_minutes,
+                sessions: 0,
+              };
+            }
+            grouped.treatments.lightBath.bodyLocations.push(treatment.body_location);
+            grouped.treatments.lightBath.sessions += treatment.planned_sessions;
+          } else if (treatment.treatment_type === "rod") {
+            if (!grouped.treatments.rod) {
+              grouped.treatments.rod = {
+                bodyLocations: [],
+                sessions: 0,
+              };
+            }
+            grouped.treatments.rod.bodyLocations.push(treatment.body_location);
+            grouped.treatments.rod.sessions += treatment.planned_sessions;
+          }
         }
-        grouped.treatments.lightBath.bodyLocations.push(session.body_location);
-        grouped.treatments.lightBath.sessions += session.planned_sessions;
-      } else if (session.treatment_type === "rod") {
-        if (!grouped.treatments.rod) {
-          grouped.treatments.rod = {
-            bodyLocations: [],
-            sessions: 0,
-          };
-        }
-        grouped.treatments.rod.bodyLocations.push(session.body_location);
-        grouped.treatments.rod.sessions += session.planned_sessions;
+  
+        // Add treatment session data
       }
-    }
+    });
   });
+
 
   return Array.from(attendanceMap.values()).sort(
     (a, b) => a.date.getTime() - b.date.getTime()

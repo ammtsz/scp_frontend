@@ -14,7 +14,7 @@ Successfully implemented **Option A: Treatment Session Confirmation** providing 
   - Success state with personalized messaging
   - Statistics summary (series created, appointments scheduled)
   - Treatment type grouping (Light Bath vs Rod)
-  - Visual indicators with emoji icons (💡 for Light Bath, 🔮 for Rod)
+  - Visual indicators with emoji icons (✨ for Light Bath, 🪄 for Rod)
   - Color-coded badges and duration display
   - Scheduled appointment dates preview
   - Automatic Tuesday scheduling information
@@ -55,8 +55,8 @@ Successfully implemented **Option A: Treatment Session Confirmation** providing 
 
 ### Treatment Type Indicators
 
-- **Light Bath**: 💡 emoji icon with yellow background badges
-- **Rod**: 🔮 emoji icon with purple background badges
+- **Light Bath**: ✨ emoji icon with yellow background badges
+- **Rod**: 🪄 emoji icon with purple background badges
 - **Color coding**: Light bath sessions show color swatches and duration
 - **Consistent styling**: Rounded badges with appropriate contrast
 

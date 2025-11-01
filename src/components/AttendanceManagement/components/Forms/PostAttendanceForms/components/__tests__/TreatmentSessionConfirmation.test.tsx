@@ -85,7 +85,7 @@ describe("TreatmentSessionConfirmation", () => {
     );
 
     // Check treatment type badge
-    expect(screen.getByText("💡 Banho de Luz")).toBeInTheDocument();
+    expect(screen.getByText("✨ Banho de Luz")).toBeInTheDocument();
 
     // Check body location
     expect(screen.getByText("Cabeça")).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe("TreatmentSessionConfirmation", () => {
     );
 
     // Check treatment type badge
-    expect(screen.getByText("🔮 Bastão")).toBeInTheDocument();
+    expect(screen.getByText("🪄 Bastão")).toBeInTheDocument();
 
     // Check body location
     expect(screen.getByText("Coluna")).toBeInTheDocument();

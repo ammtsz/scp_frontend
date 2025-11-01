@@ -228,14 +228,14 @@ const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({
         <button
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50"
+          className="button flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          className="button flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
           {isSubmitting ? "Processando..." : "Fazer Check-in"}
         </button>

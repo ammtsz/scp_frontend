@@ -51,6 +51,7 @@ export interface AttendanceStatusDetail {
   completedTime?: string | null;
   // Backend sync data
   attendanceId?: number;
+  treatmentAttendanceIds?: number[];
   patientId?: number;
 }
 

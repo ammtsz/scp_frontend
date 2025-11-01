@@ -6,20 +6,22 @@ interface TreatmentStatusOverviewProps {
   patient: Patient;
 }
 
-const getTreatmentTitle = (type: AttendanceType): { title: string; icon: string } => {
+const getTreatmentTitle = (
+  type: AttendanceType
+): { title: string; icon: string } => {
   const treatmentTitles = {
-    spiritual: { title: "Consulta Espiritual", icon: "🔮" },
-    lightBath: { title: "Banho de Luz", icon: "💡" },
-    rod: { title: "Bastão", icon: "⚡" },
+    spiritual: { title: "Consulta Espiritual", icon: "🥼" },
+    lightBath: { title: "Banho de Luz", icon: "✨" },
+    rod: { title: "Bastão", icon: "🪄" },
     combined: { title: "Tratamento Combinado", icon: "✨" },
   };
 
   return treatmentTitles[type] || treatmentTitles.spiritual;
 };
 
-export const TreatmentStatusOverview: React.FC<TreatmentStatusOverviewProps> = ({
-  patient,
-}) => {
+export const TreatmentStatusOverview: React.FC<
+  TreatmentStatusOverviewProps
+> = ({ patient }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
       <div className="bg-blue-50 p-4 rounded-lg">
@@ -32,7 +34,7 @@ export const TreatmentStatusOverview: React.FC<TreatmentStatusOverviewProps> = (
           )}
         </div>
       </div>
-      
+
       <div className="bg-green-50 p-4 rounded-lg">
         <div className="text-sm text-green-600 font-medium">
           Próximo Atendimento
@@ -51,18 +53,16 @@ export const TreatmentStatusOverview: React.FC<TreatmentStatusOverviewProps> = (
               </div>
             </>
           ) : (
-            <div className="text-sm text-orange-600 font-normal">
+            <div className="text-lg font-medium text-gray-700">
               Não agendado
             </div>
           )}
         </div>
       </div>
-      
+
       <div className="bg-gray-50 p-4 rounded-lg">
-        <div className="text-sm text-gray-600 font-medium">
-          Alta Prevista
-        </div>
-        <div className="text-lg font-semibold text-gray-900">
+        <div className="text-sm text-gray-600 font-medium">Alta Prevista</div>
+        <div className="text-lg font-medium text-gray-700">
           {patient.dischargeDate
             ? formatDateBR(
                 patient.dischargeDate.toISOString?.() ??

@@ -101,7 +101,7 @@ const GeneralRecommendationsTab: React.FC<GeneralRecommendationsTabProps> = ({
       {/* Helper Text */}
       {/* <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
         <h4 className="text-sm font-medium text-blue-900 mb-2">
-          💡 Dicas para Recomendações Gerais
+          ✨ Dicas para Recomendações Gerais
         </h4>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>

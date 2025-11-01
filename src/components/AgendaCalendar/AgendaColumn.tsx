@@ -63,14 +63,14 @@ const AgendaColumn: React.FC<AgendaColumnProps> = ({
           >
             <button
               type="button"
-              className="w-full flex justify-between items-center p-4 font-medium text-gray-800 hover:bg-gray-50 transition rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full flex justify-between items-center p-4 font-medium text-gray-800 hover:bg-gray-50 transition rounded-t-lg focus:outline-none"
               onClick={() =>
                 setOpenAgendaIdx(openAgendaIdx === idx ? null : idx)
               }
               aria-expanded={openAgendaIdx === idx}
               aria-controls={`agenda-patients-${columnType}-${idx}`}
             >
-              <span className="text-left">
+              <span className="text-left w-full">
                 <div className="font-semibold">
                   {formatDateWithDayOfWeekBR(date.toISOString())}
                 </div>

@@ -98,13 +98,13 @@ const TreatmentSessionConfirmation: React.FC<
     if (type === "light_bath") {
       return (
         <div className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center">
-          <span className="text-sm">💡</span>
+          <span className="text-sm">✨</span>
         </div>
       );
     } else {
       return (
         <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-          <span className="text-sm">🔮</span>
+          <span className="text-sm">🪄</span>
         </div>
       );
     }
@@ -114,13 +114,13 @@ const TreatmentSessionConfirmation: React.FC<
     if (type === "light_bath") {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          💡 Banho de Luz
+          ✨ Banho de Luz
         </span>
       );
     } else {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-          🔮 Bastão
+          🪄 Bastão
         </span>
       );
     }

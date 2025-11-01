@@ -3,6 +3,7 @@ import React from "react";
 interface TreatmentCompletionBadgeProps {
   /** Completion percentage (0-100) */
   completionPercentage: number;
+  showCompletionPercentage?: boolean;
   /** Treatment status */
   status:
     | "scheduled"
@@ -19,7 +20,13 @@ interface TreatmentCompletionBadgeProps {
 
 export const TreatmentCompletionBadge: React.FC<
   TreatmentCompletionBadgeProps
-> = ({ completionPercentage, status, showMilestone = false, size = "md" }) => {
+> = ({
+  completionPercentage,
+  status,
+  showMilestone = false,
+  size = "md",
+  showCompletionPercentage = false,
+}) => {
   // Get status configuration
   const getStatusConfig = () => {
     switch (status) {
@@ -117,7 +124,7 @@ export const TreatmentCompletionBadge: React.FC<
       >
         <span>{statusConfig.icon}</span>
         <span>{statusConfig.label}</span>
-        {completionPercentage > 0 && (
+        {showCompletionPercentage && completionPercentage > 0 && (
           <span className="ml-1">({completionPercentage}%)</span>
         )}
       </div>

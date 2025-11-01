@@ -9,11 +9,11 @@ import {
 describe("TreatmentStatusBadge", () => {
   test("renders active treatment badge correctly", () => {
     render(
-      <TreatmentStatusBadge isActive={true} label="Banho de luz" icon="💡" />
+      <TreatmentStatusBadge isActive={true} label="Banho de luz" icon="✨" />
     );
 
     expect(screen.getByText("Banho de luz")).toBeInTheDocument();
-    expect(screen.getByText("💡")).toBeInTheDocument();
+    expect(screen.getByText("✨")).toBeInTheDocument();
 
     const badge = screen.getByText("Banho de luz").parentElement;
     expect(badge).toHaveClass(
@@ -25,10 +25,10 @@ describe("TreatmentStatusBadge", () => {
   });
 
   test("renders inactive treatment badge correctly", () => {
-    render(<TreatmentStatusBadge isActive={false} label="Bastão" icon="🔮" />);
+    render(<TreatmentStatusBadge isActive={false} label="Bastão" icon="🪄" />);
 
     expect(screen.getByText("Bastão")).toBeInTheDocument();
-    expect(screen.getByText("🔮")).toBeInTheDocument();
+    expect(screen.getByText("🪄")).toBeInTheDocument();
 
     const badge = screen.getByText("Bastão").parentElement;
     expect(badge).toHaveClass(

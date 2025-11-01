@@ -33,7 +33,9 @@ interface ActiveTreatmentSessionsProps {
   isDeleting: boolean;
 }
 
-export const ActiveTreatmentSessions: React.FC<ActiveTreatmentSessionsProps> = ({
+export const ActiveTreatmentSessions: React.FC<
+  ActiveTreatmentSessionsProps
+> = ({
   lightBathSessions,
   rodSessions,
   visibleLightBathSessions,
@@ -51,14 +53,18 @@ export const ActiveTreatmentSessions: React.FC<ActiveTreatmentSessionsProps> = (
   isDeleting,
 }) => {
   // Don't render if no active sessions
-  if (!sessionsLoading && lightBathSessions.length === 0 && rodSessions.length === 0) {
+  if (
+    !sessionsLoading &&
+    lightBathSessions.length === 0 &&
+    rodSessions.length === 0
+  ) {
     return null;
   }
 
   return (
     <div className="mb-6 mt-10">
       <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        📊 Progresso dos Tratamentos Ativos
+        📈 Progresso dos Tratamentos Ativos
         {sessionsLoading && <LoadingSpinner size="small" />}
       </h3>
 

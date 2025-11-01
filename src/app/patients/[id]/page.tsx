@@ -33,8 +33,8 @@ export default function PatientDetailPage() {
   // Loading state with skeleton
   if (isLoading || isRefetching) {
     return (
-      <div className="flex flex-col gap-8 my-16">
-        <div className="max-w-4xl mx-auto w-full px-4">
+      <div className="flex flex-col gap-8 bg-gray-50">
+        <div className="flex flex-col max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8 w-full">
           <Breadcrumb
             items={[
               { label: "Pacientes", href: "/patients" },
@@ -162,16 +162,16 @@ export default function PatientDetailPage() {
 
           {/* Main Content Column - Treatment Info */}
           <div className="xl:col-span-2 order-2 space-y-4 sm:space-y-6">
-            <LazyComponentWrapper>
-              <LazyCurrentTreatmentCard patient={patient} />
-            </LazyComponentWrapper>
-
             {/* Mobile: Notes Card After Current Treatment */}
             <div className="xl:hidden">
               <LazyComponentWrapper>
                 <LazyPatientNotesCard patientId={patient.id} />
               </LazyComponentWrapper>
             </div>
+
+            <LazyComponentWrapper>
+              <LazyCurrentTreatmentCard patient={patient} />
+            </LazyComponentWrapper>
 
             <LazyComponentWrapper>
               <LazyAttendanceHistoryCard patient={patient} />

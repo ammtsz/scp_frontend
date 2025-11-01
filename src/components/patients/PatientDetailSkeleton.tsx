@@ -9,8 +9,8 @@ export const PatientDetailSkeleton: React.FC<PatientDetailSkeletonProps> = ({
   showCards = true,
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen w-full">
+      <div className="mx-auto w-full">
         {/* Breadcrumb Skeleton */}
         <div className="mb-6">
           <Skeleton className="h-6 w-64" />
@@ -20,7 +20,7 @@ export const PatientDetailSkeleton: React.FC<PatientDetailSkeletonProps> = ({
         <div className="ds-card mb-6">
           <div className="ds-card-body">
             <div className="flex items-start gap-4">
-              <Skeleton className="h-16 w-16" rounded />
+              <Skeleton className="h-16 w-16" />
               <div className="flex-1 space-y-3">
                 <Skeleton className="h-8 w-48" />
                 <Skeleton className="h-4 w-32" />
@@ -29,6 +29,11 @@ export const PatientDetailSkeleton: React.FC<PatientDetailSkeletonProps> = ({
                   <Skeleton className="h-4 w-20" />
                 </div>
               </div>
+            </div>
+            <div className="flex gap-4">
+              <Skeleton className="h-12 grow-1" />
+              <Skeleton className="h-12 grow-1" />
+              <Skeleton className="h-12 grow-1" />
             </div>
           </div>
         </div>

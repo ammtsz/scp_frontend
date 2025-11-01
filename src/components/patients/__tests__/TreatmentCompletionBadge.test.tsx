@@ -10,6 +10,7 @@ describe("TreatmentCompletionBadge", () => {
         <TreatmentCompletionBadge
           completionPercentage={100}
           status="completed"
+          showCompletionPercentage
         />
       );
 
@@ -23,6 +24,7 @@ describe("TreatmentCompletionBadge", () => {
         <TreatmentCompletionBadge
           completionPercentage={60}
           status="in_progress"
+          showCompletionPercentage
         />
       );
 
@@ -33,7 +35,11 @@ describe("TreatmentCompletionBadge", () => {
 
     it("renders active status correctly", () => {
       render(
-        <TreatmentCompletionBadge completionPercentage={30} status="active" />
+        <TreatmentCompletionBadge
+          completionPercentage={30}
+          status="active"
+          showCompletionPercentage
+        />
       );
 
       expect(screen.getByText("Ativo")).toBeInTheDocument();
@@ -46,6 +52,7 @@ describe("TreatmentCompletionBadge", () => {
         <TreatmentCompletionBadge
           completionPercentage={40}
           status="suspended"
+          showCompletionPercentage
         />
       );
 
@@ -59,6 +66,7 @@ describe("TreatmentCompletionBadge", () => {
         <TreatmentCompletionBadge
           completionPercentage={20}
           status="cancelled"
+          showCompletionPercentage
         />
       );
 
@@ -284,6 +292,7 @@ describe("TreatmentCompletionBadge", () => {
         <TreatmentCompletionBadge
           completionPercentage={120}
           status="completed"
+          showCompletionPercentage
         />
       );
 

@@ -25,7 +25,7 @@ describe("TreatmentRecommendationsDisplay", () => {
     expect(screen.getByText("🧴 Pomada:")).toBeInTheDocument();
     expect(screen.getByText("✨ Banho de luz:")).toBeInTheDocument();
     expect(screen.getByText("🪄 Bastão:")).toBeInTheDocument();
-    expect(screen.getByText("🧬 Trat. Espiritual:")).toBeInTheDocument();
+    expect(screen.getByText("🥼 Trat. Espiritual:")).toBeInTheDocument();
     expect(screen.getByText("📅 Retorno:")).toBeInTheDocument();
   });
 

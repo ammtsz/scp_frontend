@@ -104,6 +104,7 @@ const renderWithProviders = (component: React.ReactElement) => {
   );
 };
 
+const mockDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
 // Mock patient data
 const mockPatientWithRecentAttendance: Patient = {
   id: "1",
@@ -129,7 +130,7 @@ const mockPatientWithRecentAttendance: Patient = {
   previousAttendances: [
     {
       attendanceId: "123",
-      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      date: mockDate,
       type: "spiritual",
       notes: "Recent consultation",
       recommendations: {
@@ -472,9 +473,15 @@ describe("TreatmentRecommendationsModal", () => {
       );
 
       // Look specifically for the attendance details (not the general explanation)
-      expect(
-        screen.getByText(/27\/10\/2025 - Consulta Espiritual/)
-      ).toBeInTheDocument();
+      // Format mockDate as DD/MM/YYYY
+      const day = String(mockDate.getDate()).padStart(2, "0");
+      const month = String(mockDate.getMonth() + 1).padStart(2, "0");
+      const year = mockDate.getFullYear();
+
+      const dateRegex = new RegExp(
+        `${day}/${month}/${year} - Consulta Espiritual`
+      );
+      expect(screen.getByText(dateRegex)).toBeInTheDocument();
       expect(
         screen.getByText(/Banho de Luz \+ Trat\. Espiritual/)
       ).toBeInTheDocument();

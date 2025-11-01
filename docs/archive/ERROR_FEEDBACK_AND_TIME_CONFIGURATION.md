@@ -42,7 +42,7 @@ This document summarizes the implementation of error feedback for attendance cre
 - **Purpose**: Display detailed error information when attendance creation fails
 - **Features**:
   - Visual error summary with statistics (total errors, affected treatments)
-  - Treatment-specific error breakdown with icons (💡 for Light Bath, 🔮 for Rod)
+  - Treatment-specific error breakdown with icons (✨ for Light Bath, 🪄 for Rod)
   - Actionable recommendations for users
   - Retry and continue options
   - Responsive design with clear visual hierarchy

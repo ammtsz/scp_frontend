@@ -82,7 +82,7 @@ export const AttendanceHistoryEmpty: React.FC<AttendanceHistoryEmptyProps> = ({
   >
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
       <div className="flex items-start gap-3">
-        <div className="text-blue-500 text-lg">💡</div>
+        <div className="text-blue-500 text-lg">✨</div>
         <div className="text-sm">
           <div className="font-medium text-blue-900 mb-1">Próximos passos:</div>
           <div className="text-blue-800">

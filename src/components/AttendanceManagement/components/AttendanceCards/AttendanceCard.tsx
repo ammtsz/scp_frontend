@@ -5,14 +5,8 @@ import {
   AttendanceType,
 } from "@/types/types";
 import { IDraggedItem } from "../../types";
-import {
-  getTypeBasedStyles,
-  getTypeIndicatorConfig,
-  shouldShowTypeIndicator,
-  getTooltipContent,
-} from "../../styles/cardStyles";
+import { getTypeBasedStyles, getTooltipContent } from "../../styles/cardStyles";
 import AttendanceTimes from "./AttendanceTimes";
-import TreatmentSessionProgress from "../../../TreatmentSessionProgress";
 import type { IGroupedPatient } from "../../utils/patientGrouping";
 import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
 
@@ -49,13 +43,7 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
     isNextToBeAttended = false,
     isDayFinalized = false,
     groupedPatient,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    treatmentInfo,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onTreatmentInfoClick,
   }) => {
-    const typeConfig = getTypeIndicatorConfig(type);
-
     const isBeingDragged =
       dragged?.patientId === patient.patientId &&
       dragged?.status === status &&
@@ -68,9 +56,20 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
       groupedPatient ? groupedPatient.combinedType : type
     );
 
-    // const typeLabel = groupedPatient
-    //   ? getCombinedTreatmentLabel(groupedPatient.treatmentTypes)
-    //   : typeConfig.label;
+    const countAttendancesByType: () => Record<string, number> = () => {
+      if (!groupedPatient) return { lightBath: 0, rod: 0 };
+
+      const typeCounts: Record<string, number> = { lightBath: 0, rod: 0 };
+
+      for (const treatmentType of groupedPatient.treatmentTypes) {
+        if (treatmentType === "lightBath") {
+          typeCounts.lightBath += 1;
+        } else if (treatmentType === "rod") {
+          typeCounts.rod += 1;
+        }
+      }
+      return typeCounts;
+    };
 
     return (
       <li
@@ -87,56 +86,6 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
         }
         onDragEnd={isDayFinalized ? undefined : handleDragEnd}
       >
-        {/* TODO: Review */}
-        {/* Type indicator badge - show for all types when using AttendanceCard */}
-        {shouldShowTypeIndicator(type) && (
-          <div
-            className={`absolute top-1 left-1 rounded px-1 py-0.5 text-xs ${typeConfig.className}`}
-          >
-            {/* Treatment Session Progress for lightBath and rod types */}
-            {(type === "lightBath" || type === "rod") &&
-              patient.patientId &&
-              !groupedPatient && (
-                <div className="mr-2 inline-block align-middle">
-                  <TreatmentSessionProgress
-                    patientId={patient.patientId}
-                    attendanceType={type === "lightBath" ? "light_bath" : "rod"}
-                    showDetails={false}
-                  />
-                </div>
-              )}
-            {/* Show combined treatment progress for grouped patients */}
-            {groupedPatient && patient.patientId && (
-              <div className="mr-2 inline-block align-middle">
-                {groupedPatient.treatmentTypes.includes("lightBath") && (
-                  <TreatmentSessionProgress
-                    patientId={patient.patientId}
-                    attendanceType="light_bath"
-                    showDetails={false}
-                  />
-                )}
-                {groupedPatient.treatmentTypes.includes("rod") && (
-                  <TreatmentSessionProgress
-                    patientId={patient.patientId}
-                    attendanceType="rod"
-                    showDetails={false}
-                  />
-                )}
-              </div>
-            )}
-            {/* {typeLabel} */}
-          </div>
-        )}
-
-        {/* TODO: remove */}
-        {/* Treatment indicator for combined treatment sessions */}
-        {/* {treatmentInfo && onTreatmentInfoClick && (
-          <TreatmentIndicator
-            treatmentInfo={treatmentInfo}
-            onInfoClick={onTreatmentInfoClick}
-          />
-        )} */}
-
         {/* Next to be attended indicator */}
         {isNextToBeAttended && (
           <span className="absolute top-1 right-1 text-red-700 text-xs px-1 py-0.5 rounded z-10 bg-red-100">
@@ -144,6 +93,27 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
           </span>
         )}
 
+        {/* Treatment type attendances amount */}
+        {groupedPatient &&
+          (() => {
+            const typeCounts = countAttendancesByType();
+            return (
+              <div className="absolute top-1 left-1 text-xs px-1 flex gap-1">
+                {typeCounts.lightBath > 0 && (
+                  <span className="flex items-center justify-center gap-1 h-5 w-5 bg-yellow-200 text-yellow-800 rounded-4xl ">
+                    {typeCounts.lightBath}
+                  </span>
+                )}
+                {typeCounts.rod > 0 && (
+                  <span className="flex items-center justify-center gap-1 h-5 w-5 bg-blue-200 text-blue-800 rounded-4xl ">
+                    {typeCounts.rod}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
+
+        {/* Tooltip */}
         <span
           className="line-clamp-2 leading-tight px-2"
           title={getTooltipContent(patient.name, patient.priority)}
@@ -152,7 +122,6 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
           {patient.name} ({patient.priority})
         </span>
 
-        {/* TODO: fix times */}
         <AttendanceTimes
           status={status}
           checkedInTime={patient.checkedInTime ?? undefined}
@@ -167,7 +136,7 @@ const AttendanceCard: React.FC<AttendanceCardProps> = React.memo(
               e.stopPropagation();
               onDelete(patient.attendanceId!, patient.name);
             }}
-            className="absolute top-1 right-1 text-red-600 hover:text-red-800 text-xs"
+            className="button absolute -top-1 -right-1 text-red-600 hover:text-red-800 text-xs"
             title="Remover"
           >
             ✕

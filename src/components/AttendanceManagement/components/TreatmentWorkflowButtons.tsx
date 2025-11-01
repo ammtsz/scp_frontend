@@ -31,7 +31,7 @@ export const TreatmentWorkflowButtons: React.FC<
       ) : (
         <button
           type="button"
-          className="button-primary w-full transition-colors"
+          className="button button-primary w-full transition-colors"
           onClick={onEndOfDayClick}
         >
           Finalizar Dia

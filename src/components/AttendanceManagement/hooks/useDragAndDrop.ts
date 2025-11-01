@@ -56,6 +56,20 @@ export const useDragAndDrop = ({
     draggedType: AttendanceType;
   } | null>(null);
 
+  // Helper function to find all attendances for a patient
+  const findAllPatientAttendances = useCallback(
+    (
+      type: AttendanceType,
+      status: AttendanceProgression,
+      patientId: number
+    ): number[] => {
+      return attendancesByDate?.[type]?.[status]?.filter(
+        (p) => p.patientId === patientId
+      )?.map((p) => p.attendanceId as number) || [];
+    },
+    [attendancesByDate]
+  );
+
   // Helper function to find patient by ID
   const findPatient = useCallback(
     (
@@ -63,11 +77,12 @@ export const useDragAndDrop = ({
       status: AttendanceProgression,
       patientId: number
     ): AttendanceStatusDetail | undefined => {
-      return attendancesByDate?.[type]?.[status]?.find(
+      const patient = attendancesByDate?.[type]?.[status]?.find(
         (p) => p.patientId === patientId
       );
+      return patient ? {...patient, treatmentAttendanceIds: findAllPatientAttendances(type, status, patientId)} : undefined;
     },
-    [attendancesByDate]
+    [attendancesByDate, findAllPatientAttendances]
   );
 
   // Helper function to update patient timestamps
@@ -173,12 +188,26 @@ export const useDragAndDrop = ({
       const lightBathPatient = findPatient("lightBath", status, patient.patientId);
       const rodPatient = findPatient("rod", status, patient.patientId);
       const isCombinedTreatment = !!(lightBathPatient && rodPatient);
+
+      // For combined treatments, we treat them as a single draggable item
       
       let treatmentTypes: AttendanceType[] = [type];
-      if (isCombinedTreatment) {
+      if (isCombinedTreatment) {  
         treatmentTypes = ["lightBath", "rod"];
       }
+      if (lightBathPatient?.treatmentAttendanceIds?.length) {
+        for (let i = 1; i < lightBathPatient.treatmentAttendanceIds?.length; i++) {
+          treatmentTypes.push("lightBath");
+        } 
+      }
+      if (rodPatient?.treatmentAttendanceIds?.length) {
+        for (let i = 1; i < rodPatient.treatmentAttendanceIds?.length; i++) {
+          treatmentTypes.push("rod");
+        } 
+      }
 
+      console.log({ treatmentTypes})
+      
       setDragged({ 
         type, 
         status, 
@@ -201,8 +230,8 @@ export const useDragAndDrop = ({
       if (!dragged || !attendancesByDate || !setAttendancesByDate) return;
 
       // For combined treatments, we need to move both treatment types atomically
-      const treatmentTypesToMove = dragged.isCombinedTreatment && dragged.treatmentTypes 
-        ? dragged.treatmentTypes 
+      const treatmentTypesToMove = dragged.isCombinedTreatment && dragged.treatmentTypes
+        ? new Set(dragged.treatmentTypes)
         : [dragged.type];
 
       // Create immutable update by spreading arrays
@@ -215,10 +244,13 @@ export const useDragAndDrop = ({
         if (!patient) continue; // Skip if patient not found for this treatment type
 
         // Sync with backend if attendanceId is available
-        if (patient.attendanceId) {
-          const result = await updateAttendanceStatus(patient.attendanceId, toStatus);
-          if (!result.success) {
-            console.warn(`Backend sync failed for ${treatmentType}, continuing with local update`);
+        if (patient.treatmentAttendanceIds && patient.treatmentAttendanceIds.length > 0) {
+          for (const attendanceId of patient.treatmentAttendanceIds) {
+
+            const result = await updateAttendanceStatus(attendanceId, toStatus);
+            if (!result.success) {
+              console.warn(`Backend sync failed for ${treatmentType} attendanceId ${attendanceId}, continuing with local update`);
+            }
           }
         }
 
@@ -376,7 +408,7 @@ export const useDragAndDrop = ({
     );
     if (!patient) return; // Patient not found
 
-    // Sync with backend for all types if attendanceIds are available
+    // Sync with backend for all types if treatmentAttendanceIds are available
     const syncPromises = (["spiritual", "lightBath", "rod"] as AttendanceType[])
       .map((type) =>
         findPatient(type, "scheduled", multiSectionPending.patientId)

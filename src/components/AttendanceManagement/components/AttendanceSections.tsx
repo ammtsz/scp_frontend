@@ -52,7 +52,7 @@ export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
       {/* Spiritual Section */}
       <div key="spiritual" className="w-full">
         <button
-          className="w-full text-left mb-2 px-2 py-1 rounded bg-[color:var(--surface-light)] border border-[color:var(--border)] font-semibold text-[color:var(--primary-dark)]"
+          className="w-full mb-2 px-2 py-1 flex justify-start font-semibold"
           onClick={() => toggleCollapsed("spiritual")}
         >
           {collapsed.spiritual ? "▶ " : "▼ "}Consultas Espirituais
@@ -98,7 +98,7 @@ export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
       {/* LightBath + Rod Section */}
       <div key="mixed" className="w-full">
         <button
-          className="w-full text-left mb-2 px-2 py-1 rounded bg-[color:var(--surface-light)] border border-[color:var(--border)] font-semibold text-[color:var(--primary-dark)]"
+          className="w-full mb-2 px-2 py-1 flex justify-start font-semibold"
           onClick={() => {
             // Toggle both lightBath and rod together for mixed section
             toggleCollapsed("lightBath");
@@ -108,61 +108,64 @@ export const AttendanceSections: React.FC<AttendanceSectionsProps> = ({
           {collapsed.lightBath && collapsed.rod ? "▶ " : "▼ "}Banhos de Luz e
           Bastão
         </button>
-        {/* Dynamic legend based on available types - only show for non-spiritual */}
-        <div className="flex items-center gap-4 text-xs text-gray-800 my-4">
-          <span className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-yellow-400 rounded"></div>
-            Banho de Luz
-          </span>
-          <span className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-            Bastão
-          </span>
-          <span className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
-            Banho de Luz e Bastão
-          </span>
-        </div>
+
         {!(collapsed.lightBath && collapsed.rod) && (
-          <div className="flex flex-row gap-4 w-full mb-8">
-            {(
-              [
-                "scheduled",
-                "checkedIn",
-                "onGoing",
-                "completed",
-              ] as AttendanceProgression[]
-            ).map((status) => {
-              // Get separate light bath and rod patients
-              const lightBathPatients = getPatients("lightBath", status);
-              const rodPatients = getPatients("rod", status);
+          <>
+            {/* Dynamic legend based on available types - only show for non-spiritual */}
+            <div className="flex items-center gap-4 text-xs text-gray-800 my-4">
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-yellow-400 rounded"></div>
+                Banho de Luz
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                Bastão
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-green-500 rounded"></div>
+                Banho de Luz e Bastão
+              </span>
+            </div>
+            <div className="flex flex-row gap-4 w-full mb-8">
+              {(
+                [
+                  "scheduled",
+                  "checkedIn",
+                  "onGoing",
+                  "completed",
+                ] as AttendanceProgression[]
+              ).map((status) => {
+                // Get separate light bath and rod patients
+                const lightBathPatients = getPatients("lightBath", status);
+                const rodPatients = getPatients("rod", status);
 
-              // Group patients by patientId and combine their treatments
-              const groupedPatients = groupPatientsByTreatments(
-                lightBathPatients,
-                rodPatients
-              );
+                // Group patients by patientId and combine their treatments
+                const groupedPatients = groupPatientsByTreatments(
+                  lightBathPatients,
+                  rodPatients
+                );
 
-              return (
-                <AttendanceColumn
-                  key={status}
-                  status={status}
-                  patients={groupedPatients}
-                  dragged={dragged}
-                  handleDragStart={handleDragStart}
-                  handleDragEnd={handleDragEnd}
-                  handleDrop={() => {
-                    if (dragged?.type)
-                      handleDropWithConfirm(dragged?.type, status);
-                  }}
-                  onDelete={onDelete}
-                  isDayFinalized={isDayFinalized}
-                  treatmentDataMap={treatmentsByPatient}
-                  onTreatmentInfoClick={onTreatmentInfoClick}
-                />
-              );
-            })}
-          </div>
+                return (
+                  <AttendanceColumn
+                    key={status}
+                    status={status}
+                    patients={groupedPatients}
+                    dragged={dragged}
+                    handleDragStart={handleDragStart}
+                    handleDragEnd={handleDragEnd}
+                    handleDrop={() => {
+                      if (dragged?.type)
+                        handleDropWithConfirm(dragged?.type, status);
+                    }}
+                    onDelete={onDelete}
+                    isDayFinalized={isDayFinalized}
+                    treatmentDataMap={treatmentsByPatient}
+                    onTreatmentInfoClick={onTreatmentInfoClick}
+                  />
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>

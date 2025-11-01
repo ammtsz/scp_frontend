@@ -15,9 +15,9 @@ interface TreatmentRecommendationsDisplayProps {
   recommendations: Recommendations;
 }
 
-export const TreatmentRecommendationsDisplay: React.FC<TreatmentRecommendationsDisplayProps> = ({
-  recommendations,
-}) => {
+export const TreatmentRecommendationsDisplay: React.FC<
+  TreatmentRecommendationsDisplayProps
+> = ({ recommendations }) => {
   return (
     <>
       <h3 className="font-semibold text-gray-900 mb-3">
@@ -37,17 +37,13 @@ export const TreatmentRecommendationsDisplay: React.FC<TreatmentRecommendationsD
             </span>
           </div>
           <div className="flex items-start justify-between">
-            <span className="text-gray-600 text-nowrap mr-4">
-              💧 Água:
-            </span>
+            <span className="text-gray-600 text-nowrap mr-4">💧 Água:</span>
             <span className="text-gray-600 italic text-sm">
               {recommendations.water || "nenhuma"}
             </span>
           </div>
           <div className="flex items-start justify-between">
-            <span className="text-gray-600 text-nowrap mr-4">
-              🧴 Pomada:
-            </span>
+            <span className="text-gray-600 text-nowrap mr-4">🧴 Pomada:</span>
             <span className="text-gray-600 italic text-sm">
               {recommendations.ointment || "nenhuma"}
             </span>
@@ -61,16 +57,14 @@ export const TreatmentRecommendationsDisplay: React.FC<TreatmentRecommendationsD
             </span>
           </div>
           <div className="flex items-start justify-between">
-            <span className="text-gray-600 text-nowrap mr-4">
-              🪄 Bastão:
-            </span>
+            <span className="text-gray-600 text-nowrap mr-4">🪄 Bastão:</span>
             <span className="text-gray-600 italic text-sm">
               {recommendations.rod ? "Sim" : "nenhuma"}
             </span>
           </div>
           <div className="flex items-start justify-between">
             <span className="text-gray-600 text-nowrap mr-4">
-              🧬 Trat. Espiritual:
+              🥼 Trat. Espiritual:
             </span>
             <span className="text-gray-600 italic text-sm">
               {recommendations.spiritualTreatment ? "Sim" : "nenhuma"}

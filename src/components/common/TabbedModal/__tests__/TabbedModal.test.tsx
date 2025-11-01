@@ -44,7 +44,7 @@ describe("TabbedModal", () => {
     {
       id: "tab3",
       label: "Tab 3",
-      icon: "💡",
+      icon: "✨",
       // Neither isValid nor hasWarning - this will be invalid
     },
   ];

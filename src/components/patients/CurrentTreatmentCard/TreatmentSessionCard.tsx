@@ -65,7 +65,7 @@ export const TreatmentSessionCard: React.FC<TreatmentSessionCardProps> = ({
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-gray-700 capitalize">
             {session.body_location || "Local não especificado"}
           </span>
           {session.color && (
@@ -77,7 +77,8 @@ export const TreatmentSessionCard: React.FC<TreatmentSessionCardProps> = ({
           )}
           {session.duration_minutes && (
             <span className="text-xs text-gray-500">
-              {session.duration_minutes}min
+              {session.duration_minutes}{" "}
+              {session.duration_minutes > 1 ? "unidades" : "unidade"}
             </span>
           )}
         </div>
@@ -104,7 +105,7 @@ export const TreatmentSessionCard: React.FC<TreatmentSessionCardProps> = ({
             className="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded transition-colors disabled:opacity-50"
             title="Remover sessão"
           >
-            ❌
+            Cancelar tratamento
           </button>
         </div>
       </div>
