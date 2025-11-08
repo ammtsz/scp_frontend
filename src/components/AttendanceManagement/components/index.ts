@@ -13,7 +13,7 @@ export * from './AttendanceCards';
 
 
 // End of Day components
-export * from './EndOfDay';
+export * from './endOfDay';
 
 // Treatment Form components
 export * from './Forms/PostAttendanceForms';

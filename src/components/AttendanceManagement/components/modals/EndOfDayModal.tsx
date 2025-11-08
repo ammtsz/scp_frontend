@@ -6,7 +6,7 @@ import { updateAttendanceStatus } from "@/api/attendanceSync";
 
 // Lazy load the actual EndOfDayModal component
 const EndOfDayContainer = React.lazy(
-  () => import("../EndOfDay/EndOfDayContainer")
+  () => import("../endOfDay/EndOfDayContainer")
 );
 
 /**
