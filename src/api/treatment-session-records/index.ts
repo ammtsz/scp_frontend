@@ -75,7 +75,7 @@ export const updateTreatmentSessionRecord = async (id: string, recordData: Updat
 
 export const completeTreatmentSessionRecord = async (id: string, completionData: CompleteTreatmentSessionRecordRequest): Promise<ApiResponse<TreatmentSessionRecordResponseDto>> => {
   try {
-    const { data } = await api.put(`/treatment-session-records/${id}/complete`, completionData);
+    const { data } = await api.post(`/treatment-session-records/${id}/complete`, completionData);
     return { success: true, value: data };
   } catch (error) {
     const message = getErrorMessage((error as AxiosError).status);
@@ -85,7 +85,7 @@ export const completeTreatmentSessionRecord = async (id: string, completionData:
 
 export const markTreatmentSessionRecordMissed = async (id: string, missedData: MarkMissedTreatmentSessionRecordRequest): Promise<ApiResponse<TreatmentSessionRecordResponseDto>> => {
   try {
-    const { data } = await api.put(`/treatment-session-records/${id}/mark-missed`, missedData);
+    const { data } = await api.post(`/treatment-session-records/${id}/mark-missed`, missedData);
     return { success: true, value: data };
   } catch (error) {
     const message = getErrorMessage((error as AxiosError).status);
@@ -95,7 +95,7 @@ export const markTreatmentSessionRecordMissed = async (id: string, missedData: M
 
 export const rescheduleTreatmentSessionRecord = async (id: string, rescheduleData: RescheduleTreatmentSessionRecordRequest): Promise<ApiResponse<TreatmentSessionRecordResponseDto>> => {
   try {
-    const { data } = await api.put(`/treatment-session-records/${id}/reschedule`, rescheduleData);
+    const { data } = await api.post(`/treatment-session-records/${id}/reschedule`, rescheduleData);
     return { success: true, value: data };
   } catch (error) {
     const message = getErrorMessage((error as AxiosError).status);

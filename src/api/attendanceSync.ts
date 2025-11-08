@@ -12,7 +12,7 @@ import { AttendanceProgression } from '@/types/types';
  */
 export const updateAttendanceStatus = async (
   attendanceId: number,
-  newStatus: AttendanceProgression
+  newStatus: AttendanceProgression | "missed" | "cancelled"
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     let result;
@@ -30,6 +30,28 @@ export const updateAttendanceStatus = async (
       case 'scheduled':
         result = await updateAttendance(attendanceId.toString(), {
           status: AttendanceStatus.SCHEDULED,
+          checked_in_date: undefined,
+          checked_in_time: undefined,
+          started_date: undefined,
+          started_time: undefined,
+          completed_date: undefined,
+          completed_time: undefined
+        });
+        break;
+      case 'cancelled':
+        result = await updateAttendance(attendanceId.toString(), {
+          status: AttendanceStatus.CANCELLED,
+          checked_in_date: undefined,
+          checked_in_time: undefined,
+          started_date: undefined,
+          started_time: undefined,
+          completed_date: undefined,
+          completed_time: undefined
+        });
+        break;
+      case 'missed':
+        result = await updateAttendance(attendanceId.toString(), {
+          status: AttendanceStatus.MISSED,
           checked_in_date: undefined,
           checked_in_time: undefined,
           started_date: undefined,

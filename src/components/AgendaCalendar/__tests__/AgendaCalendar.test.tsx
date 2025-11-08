@@ -57,6 +57,7 @@ describe("AgendaCalendar - Basic Functionality", () => {
     loading: false,
     error: null,
     refreshAgenda: jest.fn(),
+    isRefreshing: false,
   };
 
   beforeEach(() => {
@@ -126,5 +127,143 @@ describe("AgendaCalendar - Basic Functionality", () => {
     // Should show section headers
     expect(screen.getByText("Consultas Espirituais")).toBeInTheDocument();
     expect(screen.getByText("Banhos de Luz / Bastão")).toBeInTheDocument();
+  });
+
+  it("should render refresh button and call refreshAgenda when clicked", () => {
+    const mockRefreshAgenda = jest.fn();
+    mockUseAgendaCalendar.mockReturnValue({
+      ...defaultHookReturn,
+      refreshAgenda: mockRefreshAgenda,
+    });
+
+    render(<AgendaCalendar />);
+
+    // Should render the refresh button
+    const refreshButton = screen.getByRole("button", { name: /atualizar/i });
+    expect(refreshButton).toBeInTheDocument();
+    expect(refreshButton).toHaveAttribute(
+      "title",
+      "Atualizar dados dos agendamentos"
+    );
+
+    // Should call refreshAgenda when clicked
+    refreshButton.click();
+    expect(mockRefreshAgenda).toHaveBeenCalledTimes(1);
+  });
+
+  it("should render both toggle and refresh button in controls area", () => {
+    render(<AgendaCalendar />);
+
+    // Should render the toggle
+    const toggle = screen.getByLabelText(
+      "Mostrar todos os atendimentos futuros"
+    );
+    expect(toggle).toBeInTheDocument();
+
+    // Should render the refresh button
+    const refreshButton = screen.getByRole("button", { name: /atualizar/i });
+    expect(refreshButton).toBeInTheDocument();
+
+    // Both should be visible and functional
+    expect(toggle).toBeVisible();
+    expect(refreshButton).toBeVisible();
+    expect(refreshButton).toBeEnabled();
+  });
+
+  it("should show loading state when refreshing", () => {
+    mockUseAgendaCalendar.mockReturnValue({
+      ...defaultHookReturn,
+      isRefreshing: true,
+    });
+
+    render(<AgendaCalendar />);
+
+    // Should render the refresh button with loading state
+    const refreshButton = screen.getByRole("button", { name: /atualizando/i });
+    expect(refreshButton).toBeInTheDocument();
+    expect(refreshButton).toBeDisabled();
+    expect(refreshButton).toHaveAttribute("title", "Atualizando...");
+    
+    // Button text should change to "Atualizando..."
+    expect(refreshButton).toHaveTextContent("Atualizando...");
+    
+    // Should have loading styles
+    expect(refreshButton).toHaveClass("opacity-50", "cursor-not-allowed");
+    
+    // Feather icon should have spinning animation
+    const icon = refreshButton.querySelector("svg");
+    expect(icon).toHaveClass("animate-spin");
+  });
+
+  it("should show normal state when not refreshing", () => {
+    mockUseAgendaCalendar.mockReturnValue({
+      ...defaultHookReturn,
+      isRefreshing: false,
+    });
+
+    render(<AgendaCalendar />);
+
+    // Should render the refresh button in normal state
+    const refreshButton = screen.getByRole("button", { name: /atualizar$/i });
+    expect(refreshButton).toBeInTheDocument();
+    expect(refreshButton).toBeEnabled();
+    expect(refreshButton).toHaveAttribute("title", "Atualizar dados dos agendamentos");
+    
+    // Button text should be "Atualizar"
+    expect(refreshButton).toHaveTextContent("Atualizar");
+    
+    // Should not have loading styles
+    expect(refreshButton).not.toHaveClass("opacity-50", "cursor-not-allowed");
+    expect(refreshButton).toHaveClass("hover:bg-gray-50");
+    
+    // Feather icon should not be spinning
+    const icon = refreshButton.querySelector("svg");
+    expect(icon).not.toHaveClass("animate-spin");
+  });
+
+  it("should show refreshing overlay on attendance columns when refreshing", () => {
+    mockUseAgendaCalendar.mockReturnValue({
+      ...defaultHookReturn,
+      isRefreshing: true,
+      filteredAgenda: mockFilteredAgenda,
+    });
+
+    render(<AgendaCalendar />);
+
+    // Should show "Atualizando..." text in both columns
+    const refreshingTexts = screen.getAllByText("Atualizando...");
+    
+    // Should have at least 2 instances - one in each column (plus the button makes 3)
+    expect(refreshingTexts.length).toBeGreaterThanOrEqual(2);
+    
+    // Check that columns have reduced opacity when refreshing
+    const spiritualColumnContent = screen.getByText("Consultas Espirituais").closest('.border');
+    const lightBathColumnContent = screen.getByText("Banhos de Luz / Bastão").closest('.border');
+    
+    expect(spiritualColumnContent).toHaveClass("opacity-75");
+    expect(lightBathColumnContent).toHaveClass("opacity-75");
+  });
+
+  it("should not show refreshing overlay when not refreshing", () => {
+    mockUseAgendaCalendar.mockReturnValue({
+      ...defaultHookReturn,
+      isRefreshing: false,
+      filteredAgenda: mockFilteredAgenda,
+    });
+
+    render(<AgendaCalendar />);
+
+    // Should not show overlay "Atualizando..." text in columns
+    const refreshingTexts = screen.queryAllByText("Atualizando...");
+    
+    // Should only have the button text, not column overlays
+    expect(refreshingTexts.length).toBeLessThanOrEqual(1);
+    
+    // Check that columns don't have reduced opacity
+    const spiritualColumnContent = screen.getByText("Consultas Espirituais").closest('.border');
+    const lightBathColumnContent = screen.getByText("Banhos de Luz / Bastão").closest('.border');
+    
+    expect(spiritualColumnContent).not.toHaveClass("opacity-75");
+    expect(lightBathColumnContent).not.toHaveClass("opacity-75");
   });
 });

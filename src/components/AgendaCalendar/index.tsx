@@ -1,18 +1,16 @@
 "use client";
 
 import React, { lazy, Suspense } from "react";
-import ConfirmModal from "@/components/common/ConfirmModal/index";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import Switch from "@/components/common/Switch";
 import AgendaColumn from "./AgendaColumn";
 import { useAgendaCalendar } from "./useAgendaCalendar";
 import LoadingFallback from "@/components/common/LoadingFallback";
+import { RefreshCw } from "react-feather";
 
 // Lazy load heavy modal component for better bundle optimization
 const NewAttendanceFormModal = lazy(
-  () =>
-    import(
-      "@/components/AttendanceManagement/components/Modals/NewAttendanceFormModal"
-    )
+  () => import("@/components/AgendaCalendar/NewAttendanceFormModal")
 );
 
 const AgendaCalendar: React.FC = () => {
@@ -34,6 +32,8 @@ const AgendaCalendar: React.FC = () => {
     handleConfirmRemove,
     handleFormSuccess,
     loading,
+    refreshAgenda,
+    isRefreshing,
   } = useAgendaCalendar();
 
   return (
@@ -81,7 +81,11 @@ const AgendaCalendar: React.FC = () => {
                 type="button"
                 className="button button-outline card-shadow"
                 onClick={() => {
-                  const today = new Date().toISOString().split("T")[0];
+                  const today = new Date(
+                    Date.now() - new Date().getTimezoneOffset() * 60000
+                  )
+                    .toISOString()
+                    .split("T")[0];
                   setSelectedDate(today);
                 }}
               >
@@ -90,10 +94,10 @@ const AgendaCalendar: React.FC = () => {
             </div>
           </div>
 
-          {/* Date Range Filter Toggle */}
+          {/* Date Range Filter Toggle and Refresh Button */}
           <div className="mb-6">
             <div className="flex items-center justify-between">
-              <div className="flex flex-col">
+              <div className="flex flex-col w-full">
                 <span className="text-xs">
                   {selectedDate
                     ? !showNext5Dates
@@ -106,14 +110,37 @@ const AgendaCalendar: React.FC = () => {
                     : !showNext5Dates
                     ? "Mostrando próximas 5 datas"
                     : "Mostrando todos os atendimentos futuros"}
-                  <Switch
-                    checked={showNext5Dates}
-                    onChange={(checked) => setShowNext5Dates(checked)}
-                    label="Mostrar todos os atendimentos futuros"
-                    size="sm"
-                    id="date-range-filter"
-                    className="text-gray-500 mt-2"
-                  />
+                  <div className="flex justify-between items-center gap-4 mt-2 w-full">
+                    <Switch
+                      checked={showNext5Dates}
+                      onChange={(checked) => setShowNext5Dates(checked)}
+                      label="Mostrar todos os atendimentos futuros"
+                      size="sm"
+                      id="date-range-filter"
+                      className="text-gray-500"
+                    />
+                    <button
+                      onClick={refreshAgenda}
+                      disabled={isRefreshing}
+                      className={`button button-outline text-sm px-3 py-1.5 flex items-center gap-1.5 transition-colors ${
+                        isRefreshing
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-gray-50"
+                      }`}
+                      type="button"
+                      title={
+                        isRefreshing
+                          ? "Atualizando..."
+                          : "Atualizar dados dos agendamentos"
+                      }
+                    >
+                      <RefreshCw
+                        size={16}
+                        className={`${isRefreshing ? "animate-spin" : ""}`}
+                      />
+                      {isRefreshing ? "Atualizando..." : "Atualizar"}
+                    </button>
+                  </div>
                 </span>
               </div>
             </div>
@@ -136,6 +163,7 @@ const AgendaCalendar: React.FC = () => {
               onRemovePatient={handleRemovePatient}
               columnType="spiritual"
               isLoading={loading}
+              isRefreshing={isRefreshing}
             />
 
             {/* Light Bath / Rod Attendances Column */}
@@ -153,6 +181,7 @@ const AgendaCalendar: React.FC = () => {
               onRemovePatient={handleRemovePatient}
               columnType="lightBath"
               isLoading={loading}
+              isRefreshing={isRefreshing}
             />
           </div>
         </div>

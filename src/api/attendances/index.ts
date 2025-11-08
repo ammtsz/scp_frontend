@@ -72,9 +72,10 @@ export const updateAttendance = async (id: string, attendanceData: UpdateAttenda
   }
 };
 
-export const deleteAttendance = async (id: string): Promise<ApiResponse<void>> => {
+export const deleteAttendance = async (id: string, cancellation_reason?: string): Promise<ApiResponse<void>> => {
   try {
-    await api.delete(`/attendances/${id}`);
+    const body = cancellation_reason ? { cancellation_reason } : undefined;
+    await api.delete(`/attendances/${id}`, { data: body });
     return { success: true };
   } catch (error) {
     const message = getErrorMessage((error as AxiosError).status);
@@ -190,6 +191,22 @@ export const getAttendanceStats = async (
     const url = date ? `/attendances/stats?date=${date}` : '/attendances/stats';
     const { data } = await api.get(url);
     return { success: true, value: data };
+  } catch (error) {
+    const message = getErrorMessage((error as AxiosError).status);
+    return { success: false, error: message };
+  }
+};
+
+export const updateAbsenceJustifications = async (
+  absenceJustifications: Array<{
+    attendanceId: number;
+    justified: boolean;
+    justification?: string;
+  }>
+): Promise<ApiResponse<void>> => {
+  try {
+    await api.post('/attendances/absence-justifications', absenceJustifications);
+    return { success: true };
   } catch (error) {
     const message = getErrorMessage((error as AxiosError).status);
     return { success: false, error: message };

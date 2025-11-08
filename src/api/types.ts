@@ -83,6 +83,7 @@ export interface NextAttendanceDateDto {
 export interface TreatmentRecordResponseDto {
   id: number;
   attendance_id: number;
+  main_complaint?: string;
   food?: string;
   water?: string;
   ointments?: string;
@@ -92,6 +93,7 @@ export interface TreatmentRecordResponseDto {
   spiritual_treatment?: boolean;
   return_in_weeks?: number;
   notes?: string;
+  parent_treatment_id?: number;
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
 }
@@ -172,6 +174,8 @@ export interface UpdateAttendanceRequest {
 
 export interface CreateTreatmentRecordRequest {
   attendance_id: number;
+  main_complaint?: string;
+  treatment_status?: string; // Optional: Used for patient update, not stored in treatment record
   food?: string;
   water?: string;
   ointments?: string;
@@ -181,10 +185,13 @@ export interface CreateTreatmentRecordRequest {
   spiritual_treatment?: boolean;
   return_in_weeks?: number; // 1-52 weeks
   notes?: string;
+  parent_treatment_id?: number;
 }
 
 export interface UpdateTreatmentRecordRequest {
   attendance_id?: number;
+  main_complaint?: string;
+  treatment_status?: string; // Optional: Used for patient update, not stored in treatment record
   food?: string;
   water?: string;
   ointments?: string;
@@ -194,6 +201,7 @@ export interface UpdateTreatmentRecordRequest {
   spiritual_treatment?: boolean;
   return_in_weeks?: number; // 1-52 weeks
   notes?: string;
+  parent_treatment_id?: number;
 }
 
 export interface CreateScheduleSettingRequest {
@@ -300,7 +308,8 @@ export interface UpdateTreatmentSessionRecordRequest {
 }
 
 export interface CompleteTreatmentSessionRecordRequest {
-  completion_notes?: string;
+  notes?: string;
+  attendanceId?: number;
 }
 
 export interface MarkMissedTreatmentSessionRecordRequest {

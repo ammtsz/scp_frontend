@@ -1,5 +1,5 @@
 // Treatment Form components
-export { default as SpiritualTreatmentFormTabbed } from '../../Modals/PostAttendanceModal';
+export { default as PostAttendanceModal } from '../../Modals/PostAttendanceModal';
 export { default as TreatmentRecommendationsSection } from './Tabs/TreatmentRecommendationsTab/TreatmentRecommendationsSection';
 
 // Treatment Form hooks

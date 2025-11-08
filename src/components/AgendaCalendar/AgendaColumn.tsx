@@ -30,6 +30,7 @@ interface AgendaColumnProps {
   }) => void;
   columnType: "spiritual" | "lightBath";
   isLoading?: boolean;
+  isRefreshing?: boolean;
 }
 
 const AgendaColumn: React.FC<AgendaColumnProps> = ({
@@ -40,9 +41,24 @@ const AgendaColumn: React.FC<AgendaColumnProps> = ({
   onRemovePatient,
   columnType,
   isLoading = false,
+  isRefreshing = false,
 }) => {
   return (
-    <div className="flex-1 border border-gray-200 shadow rounded-lg p-4 bg-white">
+    <div
+      className={`flex-1 border border-gray-200 shadow rounded-lg p-4 bg-white relative ${
+        isRefreshing ? "opacity-75" : ""
+      }`}
+    >
+      {/* Refreshing Overlay */}
+      {isRefreshing && (
+        <div className="absolute inset-0 bg-white/60 flex items-center justify-center rounded-lg z-10">
+          <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md border">
+            <Spinner size="sm" className="text-blue-500" />
+            <span className="text-sm text-gray-600">Atualizando...</span>
+          </div>
+        </div>
+      )}
+
       {/* Column Header */}
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-800">{title}</h3>

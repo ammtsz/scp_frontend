@@ -69,7 +69,10 @@ const defaultMockReturn = {
   handleChange: jest.fn(),
   handleSpiritualConsultationChange: jest.fn(),
   handleSubmit: jest.fn(),
+  handleKeyDown: jest.fn(),
   isLoading: false,
+  validationErrors: {},
+  isFormValid: jest.fn().mockReturnValue(true),
 };
 
 describe("PatientForm", () => {
@@ -336,6 +339,107 @@ describe("PatientForm", () => {
 
       const inputs = document.querySelectorAll(".input.w-full");
       expect(inputs.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Form Validation", () => {
+    it("should disable submit button when form is invalid", () => {
+      const mockIsFormValid = jest.fn().mockReturnValue(false);
+      (usePatientForm as jest.Mock).mockReturnValue({
+        ...defaultMockReturn,
+        isFormValid: mockIsFormValid,
+      });
+
+      renderWithProviders(<PatientForm />);
+
+      const submitButton = screen.getByText("Salvar Paciente");
+      expect(submitButton).toBeDisabled();
+    });
+
+    it("should enable submit button when form is valid", () => {
+      const mockIsFormValid = jest.fn().mockReturnValue(true);
+      (usePatientForm as jest.Mock).mockReturnValue({
+        ...defaultMockReturn,
+        isFormValid: mockIsFormValid,
+      });
+
+      renderWithProviders(<PatientForm />);
+
+      const submitButton = screen.getByText("Salvar Paciente");
+      expect(submitButton).not.toBeDisabled();
+    });
+
+    it("should display validation errors for required fields", () => {
+      (usePatientForm as jest.Mock).mockReturnValue({
+        ...defaultMockReturn,
+        validationErrors: {
+          name: "Nome é obrigatório",
+          birthDate: "Data de nascimento é obrigatória",
+          phone: "Telefone deve estar no formato (XX) XXXXX-XXXX",
+        },
+      });
+
+      renderWithProviders(<PatientForm />);
+
+      expect(screen.getByText("Nome é obrigatório")).toBeInTheDocument();
+      expect(
+        screen.getByText("Data de nascimento é obrigatória")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Telefone deve estar no formato (XX) XXXXX-XXXX")
+      ).toBeInTheDocument();
+    });
+
+    it("should apply error styles to fields with validation errors", () => {
+      (usePatientForm as jest.Mock).mockReturnValue({
+        ...defaultMockReturn,
+        validationErrors: {
+          name: "Nome é obrigatório",
+          phone: "Formato inválido",
+        },
+      });
+
+      renderWithProviders(<PatientForm />);
+
+      const nameInput = screen.getByLabelText("Nome *");
+      const phoneInput = screen.getByLabelText("Telefone");
+
+      expect(nameInput).toHaveClass("border-red-300");
+      expect(phoneInput).toHaveClass("border-red-300");
+    });
+  });
+
+  describe("Enter Key Prevention", () => {
+    it("should attach keyDown handler to form", () => {
+      const mockHandleKeyDown = jest.fn();
+      (usePatientForm as jest.Mock).mockReturnValue({
+        ...defaultMockReturn,
+        handleKeyDown: mockHandleKeyDown,
+      });
+
+      renderWithProviders(<PatientForm />);
+
+      const form = document.querySelector("form");
+      expect(form).toBeInTheDocument();
+
+      fireEvent.keyDown(form!, { key: "Enter" });
+      expect(mockHandleKeyDown).toHaveBeenCalled();
+    });
+
+    it("should call handleKeyDown when Enter is pressed in form", () => {
+      const mockHandleKeyDown = jest.fn();
+      (usePatientForm as jest.Mock).mockReturnValue({
+        ...defaultMockReturn,
+        handleKeyDown: mockHandleKeyDown,
+      });
+
+      renderWithProviders(<PatientForm />);
+
+      const nameInput = screen.getByLabelText("Nome *");
+      fireEvent.keyDown(nameInput, { key: "Enter" });
+
+      // The keyDown event should bubble up to the form
+      expect(mockHandleKeyDown).toHaveBeenCalled();
     });
   });
 });

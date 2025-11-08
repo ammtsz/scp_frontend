@@ -43,6 +43,7 @@ const initialPatient: Omit<Patient, "id"> = {
 export function usePatientForm() {
   const [patient, setPatient] = useState(initialPatient);
   const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const router = useRouter();
   const createPatientMutation = useCreatePatient();
   const addPatientToAgendaMutation = useAddPatientToAgenda();
@@ -54,6 +55,45 @@ export function usePatientForm() {
     return isNaN(date.getTime()) ? new Date() : date;
   };
 
+  // Comprehensive form validation
+  const validateForm = (): { isValid: boolean; errors: Record<string, string> } => {
+    const errors: Record<string, string> = {};
+
+    // Required field validation
+    if (!patient.name.trim()) {
+      errors.name = "Nome é obrigatório";
+    }
+
+    if (!patient.birthDate) {
+      errors.birthDate = "Data de nascimento é obrigatória";
+    } else {
+      // Check if birth date is in the future
+      const today = new Date();
+      const birthDate = new Date(patient.birthDate);
+      if (birthDate > today) {
+        errors.birthDate = "Data de nascimento não pode ser no futuro";
+      }
+    }
+
+    // Phone format validation (optional field, but must be valid if provided)
+    if (patient.phone.trim()) {
+      const phoneRegex = /^\(\d{2}\) \d{4,5}-\d{4}$/;
+      if (!phoneRegex.test(patient.phone.trim())) {
+        errors.phone = "Telefone deve estar no formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX";
+      }
+    }
+
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors
+    };
+  };
+
+  // Check if form is valid for submission
+  const isFormValid = (): boolean => {
+    return validateForm().isValid;
+  };
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -62,6 +102,15 @@ export function usePatientForm() {
     const { name, value, type } = e.target;
     const checked =
       type === "checkbox" ? (e.target as HTMLInputElement).checked : undefined;
+
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
 
     if (name.startsWith("recommendations.")) {
       const recKey = name.replace("recommendations.", "") as keyof Recommendations;
@@ -74,6 +123,10 @@ export function usePatientForm() {
       }));
     } else if (name === "birthDate" || name === "startDate") {
       setPatient((prev) => ({ ...prev, [name]: createSafeDate(value) }));
+    } else if (name === "phone") {
+      // Format phone number as user types
+      const formattedPhone = formatPhoneNumber(value);
+      setPatient((prev) => ({ ...prev, [name]: formattedPhone }));
     } else {
       setPatient((prev) => ({ ...prev, [name]: value }));
     }
@@ -107,9 +160,14 @@ export function usePatientForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
-    if (!patient.name.trim()) {
-      alert("Por favor, preencha o nome do paciente.");
+    // Comprehensive validation
+    const { isValid, errors } = validateForm();
+    setValidationErrors(errors);
+
+    if (!isValid) {
+      // Show first validation error
+      const firstError = Object.values(errors)[0];
+      alert(`Erro de validação: ${firstError}`);
       return;
     }
 
@@ -212,12 +270,34 @@ export function usePatientForm() {
     }
   };
 
+  // Handle key down events to prevent Enter submission unless on submit button
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === "Enter") {
+      // Allow Enter only if the target is the submit button
+      const target = e.target as HTMLElement;
+      if (target.tagName !== "BUTTON" || target.getAttribute("type") !== "submit") {
+        e.preventDefault();
+        return;
+      }
+      
+      // If Enter is pressed on submit button, validate before allowing submission
+      const { isValid } = validateForm();
+      if (!isValid) {
+        e.preventDefault();
+        return;
+      }
+    }
+  };
+
   return {
     patient,
     setPatient,
     handleChange,
     handleSpiritualConsultationChange,
     handleSubmit,
+    handleKeyDown,
     isLoading,
+    validationErrors,
+    isFormValid,
   };
 }

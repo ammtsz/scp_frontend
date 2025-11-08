@@ -119,7 +119,6 @@ body {
   font-weight: 600;
   border-radius: 0.5rem;
   transition: all 0.2s;
-  border: none;
   cursor: pointer;
   /* Ensure minimum touch target size on mobile */
   min-height: 44px;

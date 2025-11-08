@@ -322,7 +322,7 @@ describe("PatientNotesCard", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Tratamento")).toBeInTheDocument();
-      expect(screen.getByText("Emergência")).toBeInTheDocument();
+      expect(screen.getByText("Exceção")).toBeInTheDocument();
       expect(screen.getByText("Família")).toBeInTheDocument();
     });
   });

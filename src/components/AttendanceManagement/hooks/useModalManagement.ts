@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { createTreatmentRecord } from "@/api/treatment-records";
-import type { CreateTreatmentRecordRequest } from "@/api/types";
+import { updatePatient } from "@/api/patients";
+import type { CreateTreatmentRecordRequest, TreatmentStatus } from "@/api/types";
 import type { SpiritualTreatmentData } from "../components/Forms/PostAttendanceForms";
 
 export interface ModalManagementState {
@@ -104,6 +105,8 @@ export const useModalManagement = ({
         // Create the treatment record request
         const treatmentRequest: CreateTreatmentRecordRequest = {
           attendance_id: selectedAttendanceForTreatment.id,
+          main_complaint: data.mainComplaint,
+          treatment_status: data.treatmentStatus, // Used for patient update, ignored by backend
           food: data.food,
           water: data.water,
           ointments: data.ointments,
@@ -122,6 +125,18 @@ export const useModalManagement = ({
 
         if (!response.success || !response.value) {
           throw new Error(response.error || "Failed to create treatment record");
+        }
+
+        // Update patient treatment status and discharge date if applicable
+        if (data.treatmentStatus === 'A') {
+          const patientUpdateResponse = await updatePatient(selectedAttendanceForTreatment.patientId.toString(), {
+            treatment_status: data.treatmentStatus as TreatmentStatus
+          });
+          
+          if (!patientUpdateResponse.success) {
+            console.error("Failed to update patient treatment status:", patientUpdateResponse.error);
+            // Don't throw error here as the treatment record was created successfully
+          }
         }
 
         // Close modal and refresh data

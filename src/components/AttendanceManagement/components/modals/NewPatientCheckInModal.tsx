@@ -1,37 +1,67 @@
 "use client";
 
 import React from "react";
-import { Patient } from "@/types/types";
+import { Patient, PatientBasic } from "@/types/types";
 import BaseModal from "@/components/common/BaseModal";
 import NewPatientCheckInForm from "../Forms/NewPatientCheckInForm";
+import { useCloseModal, useNewPatientCheckInModal } from "@/stores/modalStore";
 
-interface NewPatientCheckInModalProps {
-  patient: Patient;
-  attendanceId?: number; // Add attendance ID to check in existing attendance
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: (updatedPatient: Patient) => void;
-}
+const NewPatientCheckInModal: React.FC = () => {
+  const newPatientCheckIn = useNewPatientCheckInModal();
+  const closeModal = useCloseModal();
 
-const NewPatientCheckInModal: React.FC<NewPatientCheckInModalProps> = ({
-  patient,
-  attendanceId,
-  isOpen,
-  onClose,
-  onSuccess,
-}) => {
+  const { patient, attendanceId, isOpen, onComplete } = newPatientCheckIn;
+
+  const patientForCheckIn: Patient = {
+    ...(patient as PatientBasic),
+    birthDate: new Date(), // Default value since PatientBasic doesn't have birthDate
+    mainComplaint: "", // Default value since PatientBasic doesn't have mainComplaint
+    startDate: new Date(), // Default value since PatientBasic doesn't have startDate
+    dischargeDate: null, // Default value since PatientBasic doesn't have dischargeDate
+    nextAttendanceDates: [], // Default empty array
+    currentRecommendations: {
+      // Default recommendations
+      date: new Date(),
+      food: "",
+      water: "",
+      ointment: "",
+      lightBath: false,
+      rod: false,
+      spiritualTreatment: false,
+      returnWeeks: 0,
+    },
+    previousAttendances: [], // Default empty array
+  };
+
+  const handleClose = () => {
+    closeModal("newPatientCheckIn");
+  };
+
+  const handleSuccess = (updatedPatient: Patient) => {
+    if (onComplete && updatedPatient) {
+      onComplete(true);
+    }
+    closeModal("newPatientCheckIn");
+    // TODO: Add refresh logic here if needed
+    console.log("Patient check-in successful:", updatedPatient);
+  };
+
+  // Don't render if modal is not open
+  if (!isOpen || !patient) {
+    return null;
+  }
   return (
     <BaseModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Check-in do Novo Paciente"
       maxWidth="md"
     >
       <NewPatientCheckInForm
-        patient={patient}
+        patient={patientForCheckIn}
         attendanceId={attendanceId}
-        onSuccess={onSuccess}
-        onCancel={onClose}
+        onSuccess={handleSuccess}
+        onCancel={handleClose}
       />
     </BaseModal>
   );

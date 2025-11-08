@@ -13,7 +13,9 @@ export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
   isDayFinalized = false,
 }) => {
   const handleTodayClick = () => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0];
     onDateChange(today);
   };
 

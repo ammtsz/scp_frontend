@@ -9,7 +9,10 @@ const PatientForm: React.FC = () => {
     handleChange,
     handleSpiritualConsultationChange,
     handleSubmit,
+    handleKeyDown,
     isLoading,
+    validationErrors,
+    isFormValid,
   } = usePatientForm();
 
   return (
@@ -27,12 +30,17 @@ const PatientForm: React.FC = () => {
         </div>
       </div>
 
-      <form className="p-4 space-y-6" onSubmit={handleSubmit}>
+      <form
+        className="p-4 space-y-6"
+        onSubmit={handleSubmit}
+        onKeyDown={handleKeyDown}
+      >
         <PatientFormFields
           patient={patient}
           handleChange={handleChange}
           handleSpiritualConsultationChange={handleSpiritualConsultationChange}
           showSpiritualConsultation={true}
+          validationErrors={validationErrors}
         />
 
         <div className="flex justify-end">
@@ -41,6 +49,7 @@ const PatientForm: React.FC = () => {
             variant="primary"
             isLoading={isLoading}
             loadingText="Salvando..."
+            disabled={isLoading || !isFormValid()}
           >
             Salvar Paciente
           </LoadingButton>

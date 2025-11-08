@@ -29,8 +29,6 @@ import {
   useSetAttendanceDataLoading,
   useSetAttendanceError,
   useCheckEndOfDayStatus,
-  // useFinalizeEndOfDay, // Not implemented yet
-  useSetDayFinalized,
   useDayFinalized,
   useEndOfDayStatus,
 } from '@/stores';
@@ -94,7 +92,6 @@ export interface UseAttendanceManagementReturn {
   
   // Actions - End-of-day Workflow
   checkEndOfDayStatus: () => EndOfDayResult;
-  finalizeEndOfDay: (data?: EndOfDayData) => Promise<EndOfDayResult>;
   handleIncompleteAttendances: (
     attendances: AttendanceStatusDetail[],
     action: "complete" | "reschedule"
@@ -122,7 +119,6 @@ export function useAttendanceManagement(): UseAttendanceManagementReturn {
   const setLoading = useSetAttendanceLoading();
   const setDataLoading = useSetAttendanceDataLoading();
   const setError = useSetAttendanceError();
-  const setDayFinalized = useSetDayFinalized();
   const checkEndOfDayStatusAction = useCheckEndOfDayStatus();
   // const finalizeEndOfDayAction = useFinalizeEndOfDay(); // Not used yet
   
@@ -240,60 +236,6 @@ export function useAttendanceManagement(): UseAttendanceManagementReturn {
     return checkEndOfDayStatusAction(attendancesByDate || null);
   }, [checkEndOfDayStatusAction, attendancesByDate]);
   
-  // Finalize end-of-day
-  const finalizeEndOfDay = useCallback(async (data?: EndOfDayData): Promise<EndOfDayResult> => {
-    try {
-      if (!attendancesByDate) {
-        throw new Error("No attendance data available");
-      }
-
-      // Handle absence justifications if provided
-      if (data?.absenceJustifications && data.absenceJustifications.length > 0) {
-        const justifications = data.absenceJustifications.map(j => ({
-          attendanceId: j.patientId, // Note: This might need adjustment based on actual data structure
-          patientName: j.patientName,
-          justified: j.justified,
-          notes: j.notes,
-        }));
-        
-        await handleAbsencesMutation.mutateAsync(justifications);
-      }
-
-      // Calculate completion data
-      const isAttendanceStatus = (value: unknown): value is { completed?: unknown[] } => {
-        const candidate = value as { completed?: unknown[] };
-        return !!(
-          value &&
-          typeof value === "object" &&
-          Array.isArray(candidate.completed)
-        );
-      };
-
-      const attendanceValues = Object.values(attendancesByDate).filter(val => 
-        typeof val === 'object' && val !== null && 'completed' in val
-      );
-      
-      const completedCount = attendanceValues
-        .filter(isAttendanceStatus)
-        .reduce((total, typeData) => total + (typeData.completed?.length || 0), 0);
-
-      const result: EndOfDayResult = {
-        type: "completed",
-        completionData: {
-          totalPatients: completedCount,
-          completedPatients: completedCount,
-          missedPatients: 0, // Would be calculated based on absences
-          completionTime: new Date(),
-        },
-      };
-
-      setDayFinalized(true);
-      return result;
-    } catch (err) {
-      console.error("Error finalizing end of day:", err);
-      throw err;
-    }
-  }, [attendancesByDate, handleAbsencesMutation, setDayFinalized]);
   
   // Handle incomplete attendances
   const handleIncompleteAttendances = useCallback(async (
@@ -357,7 +299,6 @@ export function useAttendanceManagement(): UseAttendanceManagementReturn {
     
     // Actions - End-of-day Workflow
     checkEndOfDayStatus,
-    finalizeEndOfDay,
     handleIncompleteAttendances,
     handleAbsenceJustifications,
   };

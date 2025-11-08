@@ -1,33 +1,14 @@
 import React, { useState, useEffect } from "react";
-import type { TreatmentInfo } from "@/hooks/useTreatmentIndicators";
 
-interface TreatmentSession {
-  id: number;
-  treatmentType: "light_bath" | "rod";
-  bodyLocations: string[];
-  startDate: string;
-  plannedSessions: number;
-  completedSessions: number;
-  status: "scheduled" | "in_progress" | "completed" | "cancelled";
-  color?: string;
-  durationMinutes?: number;
-}
+import { useCloseModal, usePostTreatmentModal } from "@/stores/modalStore";
+import { useTreatmentSessions } from "@/hooks/useTreatmentSessionsQueries";
+import { useBulkCompleteTreatmentSessionRecords } from "@/hooks/useTreatmentSessionRecordsQueries";
+import type { TreatmentSessionResponseDto } from "@/api/types";
 
-interface PostTreatmentModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onComplete: (
-    completedLocations: Record<number, string[]>,
-    notes: string
-  ) => void;
-  patientId: number;
-  patientName: string;
-  treatmentInfo: TreatmentInfo;
-  treatmentSessions: TreatmentSession[];
-  isLoadingSessions?: boolean;
-}
+// Use the actual backend type instead of custom interface
+type TreatmentSession = TreatmentSessionResponseDto;
 
-// New interface for individual treatment cards (one per body location)
+// Interface for individual treatment cards (one per body location)
 interface TreatmentCard {
   id: string; // Unique identifier for the card
   treatmentType: "light_bath" | "rod";
@@ -39,33 +20,37 @@ interface TreatmentCard {
   totalCompletedSessions: number;
 }
 
-// New interface for individual treatment cards (one per body location)
-interface TreatmentCard {
-  id: string; // Unique identifier for the card
-  treatmentType: "light_bath" | "rod";
-  bodyLocation: string;
-  sessions: TreatmentSession[];
-  color?: string;
-  durationMinutes?: number;
-  totalPlannedSessions: number;
-  totalCompletedSessions: number;
-}
-
-const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
-  isOpen,
-  onClose,
-  onComplete,
-  patientName,
-  treatmentSessions,
-  isLoadingSessions = false,
-}) => {
+const PostTreatmentModal: React.FC = () => {
   const [completedTreatments, setCompletedTreatments] = useState<
     Set<string> // Now using "treatmentType_bodyLocation" as key
   >(new Set());
   const [generalNotes, setGeneralNotes] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const postTreatment = usePostTreatmentModal();
+  const closeModal = useCloseModal();
+
+  // React Query mutations
+  const bulkCompleteRecords = useBulkCompleteTreatmentSessionRecords();
+  const isSubmitting = bulkCompleteRecords.isPending;
+
+  const {
+    isOpen,
+    patientId,
+    patientName,
+    // attendanceType,
+    onComplete,
+  } = postTreatment;
+
+  // Fetch treatment sessions for this patient
+  const {
+    treatmentSessions,
+    loading: treatmentSessionsLoading,
+    error: treatmentSessionsError,
+    // refetch: refetchTreatmentSessions,
+  } = useTreatmentSessions(patientId || 0);
+
 
   // Reset state when modal opens
   useEffect(() => {
@@ -82,32 +67,30 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
     const cards: TreatmentCard[] = [];
 
     treatmentSessions.forEach((session) => {
-      // Create a card for each body location in this session
-      session.bodyLocations.forEach((bodyLocation: string) => {
-        const cardId = `${session.treatmentType}_${bodyLocation}`;
+      // Create a card for this specific body location
+      const cardId = `${session.treatment_type}_${session.body_location}`;
 
-        // Check if we already have a card for this treatment type + body location
-        let existingCard = cards.find((card) => card.id === cardId);
+      // Check if we already have a card for this treatment type + body location
+      let existingCard = cards.find((card) => card.id === cardId);
 
-        if (!existingCard) {
-          existingCard = {
-            id: cardId,
-            treatmentType: session.treatmentType,
-            bodyLocation: bodyLocation,
-            sessions: [],
-            color: session.color,
-            durationMinutes: session.durationMinutes,
-            totalPlannedSessions: 0,
-            totalCompletedSessions: 0,
-          };
-          cards.push(existingCard);
-        }
+      if (!existingCard) {
+        existingCard = {
+          id: cardId,
+          treatmentType: session.treatment_type,
+          bodyLocation: session.body_location,
+          sessions: [],
+          color: session.color,
+          durationMinutes: session.duration_minutes,
+          totalPlannedSessions: 0,
+          totalCompletedSessions: 0,
+        };
+        cards.push(existingCard);
+      }
 
-        // Add this session to the card
-        existingCard.sessions.push(session);
-        existingCard.totalPlannedSessions += session.plannedSessions;
-        existingCard.totalCompletedSessions += session.completedSessions;
-      });
+      // Add this session to the card
+      existingCard.sessions.push(session);
+      existingCard.totalPlannedSessions += session.planned_sessions;
+      existingCard.totalCompletedSessions += session.completed_sessions;
     });
 
     return cards;
@@ -137,7 +120,6 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
       return;
     }
 
-    setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(false);
 
@@ -165,7 +147,32 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
         }
       });
 
-      await onComplete(completedLocationsBySession, generalNotes);
+      // Prepare completions for React Query mutation
+      const completions = [];
+      
+      for (const [sessionId, locations] of Object.entries(completedLocationsBySession)) {
+        const session = treatmentSessions.find(s => s.id === parseInt(sessionId));
+        if (!session) continue;
+
+        completions.push({
+          sessionId: sessionId,
+          completionData: {
+            notes: generalNotes || `Tratamento realizado para: ${locations.join(', ')}`
+          },
+          newCompletedCount: session.completed_sessions + 1
+        });
+      }
+
+      // Execute bulk completion using React Query mutation
+      await bulkCompleteRecords.mutateAsync(completions);
+      
+
+
+      // Notify that the completion was successful
+      if (onComplete) {
+        onComplete(true);
+      }
+
       setSubmitSuccess(true);
 
       // Auto-close after successful submission
@@ -175,18 +182,15 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
     } catch (error) {
       console.error("Error completing treatment:", error);
       setSubmitError("Erro ao completar o tratamento. Tente novamente.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
     setCompletedTreatments(new Set());
     setGeneralNotes("");
-    setIsSubmitting(false);
     setSubmitError(null);
     setSubmitSuccess(false);
-    onClose();
+    closeModal("postTreatment");
   };
 
   const getTreatmentTypeLabel = (type: "light_bath" | "rod") => {
@@ -211,10 +215,10 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gray-50 px-6 py-4 border-b">
+        <div className="bg-gray-60 px-6 py-4 border-b">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
@@ -236,9 +240,21 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          {isLoadingSessions ? (
+          {treatmentSessionsLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-gray-500">Carregando tratamentos...</div>
+            </div>
+          ) : treatmentSessionsError ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-red-600">
+                Erro ao carregar tratamentos: {treatmentSessionsError}
+              </div>
+            </div>
+          ) : treatmentCards.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-gray-500">
+                Nenhum tratamento ativo encontrado para este paciente.
+              </div>
             </div>
           ) : (
             <>
@@ -412,14 +428,14 @@ const PostTreatmentModal: React.FC<PostTreatmentModalProps> = ({
               <button
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="button text-gray-700 border border-gray-300 bg-white hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit() || isSubmitting}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="button text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
               >
                 {isSubmitting ? "Registrando..." : "Registrar Sessão"}
               </button>

@@ -9,6 +9,9 @@ import type {
 import type { TreatmentRecommendation, LightBathLocationTreatment, RodLocationTreatment } from "../types";
 import type { CreatedTreatmentSession } from "../components/TreatmentSessionConfirmation";
 import type { TreatmentSessionError } from "../components/TreatmentSessionErrors";
+import { useCloseModal, usePostAttendanceModal } from "@/stores/modalStore";
+import { useSpiritualTreatmentSubmission } from "../../../../hooks/useSpiritualTreatmentSubmission";
+
 
 // Treatment status options as per requirements
 export type TreatmentStatus = "N" | "T" | "A" | "F";
@@ -17,7 +20,6 @@ export interface SpiritualTreatmentData {
   // Main form fields from requirements
   mainComplaint: string;
   treatmentStatus: TreatmentStatus;
-  attendanceDate: string;
   startDate: string;
   returnWeeks: number;
 
@@ -29,27 +31,21 @@ export interface SpiritualTreatmentData {
   notes: string;
 }
 
-interface UseSpiritualTreatmentFormProps {
-  attendanceId: number;
-  patientId: number;
-  currentTreatmentStatus: TreatmentStatus;
-  onSubmit: (
-    data: SpiritualTreatmentData
-  ) => Promise<{ treatmentRecordId: number }>;
-  isLoading?: boolean;
-  initialData?: Partial<SpiritualTreatmentData>;
-  onTreatmentSessionsCreated?: (sessionIds: number[]) => void;
-}
+export function usePostAttendanceForm() {
+  // Get store state and actions
+  const { 
+    attendanceId, 
+    patientId, 
+    currentTreatmentStatus, 
+    isLoading: externalLoading = false,
+    initialData,
+    onComplete,
+  }  = usePostAttendanceModal();
+  const closeModal = useCloseModal();
 
-export function usePostAttendanceForm({
-  attendanceId,
-  patientId,
-  currentTreatmentStatus,
-  onSubmit,
-  isLoading: externalLoading = false,
-  initialData,
-  onTreatmentSessionsCreated,
-}: UseSpiritualTreatmentFormProps) {
+  // Use specialized treatment submission hook
+  const { submitTreatmentRecord } = useSpiritualTreatmentSubmission();
+
   // State for patient data fetching
   const [patientData, setPatientData] = useState<PatientResponseDto | null>(null);
   const [fetchingPatient, setFetchingPatient] = useState(true);
@@ -66,6 +62,10 @@ export function usePostAttendanceForm({
   // Get current date as string for default values (memoized to prevent dependency changes)
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
+  const handleCancel = useCallback(() => {
+    closeModal("postAttendance");
+  }, [closeModal]);
+  
   // Helper function to validate treatment data before sending to backend
   const validateTreatmentData = useCallback((
     treatment: LightBathLocationTreatment | RodLocationTreatment,
@@ -228,6 +228,11 @@ export function usePostAttendanceForm({
       recommendations: TreatmentRecommendation,
       treatmentRecordId: number
     ): Promise<{ sessionIds: number[], sessions: CreatedTreatmentSession[] }> => {
+      // Guard against undefined required values
+      if (!attendanceId || !patientId) {
+        throw new Error("Attendance ID and Patient ID are required for creating treatment sessions");
+      }
+      
       const createdSessionIds: number[] = [];
       const createdSessionsData: CreatedTreatmentSession[] = [];
       const lightBathErrors: string[] = [];
@@ -424,6 +429,8 @@ export function usePostAttendanceForm({
   // Fetch patient data when component mounts
   useEffect(() => {
     const fetchPatientData = async () => {
+      if (!patientId) return;
+      
       try {
         setFetchingPatient(true);
         setFetchError(null);
@@ -461,11 +468,6 @@ export function usePostAttendanceForm({
       // Start date validation
       if (data.startDate > today) {
         return "Data de início não pode ser futura";
-      }
-
-      // Attendance date validation
-      if (data.attendanceDate > today) {
-        return "Data da consulta não pode ser futura";
       }
 
       // If light bath is recommended, validate required fields
@@ -519,8 +521,14 @@ export function usePostAttendanceForm({
   const handleFormSubmit = useCallback(
     async (data: SpiritualTreatmentData) => {
       try {
-        // First, submit the spiritual treatment record (existing flow)
-        const result = await onSubmit(data);
+        if (!attendanceId) {
+          throw new Error("Attendance ID is required for treatment submission");
+        }
+        const result = await submitTreatmentRecord(data, attendanceId);
+
+        if (!result) {
+          throw new Error("Falha ao enviar o tratamento espiritual");
+        }
 
         // Then, create treatment sessions for lightbath/rod recommendations
         try {
@@ -532,15 +540,15 @@ export function usePostAttendanceForm({
           // Store created sessions for confirmation display
           setCreatedSessions(sessions);
 
-          // Notify parent component about created sessions (for backward compatibility)
-          if (sessionIds.length > 0 && onTreatmentSessionsCreated) {
-            onTreatmentSessionsCreated(sessionIds);
+          // Always notify parent component about completion (for card movement)
+          // Even if no additional treatment sessions were created
+          if (onComplete) {
+            onComplete(sessionIds);
           }
 
-          // Show confirmation view if sessions were created
-          if (sessions.length > 0) {
-            setShowConfirmation(true);
-          }
+          // Always show confirmation view after successful treatment record creation
+          // Even if no additional treatment sessions were created
+          setShowConfirmation(true);
         } catch (sessionError) {
           // Handle treatment session creation errors specifically
           console.error("Treatment session creation failed:", sessionError);
@@ -555,6 +563,8 @@ export function usePostAttendanceForm({
             // If we can't parse the error, show it as a general error
             throw sessionError;
           }
+
+          handleCancel()
         }
       } catch (error) {
         // If spiritual treatment submission fails, don't create sessions
@@ -562,7 +572,7 @@ export function usePostAttendanceForm({
         throw error;
       }
     },
-    [onSubmit, createTreatmentSessionsFromRecommendations, onTreatmentSessionsCreated, setCreatedSessions, setShowConfirmation, parseSessionCreationErrors, setSessionErrors, setShowErrors]
+    [createTreatmentSessionsFromRecommendations, onComplete, parseSessionCreationErrors, handleCancel, attendanceId, submitTreatmentRecord]
   );
 
   const {
@@ -577,7 +587,6 @@ export function usePostAttendanceForm({
     initialState: {
       mainComplaint: initialData?.mainComplaint || "",
       treatmentStatus: initialData?.treatmentStatus || "T", // Default to "T - Em tratamento"
-      attendanceDate: typeof initialData?.attendanceDate === 'string' ? initialData.attendanceDate : today,
       startDate: typeof initialData?.startDate === 'string' ? initialData.startDate : today,
       returnWeeks: initialData?.returnWeeks || 1, // Default to 1 week
       food: initialData?.food || "",
@@ -631,7 +640,7 @@ export function usePostAttendanceForm({
   );
 
   const handleDateChange = useCallback(
-    (field: "attendanceDate" | "startDate") =>
+    (field: "startDate") =>
       (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value || today;
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -683,6 +692,7 @@ export function usePostAttendanceForm({
     handleSubmit,
     handleRecommendationsChange,
     handleDateChange,
+    handleCancel,
     
     // Patient data
     patientData,

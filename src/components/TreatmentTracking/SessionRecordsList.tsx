@@ -59,7 +59,7 @@ export function SessionRecordsList({
   const handleComplete = async (recordId: string) => {
     try {
       const response = await completeTreatmentSessionRecord(recordId, {
-        completion_notes: "Sessão completada",
+        notes: "Sessão completada",
       });
 
       if (response.success) {

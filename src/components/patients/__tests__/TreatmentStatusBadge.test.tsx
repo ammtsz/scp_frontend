@@ -54,7 +54,7 @@ describe("TreatmentStatusBadge", () => {
 });
 
 describe("PatientStatusOverview", () => {
-  test("renders emergency priority patient correctly", () => {
+  test("renders exception priority patient correctly", () => {
     render(
       <PatientStatusOverview
         priority="1"
@@ -66,13 +66,13 @@ describe("PatientStatusOverview", () => {
 
     expect(screen.getByText("Status do Paciente")).toBeInTheDocument();
     expect(screen.getByText("🚨")).toBeInTheDocument();
-    expect(screen.getByText("Emergência")).toBeInTheDocument();
+    expect(screen.getByText("Exceção")).toBeInTheDocument();
     expect(screen.getByText("5")).toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText("25/10/2025")).toBeInTheDocument();
   });
 
-  test("renders normal priority patient correctly", () => {
+  test("renders standard priority patient correctly", () => {
     render(
       <PatientStatusOverview
         priority="3"
@@ -82,7 +82,7 @@ describe("PatientStatusOverview", () => {
     );
 
     expect(screen.getByText("✅")).toBeInTheDocument();
-    expect(screen.getByText("Normal")).toBeInTheDocument();
+    expect(screen.getByText("Padrão")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
   });
@@ -97,7 +97,7 @@ describe("PatientStatusOverview", () => {
     );
 
     expect(screen.getByText("⚠️")).toBeInTheDocument();
-    expect(screen.getByText("Intermediário")).toBeInTheDocument();
+    expect(screen.getByText("Idoso/crianças")).toBeInTheDocument();
     expect(screen.queryByText("Próximo atendimento:")).not.toBeInTheDocument();
   });
 

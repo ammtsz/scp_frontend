@@ -11,6 +11,7 @@ import { TreatmentRecommendationsEmpty } from "@/components/common/CardStates";
 import { TreatmentStatusOverview } from "./TreatmentStatusOverview";
 import { ActiveTreatmentSessions } from "./ActiveTreatmentSessions";
 import { TreatmentRecommendationsDisplay } from "./TreatmentRecommendationsDisplay";
+import ConfirmModal from "@/components/common/ConfirmModal";
 
 interface CurrentTreatmentCardProps {
   patient: Patient;
@@ -22,6 +23,12 @@ export const CurrentTreatmentCard: React.FC<CurrentTreatmentCardProps> = ({
   // State for treatment recommendations modal
   const [isRecommendationsModalOpen, setIsRecommendationsModalOpen] =
     useState(false);
+
+  // State for confirmation modal
+  const [confirmDelete, setConfirmDelete] = useState<{
+    sessionId: string;
+    sessionType: string;
+  } | null>(null);
 
   // Fetch treatment sessions for progress tracking
   const {
@@ -76,23 +83,21 @@ export const CurrentTreatmentCard: React.FC<CurrentTreatmentCardProps> = ({
   }, [latestTreatmentRecord, patient.currentRecommendations]);
 
   // Handle treatment session deletion
-  const handleDeleteSession = async (
-    sessionId: string,
-    sessionType: string
-  ) => {
-    if (
-      !confirm(
-        `Tem certeza que deseja remover esta sessão de ${sessionType}? Esta ação não pode ser desfeita.`
-      )
-    ) {
-      return;
-    }
+  const handleDeleteSession = (sessionId: string, sessionType: string) => {
+    setConfirmDelete({ sessionId, sessionType });
+  };
+
+  // Handle confirmed deletion
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
 
     try {
-      await deleteTreatmentSessionMutation.mutateAsync(sessionId);
+      await deleteTreatmentSessionMutation.mutateAsync(confirmDelete.sessionId);
       await refetchSessions(); // Refresh the sessions list
+      setConfirmDelete(null);
     } catch (error) {
       console.error("Failed to delete treatment session:", error);
+      setConfirmDelete(null);
     }
   };
 
@@ -216,6 +221,29 @@ export const CurrentTreatmentCard: React.FC<CurrentTreatmentCardProps> = ({
             updatedRecommendations
           );
         }}
+      />
+
+      {/* Confirmation Modal for Deletion */}
+      <ConfirmModal
+        open={!!confirmDelete}
+        title="Remover Sessão de Tratamento"
+        message={
+          confirmDelete && (
+            <>
+              Tem certeza que deseja remover esta sessão de{" "}
+              <span className="font-semibold">{confirmDelete.sessionType}</span>
+              ?
+              <br />
+              <span className="text-red-600">
+                Esta ação não pode ser desfeita.
+              </span>
+            </>
+          )
+        }
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

@@ -87,7 +87,6 @@ export type {
  * useTreatmentWorkflow - Treatment-specific workflows
  * Handles spiritual consultations and treatment processes.
  */
-export { useTreatmentWorkflow } from './useTreatmentWorkflow';
 
 // ===== MIGRATION COMPLETE =====
 // The monolithic useAttendanceManagement hook (609 lines) has been successfully

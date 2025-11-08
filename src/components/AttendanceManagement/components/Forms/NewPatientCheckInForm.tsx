@@ -23,9 +23,9 @@ interface NewPatientCheckInFormProps {
 }
 
 const priorityOptions = [
-  { value: "1", label: "1 - Emergência" },
-  { value: "2", label: "2 - Intermediário" },
-  { value: "3", label: "3 - Normal" },
+  { value: "1", label: "1 - Exceção" },
+  { value: "2", label: "2 - Idoso/crianças" },
+  { value: "3", label: "3 - Padrão" },
 ];
 
 const NewPatientCheckInForm: React.FC<NewPatientCheckInFormProps> = ({

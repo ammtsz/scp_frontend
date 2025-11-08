@@ -1,51 +1,35 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import ErrorDisplay from "@/components/common/ErrorDisplay";
-import type { IAttendanceStatusDetailWithType } from "../../utils/attendanceDataUtils";
 import StepNavigation from "./StepNavigation";
 import IncompleteAttendancesStep from "./Steps/IncompleteAttendancesStep";
 import AbsenceJustificationStep from "./Steps/AbsenceJustificationStep";
 import ConfirmationStep from "./Steps/ConfirmationStep";
 import { useEndOfDay } from "./useEndOfDay";
-import type { AbsenceJustification } from "./types";
+import { useCloseModal, useEndOfDayModal } from "@/stores/modalStore";
 
 interface EndOfDayContainerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  selectedDate: string;
-  incompleteAttendances: IAttendanceStatusDetailWithType[];
-  completedAttendances: IAttendanceStatusDetailWithType[];
-  scheduledAbsences: IAttendanceStatusDetailWithType[];
   onHandleCompletion: (attendanceId: number) => void;
   onReschedule: (attendanceId: number) => void;
-  onSubmitEndOfDay: (absenceJustifications: AbsenceJustification[]) => void;
 }
 
 const EndOfDayContainer: React.FC<EndOfDayContainerProps> = ({
-  isOpen,
-  onClose,
-  selectedDate,
-  incompleteAttendances,
-  completedAttendances,
-  scheduledAbsences,
   onHandleCompletion,
   onReschedule,
-  onSubmitEndOfDay,
 }) => {
   const [error, setError] = useState<string | null>(null);
 
-  // Memoize the transformation to prevent infinite loops
-  const transformedScheduledAbsences = useMemo(() => {
-    return scheduledAbsences.map((absence) => ({
-      patientId: absence.patientId || 0,
-      patientName: absence.name,
-      attendanceType: absence.attendanceType,
-    }));
-  }, [scheduledAbsences]);
+  const endOfDay = useEndOfDayModal();
+  const closeModal = useCloseModal();
+
+  const selectedDate = endOfDay.selectedDate as string;
 
   const {
     currentStep,
     absenceJustifications,
     isSubmitting,
+    scheduledAbsences,
+    completedAttendances,
+    incompleteAttendances,
     handleJustificationChange,
     handleNext,
     handleBack,
@@ -53,8 +37,6 @@ const EndOfDayContainer: React.FC<EndOfDayContainerProps> = ({
     handleCompletion,
     handleReschedule,
   } = useEndOfDay({
-    incompleteAttendances,
-    scheduledAbsences: transformedScheduledAbsences,
     onHandleCompletion: async (attendanceId: number) => {
       try {
         setError(null);
@@ -75,20 +57,7 @@ const EndOfDayContainer: React.FC<EndOfDayContainerProps> = ({
         );
       }
     },
-    onSubmitEndOfDay: async (absenceJustifications: AbsenceJustification[]) => {
-      try {
-        setError(null);
-        await onSubmitEndOfDay(absenceJustifications);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Erro ao finalizar o dia"
-        );
-        throw err;
-      }
-    },
   });
-
-  if (!isOpen) return null;
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -107,7 +76,7 @@ const EndOfDayContainer: React.FC<EndOfDayContainerProps> = ({
           <AbsenceJustificationStep
             scheduledAbsences={scheduledAbsences.map((absence) => ({
               patientId: absence.patientId || 0,
-              patientName: absence.name,
+              patientName: absence.patientName,
               attendanceType: absence.attendanceType,
             }))}
             selectedDate={selectedDate}
@@ -124,7 +93,7 @@ const EndOfDayContainer: React.FC<EndOfDayContainerProps> = ({
             completedAttendances={completedAttendances}
             scheduledAbsences={scheduledAbsences.map((absence) => ({
               patientId: absence.patientId || 0,
-              patientName: absence.name,
+              patientName: absence.patientName,
               attendanceType: absence.attendanceType,
             }))}
             absenceJustifications={absenceJustifications}
@@ -148,7 +117,7 @@ const EndOfDayContainer: React.FC<EndOfDayContainerProps> = ({
               Finalizar o Dia
             </h2>
             <button
-              onClick={onClose}
+              onClick={() => closeModal("endOfDay")}
               disabled={isSubmitting}
               className="text-gray-400 hover:text-gray-600 focus:outline-none disabled:opacity-50"
               aria-label="Fechar modal"

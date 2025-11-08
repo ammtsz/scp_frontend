@@ -10,36 +10,18 @@ import {
 } from "../Forms/PostAttendanceForms/Tabs";
 import TreatmentSessionConfirmation from "../Forms/PostAttendanceForms/components/TreatmentSessionConfirmation";
 import TreatmentSessionErrors from "../Forms/PostAttendanceForms/components/TreatmentSessionErrors";
-import type {
-  SpiritualTreatmentData,
-  TreatmentStatus,
-} from "../Forms/PostAttendanceForms/hooks/usePostAttendanceForm";
+import type { TreatmentStatus } from "../Forms/PostAttendanceForms/hooks/usePostAttendanceForm";
+import { usePostAttendanceModal, useCloseModal } from "@/stores/modalStore";
 
-interface PostAttendanceModalProps {
-  attendanceId: number;
-  patientId: number;
-  patientName: string;
-  currentTreatmentStatus: TreatmentStatus;
-  onSubmit: (
-    data: SpiritualTreatmentData
-  ) => Promise<{ treatmentRecordId: number }>;
-  onCancel: () => void;
-  isLoading?: boolean;
-  initialData?: Partial<SpiritualTreatmentData>;
-  onTreatmentSessionsCreated?: (sessionIds: number[]) => void;
-}
+const PostAttendanceModal: React.FC = () => {
+  // // Get state from Zustand store
+  const postAttendance = usePostAttendanceModal();
+  const closeModal = useCloseModal();
 
-const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
-  attendanceId,
-  patientId,
-  patientName,
-  currentTreatmentStatus,
-  onSubmit,
-  onCancel,
-  isLoading: externalLoading = false,
-  initialData,
-  onTreatmentSessionsCreated,
-}) => {
+  // // Extract values from store
+  const { attendanceId, patientId, patientName, currentTreatmentStatus } =
+    postAttendance;
+
   // Use the custom hook for all spiritual treatment logic
   const {
     formData,
@@ -60,15 +42,8 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
     sessionErrors,
     resetErrors,
     retrySessionCreation,
-  } = usePostAttendanceForm({
-    attendanceId,
-    patientId,
-    currentTreatmentStatus,
-    onSubmit,
-    isLoading: externalLoading,
-    initialData,
-    onTreatmentSessionsCreated,
-  });
+    handleCancel,
+  } = usePostAttendanceForm();
 
   // Tab validation logic - simplified for now
   const [activeTab, setActiveTab] = React.useState("basic");
@@ -98,13 +73,13 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
   // Handle confirmation acknowledgment
   const handleConfirmationAcknowledge = () => {
     resetConfirmation();
-    onCancel(); // Close modal after acknowledgment
+    handleCancel(); // Close modal after acknowledgment
   };
 
   // Handle error acknowledgment
   const handleErrorContinue = () => {
     resetErrors();
-    onCancel(); // Close modal after acknowledgment
+    handleCancel(); // Close modal after acknowledgment
   };
 
   // Handle error retry
@@ -132,7 +107,7 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
         return (
           <BasicInfoTab
             formData={formData}
-            currentTreatmentStatus={currentTreatmentStatus}
+            currentTreatmentStatus={currentTreatmentStatus as TreatmentStatus}
             patientData={patientData}
             onFormDataChange={(field, value) => {
               const syntheticEvent = {
@@ -171,9 +146,9 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
     <div className="flex justify-end space-x-3">
       <button
         type="button"
-        onClick={onCancel}
+        onClick={() => closeModal("postAttendance")}
         disabled={isLoading}
-        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 transition-colors"
+        className="button text-gray-700 border border-gray-300 bg-white hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 transition-colors"
       >
         Cancelar
       </button>
@@ -181,17 +156,22 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
         onClick={handleSubmit}
         isLoading={isLoading}
         loadingText="Salvando..."
-        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+        className="button text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
       >
         Concluir atendimento
       </LoadingButton>
     </div>
   );
 
+  // Don't render if modal is not open
+  if (!postAttendance.isOpen || !postAttendance.attendanceId) {
+    return null;
+  }
+
   return (
     <TabbedModal
       isOpen={true}
-      onClose={onCancel}
+      onClose={handleCancel}
       title={
         showConfirmation
           ? `Tratamento Concluído - ${patientName}`
@@ -235,13 +215,13 @@ const PostAttendanceModal: React.FC<PostAttendanceModalProps> = ({
       {showConfirmation ? (
         <TreatmentSessionConfirmation
           sessions={createdSessions}
-          patientName={patientName}
+          patientName={patientName || ""}
           onAcknowledge={handleConfirmationAcknowledge}
         />
       ) : showErrors ? (
         <TreatmentSessionErrors
           errors={sessionErrors}
-          patientName={patientName}
+          patientName={patientName || ""}
           onRetry={handleErrorRetry}
           onContinue={handleErrorContinue}
         />

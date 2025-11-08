@@ -326,7 +326,11 @@ const PatientWalkInForm: React.FC<PatientWalkInFormProps> = ({
       }
 
       // Get current date and time
-      const today = new Date().toISOString().split("T")[0];
+      const today = new Date(
+        Date.now() - new Date().getTimezoneOffset() * 60000
+      )
+        .toISOString()
+        .split("T")[0];
       const currentTime = "20:00"; // Default scheduled time
 
       // Create attendances for each selected type

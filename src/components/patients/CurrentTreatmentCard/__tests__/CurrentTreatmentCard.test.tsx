@@ -8,6 +8,8 @@ import {
 } from "../../../../hooks/useTreatmentSessionsQueries";
 import { useTreatmentRecords } from "../../../../hooks/useTreatmentRecords";
 
+// Tests now use ConfirmModal component instead of window.confirm
+
 // Mock the React Query hook
 jest.mock("../../../../hooks/usePatientQueries", () => ({
   useUpdatePatient: jest.fn(() => ({
@@ -101,6 +103,10 @@ jest.mock("@/utils/dateHelpers", () => ({
 }));
 
 describe("CurrentTreatmentCard", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("renders treatment card with correct title", () => {
     render(<CurrentTreatmentCard patient={mockPatient} />);
 
@@ -214,9 +220,6 @@ describe("CurrentTreatmentCard", () => {
       // Mock successful deletion
       mockMutateAsync.mockResolvedValue(true);
 
-      // Mock window.confirm to auto-confirm
-      const mockConfirm = jest.spyOn(window, "confirm").mockReturnValue(true);
-
       // Mock the hook to return treatment sessions
       (useTreatmentSessions as jest.Mock).mockReturnValue({
         treatmentSessions: [mockTreatmentSession],
@@ -230,24 +233,30 @@ describe("CurrentTreatmentCard", () => {
       const deleteButton = screen.getAllByTitle("Remover sessão")[0];
       fireEvent.click(deleteButton);
 
-      // Verify confirmation dialog was shown
-      expect(mockConfirm).toHaveBeenCalledWith(
-        "Tem certeza que deseja remover esta sessão de Banho de Luz? Esta ação não pode ser desfeita."
-      );
+      // Verify confirmation modal is shown
+      expect(
+        screen.getByText("Remover Sessão de Tratamento")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Esta ação não pode ser desfeita.")
+      ).toBeInTheDocument();
+      // Check that the modal contains both the question text and the treatment type
+      expect(
+        screen.getByText(/Tem certeza que deseja remover esta sessão de/)
+      ).toBeInTheDocument();
+
+      // Click confirm button in modal
+      const confirmButton = screen.getByRole("button", { name: "Remover" });
+      fireEvent.click(confirmButton);
 
       // Wait for the deletion to be called
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith("1");
         expect(mockRefetch).toHaveBeenCalled();
       });
-
-      mockConfirm.mockRestore();
     });
 
     it("does not delete when user cancels confirmation", async () => {
-      // Mock user canceling confirmation
-      const mockConfirm = jest.spyOn(window, "confirm").mockReturnValue(false);
-
       // Mock the hook to return treatment sessions
       (useTreatmentSessions as jest.Mock).mockReturnValue({
         treatmentSessions: [mockTreatmentSession],
@@ -261,14 +270,25 @@ describe("CurrentTreatmentCard", () => {
       const deleteButton = screen.getAllByTitle("Remover sessão")[0];
       fireEvent.click(deleteButton);
 
-      // Verify confirmation dialog was shown
-      expect(mockConfirm).toHaveBeenCalled();
+      // Verify confirmation modal is shown
+      expect(
+        screen.getByText("Remover Sessão de Tratamento")
+      ).toBeInTheDocument();
 
-      // Verify deletion was not called
+      // Click cancel button in modal
+      const cancelButton = screen.getByRole("button", { name: "Cancelar" });
+      fireEvent.click(cancelButton);
+
+      // Verify modal is closed
+      await waitFor(() => {
+        expect(
+          screen.queryByText("Remover Sessão de Tratamento")
+        ).not.toBeInTheDocument();
+      });
+
+      // Verify deletion was not called (since user cancelled)
       expect(mockMutateAsync).not.toHaveBeenCalled();
       expect(mockRefetch).not.toHaveBeenCalled();
-
-      mockConfirm.mockRestore();
     });
 
     it("shows delete error when deletion fails", () => {

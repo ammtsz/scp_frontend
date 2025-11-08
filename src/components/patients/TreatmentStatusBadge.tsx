@@ -43,19 +43,19 @@ export const PatientStatusOverview: React.FC<PatientStatusOverviewProps> = ({
       case "1":
         return {
           badgeClass: "ds-badge-priority-emergency",
-          text: "Emergência",
+          text: "Exceção",
           icon: "🚨",
         };
       case "2":
         return {
           badgeClass: "ds-badge-priority-intermediate",
-          text: "Intermediário",
+          text: "Idoso/crianças",
           icon: "⚠️",
         };
       case "3":
         return {
           badgeClass: "ds-badge-priority-normal",
-          text: "Normal",
+          text: "Padrão",
           icon: "✅",
         };
       default:

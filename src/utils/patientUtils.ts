@@ -228,11 +228,11 @@ Este resumo foi gerado automaticamente pelo sistema MVP Center.
 export function getPriorityLabel(priority: string): string {
   switch (priority) {
     case "1":
-      return "Emergência (1)";
+      return "Exceção (1)";
     case "2":
-      return "Intermediária (2)";
+      return "Idoso/crianças (2)";
     case "3":
-      return "Normal (3)";
+      return "Padrão (3)";
     default:
       return priority;
   }

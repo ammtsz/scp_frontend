@@ -179,9 +179,9 @@ const NewAttendanceForm: React.FC<NewAttendanceFormProps> = ({
               className="input w-full"
               disabled={isSubmitting}
             >
-              <option value="1">Emergência</option>
-              <option value="2">Intermediária</option>
-              <option value="3">Normal</option>
+              <option value="1">Exceção</option>
+              <option value="2">Idoso/crianças</option>
+              <option value="3">Padrão</option>
             </select>
           </div>
         )}

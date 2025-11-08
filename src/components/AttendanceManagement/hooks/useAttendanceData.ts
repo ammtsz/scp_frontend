@@ -68,7 +68,7 @@ export interface UseAttendanceDataReturn {
     mainComplaint?: string;
   }) => Promise<PatientCreationResult>;
   
-  deleteAttendance: (attendanceId: number) => Promise<boolean>;
+  deleteAttendance: (attendanceId: number, cancellationReason?: string) => Promise<boolean>;
   
   refreshData: () => Promise<void>;
   
@@ -114,6 +114,7 @@ export const useAttendanceData = ({
   /**
    * Create a new attendance
    */
+  // TO DO: Check where it is being used
   const createAttendance = useCallback(async (params: {
     patientId: number;
     attendanceType: AttendanceType;
@@ -175,6 +176,7 @@ export const useAttendanceData = ({
     mainComplaint?: string;
   }) => {
     try {
+      console.log("Creating patient with params:", params)
       setProcessingAttendance(true);
       
       // Validate patient data
@@ -203,6 +205,7 @@ export const useAttendanceData = ({
       
       // Trigger new patient detection if callback provided
       if (onNewPatientDetected && newPatientData) {
+        console.log("New patient created:", newPatientData);
         const newPatient = {
           id: newPatientData.id.toString(),
           name: newPatientData.name,
@@ -242,13 +245,13 @@ export const useAttendanceData = ({
   }, [createPatientMutation, onNewPatientDetected]);
 
   /**
-   * Delete an attendance
+   * Delete an attendance with optional cancellation reason
    */
-  const deleteAttendance = useCallback(async (attendanceId: number) => {
+  const deleteAttendance = useCallback(async (attendanceId: number, cancellationReason?: string) => {
     try {
       setProcessingAttendance(true);
       
-      await deleteAttendanceMutation.mutateAsync(attendanceId);
+      await deleteAttendanceMutation.mutateAsync({ attendanceId, cancellationReason });
 
       await refreshCurrentDate();
       return true;

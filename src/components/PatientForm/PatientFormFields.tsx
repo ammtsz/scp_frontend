@@ -35,6 +35,7 @@ interface PatientFormFieldsProps {
     e: React.ChangeEvent<HTMLInputElement>
   ) => void;
   showSpiritualConsultation?: boolean;
+  validationErrors?: Record<string, string>;
 }
 
 const PatientFormFields: React.FC<PatientFormFieldsProps> = React.memo(
@@ -43,6 +44,7 @@ const PatientFormFields: React.FC<PatientFormFieldsProps> = React.memo(
     handleChange,
     handleSpiritualConsultationChange,
     showSpiritualConsultation = true,
+    validationErrors = {},
   }) => {
     return (
       <div className="space-y-6">
@@ -60,10 +62,13 @@ const PatientFormFields: React.FC<PatientFormFieldsProps> = React.memo(
               name="name"
               value={patient.name}
               onChange={handleChange}
-              className="input w-full"
+              className={`input w-full ${validationErrors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
               required
               placeholder="Nome completo do paciente"
             />
+            {validationErrors.name && (
+              <p className="text-sm text-red-600 mt-1">{validationErrors.name}</p>
+            )}
           </div>
           <div>
             <label
@@ -77,9 +82,12 @@ const PatientFormFields: React.FC<PatientFormFieldsProps> = React.memo(
               name="phone"
               value={patient.phone}
               onChange={handleChange}
-              className="input w-full"
+              className={`input w-full ${validationErrors.phone ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
               placeholder="(11) 99999-9999"
             />
+            {validationErrors.phone && (
+              <p className="text-sm text-red-600 mt-1">{validationErrors.phone}</p>
+            )}
           </div>
         </div>
 
@@ -95,12 +103,15 @@ const PatientFormFields: React.FC<PatientFormFieldsProps> = React.memo(
               id="birthDate"
               name="birthDate"
               type="date"
-              className="input w-full"
+              className={`input w-full ${validationErrors.birthDate ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
               value={formatDateForInput(patient.birthDate)}
               onChange={handleChange}
               required
               lang="pt-BR"
             />
+            {validationErrors.birthDate && (
+              <p className="text-sm text-red-600 mt-1">{validationErrors.birthDate}</p>
+            )}
           </div>
           <div>
             <label

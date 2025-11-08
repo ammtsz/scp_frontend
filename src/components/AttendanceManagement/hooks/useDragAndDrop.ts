@@ -8,53 +8,21 @@ import type {
   AttendanceProgression,
   AttendanceType,
   AttendanceStatusDetail,
-  PatientBasic,
 } from "@/types/types";
 import type { IDraggedItem } from "../types";
+import { useOpenMultiSection, useOpenNewPatientCheckIn, useOpenPostAttendance, useOpenPostTreatment } from "@/stores/modalStore";
 
-interface UseDragAndDropProps {
-  onNewPatientDetected?: (patient: PatientBasic, attendanceId?: number) => void;
-  onTreatmentFormOpen?: (attendanceDetails: {
-    id: number;
-    patientId: number;
-    patientName: string;
-    attendanceType: string;
-    currentTreatmentStatus: "N" | "T" | "A" | "F";
-    currentStartDate?: Date;
-    currentReturnWeeks?: number;
-    isFirstAttendance: boolean;
-  }) => void;
-  onTreatmentCompletionOpen?: (attendanceDetails: {
-    attendanceId: number;
-    patientId: number;
-    patientName: string;
-    attendanceType: AttendanceType;
-    onComplete: (success: boolean) => void;
-  }) => void;
-}
-
-export const useDragAndDrop = ({
-  onNewPatientDetected,
-  onTreatmentFormOpen,
-  onTreatmentCompletionOpen,
-}: UseDragAndDropProps = {}) => {
+export const useDragAndDrop = () => {
   const { data: patients = [] } = usePatients();
   const { attendancesByDate, setAttendancesByDate } = useAttendanceManagement();
 
   // Drag and drop state
   const [dragged, setDragged] = useState<IDraggedItem | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingDrop, setPendingDrop] = useState<{
-    toType: AttendanceType;
-    toStatus: AttendanceProgression;
-  } | null>(null);
-  const [multiSectionModalOpen, setMultiSectionModalOpen] = useState(false);
-  const [multiSectionPending, setMultiSectionPending] = useState<{
-    patientId: number;
-    fromStatus: AttendanceProgression;
-    toStatus: AttendanceProgression;
-    draggedType: AttendanceType;
-  } | null>(null);
+
+  const openPostAttendance = useOpenPostAttendance();
+  const openPostTreatment = useOpenPostTreatment();
+  const openNewPatientCheckIn = useOpenNewPatientCheckIn();
+  const openMultiSection = useOpenMultiSection();
 
   // Helper function to find all attendances for a patient
   const findAllPatientAttendances = useCallback(
@@ -63,9 +31,13 @@ export const useDragAndDrop = ({
       status: AttendanceProgression,
       patientId: number
     ): number[] => {
-      return attendancesByDate?.[type]?.[status]?.filter(
-        (p) => p.patientId === patientId
-      )?.map((p) => p.attendanceId as number) || [];
+      const statusAttendances =
+        attendancesByDate?.[type] && status in attendancesByDate[type]
+          ? (attendancesByDate[type][status as keyof typeof attendancesByDate[typeof type]] as AttendanceStatusDetail[])
+          : [];
+      return statusAttendances
+        ?.filter((p) => p.patientId === patientId)
+        ?.map((p) => p.attendanceId as number) || [];
     },
     [attendancesByDate]
   );
@@ -96,43 +68,10 @@ export const useDragAndDrop = ({
       if (status === "onGoing") updates.onGoingTime = new Date().toTimeString().split(' ')[0];
       if (status === "completed") {
         updates.completedTime = new Date().toTimeString().split(' ')[0];
-        
-        // Route to correct modal based on attendance type
-        const fullPatient = patients.find((p) => p.name === patient.name);
-        if (fullPatient && patient.attendanceId && patient.patientId) {
-          const attendanceType = dragged?.type;
-          
-          if (attendanceType === "spiritual") {
-            // Spiritual consultations should open PostAttendanceModal for recommendations
-            const isFirstAttendance = fullPatient.status === "N";
-            onTreatmentFormOpen?.({
-              id: patient.attendanceId,
-              patientId: patient.patientId,
-              patientName: patient.name,
-              attendanceType,
-              currentTreatmentStatus: "N",
-              currentStartDate: undefined,
-              currentReturnWeeks: undefined,
-              isFirstAttendance,
-            });
-          } else if (attendanceType === "lightBath" || attendanceType === "rod") {
-            // Light Bath and Rod treatments should open PostTreatmentModal for session completion
-            onTreatmentCompletionOpen?.({
-              attendanceId: patient.attendanceId,
-              patientId: patient.patientId,
-              patientName: patient.name,
-              attendanceType,
-              onComplete: (success: boolean) => {
-                // Handle completion callback if needed
-                console.log(`Treatment completion ${success ? 'successful' : 'failed'}:`, patient.name);
-              }
-            });
-          }
-        }
       }
       return { ...patient, ...updates };
     },
-    [patients, dragged, onTreatmentFormOpen, onTreatmentCompletionOpen]
+    []
   );
 
   // Get patients for a specific type and status
@@ -143,7 +82,7 @@ export const useDragAndDrop = ({
     ): AttendanceStatusDetail[] => {
       if (!attendancesByDate) return [];
 
-      const patients = attendancesByDate[type][status] || [];
+      const patients = attendancesByDate[type][status as keyof typeof attendancesByDate[typeof type]] || [];
 
       // Sort checkedIn patients by priority using business rules
       if (status === "checkedIn") {
@@ -206,8 +145,6 @@ export const useDragAndDrop = ({
         } 
       }
 
-      console.log({ treatmentTypes})
-      
       setDragged({ 
         type, 
         status, 
@@ -229,10 +166,28 @@ export const useDragAndDrop = ({
     async (toType: AttendanceType, toStatus: AttendanceProgression) => {
       if (!dragged || !attendancesByDate || !setAttendancesByDate) return;
 
-      // For combined treatments, we need to move both treatment types atomically
-      const treatmentTypesToMove = dragged.isCombinedTreatment && dragged.treatmentTypes
-        ? new Set(dragged.treatmentTypes)
-        : [dragged.type];
+      // Determine which treatment types to move
+      let treatmentTypesToMove: Set<AttendanceType> | AttendanceType[];
+      
+      if (dragged.isCombinedTreatment && dragged.treatmentTypes) {
+        // For combined treatments (green cards):
+        // - If dragged from lightBath/rod section AND moving within lightBath/rod: move both parts
+        // - If dragged from spiritual: move only spiritual
+        const isLightBathRodCombined = dragged.treatmentTypes.includes("lightBath") && dragged.treatmentTypes.includes("rod");
+        const isDraggingLightBathRod = dragged.type === "lightBath" || dragged.type === "rod";
+        const isTargetLightBathRod = toType === "lightBath" || toType === "rod";
+        
+        if (isLightBathRodCombined && isDraggingLightBathRod && isTargetLightBathRod) {
+          // Combined lightBath+rod treatment: move both parts together
+          treatmentTypesToMove = new Set<AttendanceType>(["lightBath", "rod"]);
+        } else {
+          // Other cases: move only the dragged type
+          treatmentTypesToMove = [dragged.type];
+        }
+      } else {
+        // Single treatment: move only the dragged type
+        treatmentTypesToMove = [dragged.type];
+      }
 
       // Create immutable update by spreading arrays
       let newAttendancesByDate = { ...attendancesByDate };
@@ -240,13 +195,16 @@ export const useDragAndDrop = ({
       // Process each treatment type that needs to be moved
       for (const treatmentType of treatmentTypesToMove) {
         // Find patient for this specific treatment type
-        const patient = findPatient(treatmentType, dragged.status, dragged.patientId);
+        const patient = findPatient(treatmentType as AttendanceType, dragged.status, dragged.patientId);
         if (!patient) continue; // Skip if patient not found for this treatment type
 
         // Sync with backend if attendanceId is available
-        if (patient.treatmentAttendanceIds && patient.treatmentAttendanceIds.length > 0) {
-          for (const attendanceId of patient.treatmentAttendanceIds) {
-
+        const attendanceIds = patient.treatmentAttendanceIds && patient.treatmentAttendanceIds.length > 0 
+          ? patient.treatmentAttendanceIds 
+          : (patient.attendanceId ? [patient.attendanceId] : []);
+          
+        if (attendanceIds.length > 0) {
+          for (const attendanceId of attendanceIds) {
             const result = await updateAttendanceStatus(attendanceId, toStatus);
             if (!result.success) {
               console.warn(`Backend sync failed for ${treatmentType} attendanceId ${attendanceId}, continuing with local update`);
@@ -255,18 +213,18 @@ export const useDragAndDrop = ({
         }
 
         // Update source type (remove patient)
+        const sourceType = treatmentType as AttendanceType;
         newAttendancesByDate = {
           ...newAttendancesByDate,
-          [treatmentType]: {
-            ...newAttendancesByDate[treatmentType],
-            [dragged.status]: newAttendancesByDate[treatmentType][
-              dragged.status
-            ].filter((p) => p.patientId !== dragged.patientId),
+          [sourceType]: {
+            ...newAttendancesByDate[sourceType],
+            [dragged.status]: (newAttendancesByDate[sourceType][dragged.status] as AttendanceStatusDetail[])
+              .filter((p: AttendanceStatusDetail) => p.patientId !== dragged.patientId),
           },
         };
 
         // For combined treatments, we need to use the correct destination type for each treatment
-        const destinationType = dragged.isCombinedTreatment ? treatmentType : toType;
+        const destinationType = dragged.isCombinedTreatment ? (treatmentType as AttendanceType) : toType;
 
         // Update destination type (add patient)
         newAttendancesByDate = {
@@ -274,7 +232,7 @@ export const useDragAndDrop = ({
           [destinationType]: {
             ...newAttendancesByDate[destinationType],
             [toStatus]: [
-              ...newAttendancesByDate[destinationType][toStatus],
+              ...(newAttendancesByDate[destinationType][toStatus] as AttendanceStatusDetail[]),
               updatePatientTimestamps(patient, toStatus),
             ],
           },
@@ -284,13 +242,7 @@ export const useDragAndDrop = ({
       // Update state with new object
       setAttendancesByDate(newAttendancesByDate);
     },
-    [
-      dragged,
-      attendancesByDate,
-      setAttendancesByDate,
-      findPatient,
-      updatePatientTimestamps,
-    ]
+    [dragged, attendancesByDate, setAttendancesByDate, findPatient, updatePatientTimestamps]
   );
 
   const handleDropWithConfirm = useCallback(
@@ -301,16 +253,16 @@ export const useDragAndDrop = ({
       const patient = findPatient(dragged.type, dragged.status, dragged.patientId);
       if (!patient) return; // Patient not found
 
-      // For combined treatments, allow dropping on either lightBath or rod sections
-      // but prevent moves to spiritual section
       if (dragged.isCombinedTreatment) {
-        if (toType === "spiritual") {
+        // Combined treatments: lightBath/rod cards can move between lightBath and rod sections
+        // but each card type should stay within its own type for status progression
+        if (dragged.type !== toType) {
           setDragged(null);
           return;
         }
-        // Combined treatments can be dropped on lightBath or rod sections
       } else {
-        // Prevent moves between different consultation types for single treatments
+        // Single treatments: only allow moves within the same consultation type
+        // This ensures spiritual cards stay in spiritual, lightBath in lightBath, etc.
         if (dragged.type !== toType) {
           setDragged(null);
           return;
@@ -324,7 +276,65 @@ export const useDragAndDrop = ({
         );
         if (patientData?.status === "N") {
           // This is a new patient - trigger new patient check-in modal
-          onNewPatientDetected?.(patientData, patient.attendanceId);
+          openNewPatientCheckIn({
+            attendanceId: patient.attendanceId,
+            patient: patientData,
+            onComplete: async (checkInSuccess: boolean) => {
+              if (checkInSuccess) {
+                await performMove(dragged.type, "checkedIn");
+              }
+            },
+          });
+
+          setDragged(null);
+          return;
+        }
+      }
+
+      // Handle completion moves - open modal BEFORE moving the card
+      if (toStatus === "completed") {
+        const patient = findPatient(dragged.type, dragged.status, dragged.patientId);
+        if (patient && patient.attendanceId && patient.patientId) {
+          const attendanceType = dragged.type;
+          const fullPatient = patients.find((p) => p.name === patient.name);
+          const isFirstAttendance = fullPatient?.status === "N";
+          
+          if(attendanceType === "spiritual") {
+            // Open modal directly - backend will handle duplicate prevention
+            openPostAttendance({
+              attendanceId: patient.attendanceId!,
+              patientId: patient.patientId!,
+              patientName: patient.name,
+              attendanceType,
+              currentTreatmentStatus: "T",
+              currentStartDate: undefined,
+              currentReturnWeeks: undefined,
+              isFirstAttendance: isFirstAttendance,
+              // Form will handle its own treatment submission with built-in logic
+              // We only need to know when it's done to move the card
+              onComplete: async () => {
+                // After successful treatment submission, move the card to completed
+                await performMove(attendanceType, "completed");
+              },
+            });
+          }
+
+          if(attendanceType !== "spiritual") {
+            openPostTreatment({
+              attendanceId: patient.attendanceId,
+              patientId: patient.patientId,
+              patientName: patient.name,
+              attendanceType,
+              onComplete: async (success) => {
+                if (success) {
+                  // After successful treatment completion, move the card to completed
+                  await performMove(attendanceType, "completed");
+                }
+              },
+            });
+          }
+
+          // Don't move the card yet - the modal will handle it
           setDragged(null);
           return;
         }
@@ -333,8 +343,8 @@ export const useDragAndDrop = ({
       // TODO: update to rod and combined types or remove feature
       // Check if patient is scheduled in both consultation types
       const isInBothTypes =
-        findPatient("spiritual", "scheduled", dragged.patientId) &&
-        findPatient("lightBath", "scheduled", dragged.patientId);
+        !!findPatient("spiritual", "scheduled", dragged.patientId) &&
+        !!findPatient("lightBath", "scheduled", dragged.patientId);
 
       // If patient is in both types and we're moving from scheduled to checkedIn, show multi-section modal
       if (
@@ -342,21 +352,115 @@ export const useDragAndDrop = ({
         dragged.status === "scheduled" &&
         toStatus === "checkedIn"
       ) {
-        setMultiSectionPending({
+        // Capture current values to avoid stale closures
+        const currentPending = {
           patientId: dragged.patientId,
           fromStatus: dragged.status,
           toStatus: toStatus,
           draggedType: dragged.type,
-        });
-        setMultiSectionModalOpen(true);
+        };
 
+        // Open the Zustand modal with inline handlers
+        openMultiSection(
+          async () => {            
+            if (!attendancesByDate || !setAttendancesByDate) return;
+
+            // Sync with backend for ALL attendance IDs of each type
+            const syncPromises: Promise<{success: boolean}>[] = [];
+            (["spiritual", "lightBath", "rod"] as AttendanceType[]).forEach((type) => {
+              const patientForType = findPatient(type, "scheduled", currentPending.patientId);
+              if (patientForType) {
+                // Get all attendance IDs for this type
+                const attendanceIds = patientForType.treatmentAttendanceIds && patientForType.treatmentAttendanceIds.length > 0 
+                  ? patientForType.treatmentAttendanceIds 
+                  : (patientForType.attendanceId ? [patientForType.attendanceId] : []);
+                
+                // Sync each attendance ID
+                attendanceIds.forEach((attendanceId) => {
+                  syncPromises.push(updateAttendanceStatus(attendanceId, "checkedIn"));
+                });
+              }
+            });
+
+            // Wait for all backend syncs to complete
+            if (syncPromises.length > 0) {
+              try {
+                await Promise.all(syncPromises);
+              } catch {
+                console.warn("Some backend syncs failed, continuing with local update");
+              }
+            }
+
+            // Create immutable update for all consultation types
+            let newAttendancesByDate = { ...attendancesByDate };
+
+            (["spiritual", "lightBath", "rod"] as AttendanceType[]).forEach((type) => {
+              const patientToMove = findPatient(
+                type,
+                "scheduled",
+                currentPending.patientId
+              );
+
+              if (patientToMove) {
+                newAttendancesByDate = {
+                  ...newAttendancesByDate,
+                  [type]: {
+                    ...newAttendancesByDate[type],
+                    scheduled: newAttendancesByDate[type].scheduled.filter(
+                      (p) => p.patientId !== currentPending.patientId
+                    ),
+                    checkedIn: [
+                      ...newAttendancesByDate[type].checkedIn,
+                      updatePatientTimestamps(patientToMove, "checkedIn"),
+                    ],
+                  },
+                };
+              }
+            });
+
+            // Update state with new object
+            setAttendancesByDate(newAttendancesByDate);
+
+            // Reset state
+            setDragged(null);
+          },
+          async () => {
+            // Temporarily restore the dragged state so performMove works correctly
+            const originalDraggedState = {
+              type: currentPending.draggedType,
+              status: currentPending.fromStatus,
+              idx: 0, // Not used by performMove
+              patientId: currentPending.patientId,
+              // Check if it's a combined treatment
+              isCombinedTreatment: !!(
+                findPatient("lightBath", currentPending.fromStatus, currentPending.patientId) &&
+                findPatient("rod", currentPending.fromStatus, currentPending.patientId)
+              ),
+              treatmentTypes: [] as AttendanceType[], // Will be set below
+            };
+
+            // Set treatment types based on combined status
+            if (originalDraggedState.isCombinedTreatment) {
+              originalDraggedState.treatmentTypes = ["lightBath", "rod"];
+            } else {
+              originalDraggedState.treatmentTypes = [currentPending.draggedType];
+            }
+
+            // Temporarily set dragged state for performMove
+            setDragged(originalDraggedState);
+            
+            // Use existing performMove logic - it already handles everything correctly
+            await performMove(currentPending.draggedType, currentPending.toStatus);
+
+            // Reset state (performMove doesn't reset dragged, we need to do it)
+            setDragged(null);
+          }
+        );
         return;
       }
 
       // For combined treatments or same-type moves (not involving multi-type scenarios)
-      const isValidMove = dragged.isCombinedTreatment 
-        ? (toType === "lightBath" || toType === "rod") && dragged.status !== toStatus
-        : dragged.type === toType && dragged.status !== toStatus;
+      const isValidMove = dragged.type === toType && dragged.status !== toStatus;
 
       if (isValidMove) {
         // Perform the move - modal logic is handled in updatePatientTimestamps
@@ -368,135 +472,15 @@ export const useDragAndDrop = ({
       // Same type and same status, or invalid move - no action needed
       setDragged(null);
     },
-    [
-      dragged,
-      attendancesByDate,
-      findPatient,
-      patients,
-      onNewPatientDetected,
-      performMove,
-    ]
+    [dragged, attendancesByDate, findPatient, patients, openNewPatientCheckIn, performMove, openPostAttendance, openPostTreatment, openMultiSection, setAttendancesByDate, updatePatientTimestamps]
   );
 
-  const handleConfirm = useCallback(async () => {
-    if (!dragged || !pendingDrop) return;
-
-    // Use the helper function to perform the move
-    await performMove(pendingDrop.toType, pendingDrop.toStatus);
-
-    // Reset state
-    setConfirmOpen(false);
-    setPendingDrop(null);
-    setDragged(null);
-  }, [dragged, pendingDrop, performMove]);
-
-  const handleCancel = useCallback(() => {
-    setConfirmOpen(false);
-    setPendingDrop(null);
-    setDragged(null);
-  }, []);
-
-  const handleMultiSectionConfirm = useCallback(async () => {
-    if (!multiSectionPending || !attendancesByDate || !setAttendancesByDate)
-      return;
-
-    // Find patient using helper function
-    const patient = findPatient(
-      multiSectionPending.draggedType,
-      multiSectionPending.fromStatus,
-      multiSectionPending.patientId
-    );
-    if (!patient) return; // Patient not found
-
-    // Sync with backend for all types if treatmentAttendanceIds are available
-    const syncPromises = (["spiritual", "lightBath", "rod"] as AttendanceType[])
-      .map((type) =>
-        findPatient(type, "scheduled", multiSectionPending.patientId)
-      )
-      .filter((p) => p?.attendanceId)
-      .map((p) => updateAttendanceStatus(p!.attendanceId!, "checkedIn"));
-
-    // Wait for all backend syncs to complete
-    if (syncPromises.length > 0) {
-      try {
-        await Promise.all(syncPromises);
-      } catch {
-        console.warn("Some backend syncs failed, continuing with local update");
-      }
-    }
-
-    // Create immutable update for all consultation types
-    let newAttendancesByDate = { ...attendancesByDate };
-
-    (["spiritual", "lightBath", "rod"] as AttendanceType[]).forEach((type) => {
-      const patientToMove = findPatient(
-        type,
-        "scheduled",
-        multiSectionPending.patientId
-      );
-
-      if (patientToMove) {
-        newAttendancesByDate = {
-          ...newAttendancesByDate,
-          [type]: {
-            ...newAttendancesByDate[type],
-            scheduled: newAttendancesByDate[type].scheduled.filter(
-              (p) => p.patientId !== multiSectionPending.patientId
-            ),
-            checkedIn: [
-              ...newAttendancesByDate[type].checkedIn,
-              updatePatientTimestamps(patientToMove, "checkedIn"),
-            ],
-          },
-        };
-      }
-    });
-
-    // Update state with new object
-    setAttendancesByDate(newAttendancesByDate);
-
-    // Reset state
-    setMultiSectionModalOpen(false);
-    setMultiSectionPending(null);
-    setDragged(null);
-  }, [
-    multiSectionPending,
-    attendancesByDate,
-    setAttendancesByDate,
-    findPatient,
-    updatePatientTimestamps,
-  ]);
-
-  const handleMultiSectionCancel = useCallback(async () => {
-    if (!multiSectionPending || !dragged) return;
-
-    // Only move in the dragged type, not in both types
-    await performMove(dragged.type, multiSectionPending.toStatus);
-
-    // Reset state
-    setMultiSectionModalOpen(false);
-    setMultiSectionPending(null);
-    setDragged(null);
-  }, [multiSectionPending, dragged, performMove]);
-
   return {
-    // State
     dragged,
-    confirmOpen,
-    multiSectionModalOpen,
-
-    // Handlers
     handleDragStart,
     handleDragEnd,
     handleDropWithConfirm,
-    handleConfirm,
-    handleCancel,
-    handleMultiSectionConfirm,
-    handleMultiSectionCancel,
-
-    // Utility functions
     getPatients,
-    findPatient,
   };
 };
 

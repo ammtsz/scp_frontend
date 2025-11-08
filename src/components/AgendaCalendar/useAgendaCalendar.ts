@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AttendanceType } from "@/types/types";
 import { useScheduledAgenda, useRemovePatientFromAgenda, useRefreshAgenda } from "@/hooks/useAgendaQueries";
 import { 
@@ -17,10 +17,13 @@ import {
 } from "@/stores";
 
 export function useAgendaCalendar() {
+  // Local state for refresh loading
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // React Query for server state
   const { agenda, isLoading: loading, error } = useScheduledAgenda();
   const removePatientMutation = useRemovePatientFromAgenda();
-  const refreshAgenda = useRefreshAgenda();
+  const refreshAgendaQuery = useRefreshAgenda();
 
   // Zustand for UI state - using individual selectors for optimal performance
   const selectedDate = useSelectedDateString();
@@ -137,6 +140,18 @@ export function useAgendaCalendar() {
     setShowNewAttendance(false);
   };
 
+  // Custom refresh function with loading state
+  const handleRefreshAgenda = async () => {
+    setIsRefreshing(true);
+    try {
+      refreshAgendaQuery();
+      // Add a small delay to show the loading state
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return {
     selectedDate,
     setSelectedDate,
@@ -156,6 +171,7 @@ export function useAgendaCalendar() {
     handleFormSuccess,
     loading,
     error: error?.message || null,
-    refreshAgenda,
+    refreshAgenda: handleRefreshAgenda,
+    isRefreshing,
   };
 }

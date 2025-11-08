@@ -17,34 +17,6 @@ jest.mock("@/api/patients", () => ({
   getPatients: jest.fn(),
 }));
 
-// Mock ConfirmModal since it's external
-jest.mock("@/components/common/ConfirmModal/index", () => {
-  return function MockConfirmModal({
-    open,
-    message,
-    confirmLabel = "Confirmar",
-    cancelLabel = "Cancelar",
-    onConfirm,
-    onCancel,
-  }: {
-    open: boolean;
-    message: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-    onConfirm: () => void;
-    onCancel: () => void;
-  }) {
-    if (!open) return null;
-    return (
-      <div data-testid="confirm-modal">
-        <p>{message}</p>
-        <button onClick={onConfirm}>{confirmLabel}</button>
-        <button onClick={onCancel}>{cancelLabel}</button>
-      </div>
-    );
-  };
-});
-
 import {
   getAttendancesByDate,
   bulkUpdateAttendanceStatus,

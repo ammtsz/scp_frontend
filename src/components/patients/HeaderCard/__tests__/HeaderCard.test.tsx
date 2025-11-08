@@ -75,7 +75,7 @@ describe("HeaderCard", () => {
   it("displays priority badge with correct text and styling", () => {
     renderWithQueryClient(<HeaderCard patient={mockPatient} />);
 
-    const priorityBadge = screen.getByText("Intermediário");
+    const priorityBadge = screen.getByText("Idoso/crianças");
     expect(priorityBadge).toBeInTheDocument();
     expect(priorityBadge).toHaveClass(
       "bg-yellow-50",
@@ -103,7 +103,7 @@ describe("HeaderCard", () => {
   });
 
   it("displays priority colors correctly for different priority levels", () => {
-    // Test Emergency priority
+    // Test Exception priority
     const emergencyPatient: Patient = { ...mockPatient, priority: "1" };
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -117,20 +117,20 @@ describe("HeaderCard", () => {
         <HeaderCard patient={emergencyPatient} />
       </QueryClientProvider>
     );
-    expect(screen.getByText("Emergência")).toHaveClass(
+    expect(screen.getByText("Exceção")).toHaveClass(
       "bg-red-50",
       "text-red-800",
       "border-red-200"
     );
 
-    // Test Normal priority
+    // Test Standard priority
     const normalPatient: Patient = { ...mockPatient, priority: "3" };
     rerender(
       <QueryClientProvider client={queryClient}>
         <HeaderCard patient={normalPatient} />
       </QueryClientProvider>
     );
-    expect(screen.getByText("Normal")).toHaveClass(
+    expect(screen.getByText("Padrão")).toHaveClass(
       "bg-green-50",
       "text-green-800",
       "border-green-200"

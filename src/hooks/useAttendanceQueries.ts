@@ -322,8 +322,8 @@ export function useDeleteAttendance() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (attendanceId: number) => {
-      const response = await deleteAttendance(attendanceId.toString());
+    mutationFn: async (params: { attendanceId: number; cancellationReason?: string }) => {
+      const response = await deleteAttendance(params.attendanceId.toString(), params.cancellationReason);
       
       if (!response.success) {
         throw new Error(response.error || "Failed to delete attendance");

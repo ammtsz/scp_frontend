@@ -14,7 +14,7 @@ interface BasicInfoTabProps {
     value: string | number | Date
   ) => void;
   onDateChange: (
-    field: "attendanceDate" | "startDate"
+    field: "startDate"
   ) => (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -141,56 +141,35 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
         </div>
       </div>
 
-      {/* Date Fields */}
-      <div className="flex flex-col gap-4 md:flex-row">
-        {/* Attendance Date */}
-        <div className="flex-1">
-          <label
-            htmlFor="attendanceDate"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Data da Consulta *
-          </label>
-          <input
-            type="date"
-            id="attendanceDate"
-            value={formatDateForInput(formData.attendanceDate)}
-            onChange={onDateChange("attendanceDate")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-        </div>
-
-        {/* Start Date */}
-        <div className="flex-1">
-          <label
-            htmlFor="startDate"
-            className={`block text-sm font-medium mb-1 ${
-              !!patientData?.start_date ? "text-gray-500" : "text-gray-700"
-            }`}
-          >
-            Data de Início *
-          </label>
-          <input
-            type="date"
-            id="startDate"
-            value={formatDateForInput(formData.startDate)}
-            onChange={onDateChange("startDate")}
-            disabled={!!patientData?.start_date}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:!bg-gray-100 disabled:!cursor-not-allowed disabled:!text-gray-500 disabled:!opacity-75"
-            required
-          />
-          {patientData?.start_date && (
-            <p className="text-xs text-gray-400 mt-1">
-              Data de início já estabelecida (somente leitura)
-            </p>
-          )}
-          {!patientData?.start_date && currentTreatmentStatus === "N" && (
-            <p className="text-xs text-gray-400 mt-1">
-              Data de início será definida nesta consulta
-            </p>
-          )}
-        </div>
+      {/* Start Date */}
+      <div>
+        <label
+          htmlFor="startDate"
+          className={`block text-sm font-medium mb-1 ${
+            !!patientData?.start_date ? "text-gray-500" : "text-gray-700"
+          }`}
+        >
+          Data de Início *
+        </label>
+        <input
+          type="date"
+          id="startDate"
+          value={formatDateForInput(formData.startDate)}
+          onChange={onDateChange("startDate")}
+          disabled={!!patientData?.start_date}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:!bg-gray-100 disabled:!cursor-not-allowed disabled:!text-gray-500 disabled:!opacity-75"
+          required
+        />
+        {patientData?.start_date && (
+          <p className="text-xs text-gray-400 mt-1">
+            Data de início já estabelecida (somente leitura)
+          </p>
+        )}
+        {!patientData?.start_date && currentTreatmentStatus === "N" && (
+          <p className="text-xs text-gray-400 mt-1">
+            Data de início será definida nesta consulta
+          </p>
+        )}
       </div>
 
       {/* Additional Notes - Moved from bottom to here */}

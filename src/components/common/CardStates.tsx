@@ -81,17 +81,16 @@ export const AttendanceHistoryEmpty: React.FC<AttendanceHistoryEmptyProps> = ({
     iconBgColor="bg-green-50"
   >
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-      <div className="flex items-start gap-3">
-        <div className="text-blue-500 text-lg">✨</div>
-        <div className="text-sm">
-          <div className="font-medium text-blue-900 mb-1">Próximos passos:</div>
-          <div className="text-blue-800">
-            {patient.nextAttendanceDates.length > 0
-              ? `Próximo atendimento agendado para ${new Date(
-                  patient.nextAttendanceDates[0].date
-                ).toLocaleDateString("pt-BR")}`
-              : "Agendar primeiro atendimento para iniciar o tratamento"}
-          </div>
+      <div className="text-sm">
+        <div className="font-medium text-blue-900 mb-1">
+          💡 Próximos passos:
+        </div>
+        <div className="text-blue-800">
+          {patient.nextAttendanceDates.length > 0
+            ? `Próximo atendimento agendado para ${new Date(
+                patient.nextAttendanceDates[0].date
+              ).toLocaleDateString("pt-BR")}`
+            : "Agendar primeiro atendimento para iniciar o tratamento"}
         </div>
       </div>
     </div>
@@ -143,7 +142,10 @@ export const TreatmentRecommendationsEmpty: React.FC<
     description="Este paciente ainda não possui recomendações de tratamento registradas."
     iconBgColor="bg-yellow-50"
   >
-    <button className="ds-button-primary" onClick={onCreateRecommendations}>
+    <button
+      className="button ds-button-primary"
+      onClick={onCreateRecommendations}
+    >
       ✨ Criar Recomendações
     </button>
   </EmptyState>

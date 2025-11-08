@@ -281,6 +281,8 @@ export const transformPriorityToApi = (localPriority: Priority): PatientPriority
 // Transform local status to API status
 export const transformStatusToApi = (localStatus: Status): TreatmentStatus => {
   switch (localStatus) {
+    case "N":
+      return TreatmentStatus.NEW_PATIENT;
     case "T":
       return TreatmentStatus.IN_TREATMENT;
     case "A":
@@ -288,7 +290,7 @@ export const transformStatusToApi = (localStatus: Status): TreatmentStatus => {
     case "F":
       return TreatmentStatus.ABSENT;
     default:
-      return TreatmentStatus.IN_TREATMENT;
+      return TreatmentStatus.NEW_PATIENT; // Default to NEW_PATIENT for new patients
   }
 };
 

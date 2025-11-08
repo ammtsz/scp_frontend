@@ -33,11 +33,11 @@ export const HeaderCard: React.FC<HeaderCardProps> = ({
   const getPriorityText = (priority: string) => {
     switch (priority) {
       case "1":
-        return "Emergência";
+        return "Exceção";
       case "2":
-        return "Intermediário";
+        return "Idoso/crianças";
       case "3":
-        return "Normal";
+        return "Padrão";
       default:
         return priority;
     }

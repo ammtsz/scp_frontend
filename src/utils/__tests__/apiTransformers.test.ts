@@ -1,4 +1,11 @@
-import { transformPriority, transformStatus, transformAttendanceType, transformAttendanceProgression } from '../apiTransformers';
+import { 
+  transformPriority, 
+  transformStatus, 
+  transformAttendanceType, 
+  transformAttendanceProgression,
+  transformStatusToApi,
+  transformPriorityToApi
+} from '../apiTransformers';
 import { PatientPriority, TreatmentStatus, AttendanceType, AttendanceStatus } from '@/api/types';
 
 describe('API Transformers', () => {
@@ -59,6 +66,46 @@ describe('API Transformers', () => {
 
     it('should transform COMPLETED to "completed"', () => {
       expect(transformAttendanceProgression(AttendanceStatus.COMPLETED)).toBe('completed');
+    });
+  });
+
+  describe('transformStatusToApi', () => {
+    it('should transform "N" to NEW_PATIENT', () => {
+      expect(transformStatusToApi('N')).toBe(TreatmentStatus.NEW_PATIENT);
+    });
+
+    it('should transform "T" to IN_TREATMENT', () => {
+      expect(transformStatusToApi('T')).toBe(TreatmentStatus.IN_TREATMENT);
+    });
+
+    it('should transform "A" to DISCHARGED', () => {
+      expect(transformStatusToApi('A')).toBe(TreatmentStatus.DISCHARGED);
+    });
+
+    it('should transform "F" to ABSENT', () => {
+      expect(transformStatusToApi('F')).toBe(TreatmentStatus.ABSENT);
+    });
+
+    it('should default to NEW_PATIENT for unknown status', () => {
+      expect(transformStatusToApi('X' as 'N')).toBe(TreatmentStatus.NEW_PATIENT);
+    });
+  });
+
+  describe('transformPriorityToApi', () => {
+    it('should transform "1" to EMERGENCY', () => {
+      expect(transformPriorityToApi('1')).toBe(PatientPriority.EMERGENCY);
+    });
+
+    it('should transform "2" to INTERMEDIATE', () => {
+      expect(transformPriorityToApi('2')).toBe(PatientPriority.INTERMEDIATE);
+    });
+
+    it('should transform "3" to NORMAL', () => {
+      expect(transformPriorityToApi('3')).toBe(PatientPriority.NORMAL);
+    });
+
+    it('should default to NORMAL for unknown priority', () => {
+      expect(transformPriorityToApi('9' as '1')).toBe(PatientPriority.NORMAL);
     });
   });
 });

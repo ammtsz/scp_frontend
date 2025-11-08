@@ -144,6 +144,27 @@
 - **Validation Hook**: `useTabValidation` for centralized tab state management
 - **Integration**: Maintains existing API integration and form submission logic
 
+#### Treatment Session Management Pattern
+- **PostTreatmentModal**: Complete treatment session recording with dual API integration
+  - Creates treatment session records for individual completed sessions
+  - Updates treatment session progress counters (`completed_sessions`)
+  - Handles onComplete callbacks for attendance status transitions
+  - Real-time progress bars and visual feedback for session completion
+- **API Integration**: Dual API calls to `treatment-session-records` and `treatment-sessions` endpoints
+- **Error Handling**: Graceful failure handling with user-friendly error messages
+- **State Management**: Modal state with `onComplete` callbacks for workflow integration
+
+#### Form Validation Pattern
+- **Comprehensive Validation**: Real-time validation with `validateForm()` function checking required fields, data formats, and business rules
+- **Visual Feedback**: Error states with red borders and inline error messages for invalid fields
+- **Smart Submit Control**: Submit buttons disabled when form invalid, Enter key prevention except on submit button focus
+- **Error Clearing**: Validation errors automatically clear when user corrects the field
+- **Phone Formatting**: Automatic phone number formatting as user types with Brazilian standard (XX) XXXXX-XXXX
+- **Date Validation**: Birth date validation preventing future dates and ensuring required fields
+- **Enter Key Management**: `handleKeyDown` handler prevents accidental form submission, allows Enter only on focused submit button
+- **Implementation**: Used in PatientForm with `usePatientForm` hook, extendable to other forms
+- **Testing**: Comprehensive test coverage for validation logic, error display, and user interactions
+
 #### Performance Optimization Patterns
 - **Route-Level Code Splitting**: Implemented React.lazy() for major routes with 24% bundle reduction
 - **Modal Lazy Loading**: Large modals loaded on-demand to reduce initial bundle size
@@ -304,3 +325,4 @@ This is a Next.js healthcare attendance management system with React, TypeScript
 - ✅ **Timezone integration**: Global timezone support with intelligent browser detection
 - ✅ **Multiselect components**: Advanced body location selector with search functionality
 - ✅ **Tabbed modal system**: Reusable tabbed interface for complex forms
+- ✅ **Form Validation Pattern**: Comprehensive validation with real-time feedback, Enter key prevention, and smart form controls

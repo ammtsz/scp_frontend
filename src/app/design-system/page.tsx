@@ -52,11 +52,11 @@ export default function DesignSystemDemo() {
           </div>
           <div className="ds-card-body">
             <div className="flex flex-wrap gap-4">
-              <span className="ds-badge-priority-emergency">Emergência</span>
+              <span className="ds-badge-priority-emergency">Exceção</span>
               <span className="ds-badge-priority-intermediate">
-                Intermediário
+                Idoso/crianças
               </span>
-              <span className="ds-badge-priority-normal">Normal</span>
+              <span className="ds-badge-priority-normal">Padrão</span>
               <span className="ds-badge">Default Badge</span>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function DesignSystemDemo() {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <span className="ds-badge-priority-emergency">
-                  High Priority
+                  Alta Prioridade
                 </span>
                 <button className="ds-button-success">Complete Task</button>
                 <button className="ds-button-outline">Cancel</button>

@@ -104,7 +104,7 @@ describe("patientUtils", () => {
       
       expect(summary).toContain("RESUMO DO PACIENTE");
       expect(summary).toContain("João Silva");
-      expect(summary).toContain("Normal (3)");
+      expect(summary).toContain("Padrão (3)");
       expect(summary).toContain("Em Tratamento");
       expect(summary).toContain("Consulta Espiritual");
       expect(summary).toContain("Agendado");
@@ -115,7 +115,7 @@ describe("patientUtils", () => {
       
       expect(summary).toContain("RESUMO DO PACIENTE");
       expect(summary).toContain("João Silva");
-      expect(summary).toContain("Normal (3)");
+      expect(summary).toContain("Padrão (3)");
       expect(summary).toContain("Nenhum atendimento registrado");
     });
 
@@ -129,9 +129,9 @@ describe("patientUtils", () => {
   describe("label functions", () => {
     describe("getPriorityLabel", () => {
       it("should return correct priority labels", () => {
-        expect(getPriorityLabel("1")).toBe("Emergência (1)");
-        expect(getPriorityLabel("2")).toBe("Intermediária (2)");
-        expect(getPriorityLabel("3")).toBe("Normal (3)");
+        expect(getPriorityLabel("1")).toBe("Exceção (1)");
+        expect(getPriorityLabel("2")).toBe("Idoso/crianças (2)");
+        expect(getPriorityLabel("3")).toBe("Padrão (3)");
         expect(getPriorityLabel("unknown")).toBe("unknown");
       });
     });
