@@ -3,7 +3,7 @@
 import React from "react";
 import { Priority } from "../../types/types";
 import { useOpenCancellation } from "@/stores/modalStore";
-import { ModalRegistry } from "./components/Modals/ModalRegistry";
+import { ModalRegistry } from "./components/modals";
 
 import { useAttendanceData } from "./hooks/useAttendanceData";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";

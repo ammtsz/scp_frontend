@@ -61,7 +61,7 @@ const MODAL_REGISTRY = [
  * Automatically renders all registered modals. Each modal manages its own
  * visibility through Zustand store state. No props needed!
  */
-export const ModalRegistry: React.FC = () => {
+const ModalRegistry: React.FC = () => {
   return (
     <>
       {MODAL_REGISTRY.map(({ name, component: ModalComponent }) => (
@@ -90,4 +90,6 @@ export type ModalRegistryEntry = {
   description: string;
 };
 
+// Export both named and default for compatibility
+export { ModalRegistry };
 export default ModalRegistry;
