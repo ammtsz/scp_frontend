@@ -1,146 +1,68 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { TreatmentSessionCard } from "@/components/TreatmentTracking/TreatmentSessionCard";
-import { SessionRecordsList } from "@/components/TreatmentTracking/SessionRecordsList";
-import {
-  getTreatmentSessions,
-  createTreatmentSession,
-  activateTreatmentSession,
-  suspendTreatmentSession,
-  completeTreatmentSession,
-} from "@/api/treatment-sessions";
-import { getPatients } from "@/api/patients";
-import { TreatmentSessionResponseDto, PatientResponseDto } from "@/api/types";
+import React from "react";
+import { TreatmentCard } from "@/components/TreatmentTracking/TreatmentCard";
+import { FilterBar } from "@/components/TreatmentTracking/FilterBar";
+import { CreateTreatmentSessionModal } from "@/components/TreatmentTracking/CreateTreatmentSessionModal";
+import { useTreatmentTracking } from "@/hooks/useTreatmentTracking";
+import type { CreateTreatmentSessionRequest } from "@/api/types";
 
 export default function TreatmentTrackingPage() {
-  const [sessions, setSessions] = useState<TreatmentSessionResponseDto[]>([]);
-  const [patients, setPatients] = useState<PatientResponseDto[]>([]);
-  const [selectedSession, setSelectedSession] =
-    useState<TreatmentSessionResponseDto | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Use the custom hook for all treatment tracking logic
+  const {
+    filteredSessions,
+    patients,
+    expandedTreatmentId,
+    isLoading,
+    error,
+    isCreateModalOpen,
+    openCreateModal,
+    closeCreateModal,
+    filters,
+    updateSearchTerm,
+    updateTreatmentTypes,
+    updateStatuses,
+    updateDateRange,
+    setDatePreset,
+    clearFilters,
+    hasActiveFilters,
+    savedPresets,
+    savePreset,
+    loadPreset,
+    deletePreset,
+    handleCreateSession,
+    handleActivateSession,
+    handleSuspendSession,
+    handleCompleteSession,
+    handleCancelSession,
+    handleToggleExpanded,
+    refetch,
+    getPatientName,
+    isCreating,
+  } = useTreatmentTracking();
 
-  const loadData = async () => {
+  // Handle create session with proper error handling
+  const handleCreateSessionWithFeedback = async (sessionData: CreateTreatmentSessionRequest) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const [sessionsResponse, patientsResponse] = await Promise.all([
-        getTreatmentSessions(),
-        getPatients(),
-      ]);
-
-      if (sessionsResponse.success && sessionsResponse.value) {
-        setSessions(sessionsResponse.value);
-      }
-
-      if (patientsResponse.success && patientsResponse.value) {
-        setPatients(patientsResponse.value);
-      }
-
-      if (!sessionsResponse.success) {
-        setError(
-          sessionsResponse.error || "Erro ao carregar sessões de tratamento"
-        );
-      }
+      await handleCreateSession(sessionData);
     } catch (err) {
-      setError("Erro inesperado ao carregar dados");
-      console.error("Error loading treatment tracking data:", err);
-    } finally {
-      setLoading(false);
+      alert(err instanceof Error ? err.message : "Erro ao criar sessão");
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const handleCreateSession = async () => {
-    if (patients.length === 0) {
-      alert("Nenhum paciente disponível");
-      return;
-    }
-
+  // Handle other actions with proper error handling
+  const handleActionWithFeedback = async (
+    action: () => Promise<void>,
+    errorMessage: string
+  ) => {
     try {
-      // NOTE: This is demo/test code - in real usage, treatment sessions are created
-      // automatically by the SpiritualTreatmentForm after completing a consultation
-      const response = await createTreatmentSession({
-        treatment_record_id: 1, // Placeholder - would come from actual treatment record
-        attendance_id: 1, // Placeholder - would come from actual attendance
-        patient_id: patients[0].id,
-        treatment_type: "light_bath",
-        body_location: "Coronário",
-        start_date: new Date().toISOString().split("T")[0],
-        planned_sessions: 10,
-        duration_minutes: 3, // 3 units = 21 minutes
-        color: "azul",
-        notes: "Sessão de exemplo criada para demonstração",
-      });
-
-      if (response.success) {
-        await loadData();
-      } else {
-        setError(response.error || "Erro ao criar sessão");
-      }
+      await action();
     } catch (err) {
-      setError("Erro inesperado ao criar sessão");
-      console.error("Error creating session:", err);
+      alert(err instanceof Error ? err.message : errorMessage);
     }
   };
 
-  const handleActivateSession = async (sessionId: string) => {
-    try {
-      const response = await activateTreatmentSession(sessionId);
-      if (response.success) {
-        await loadData();
-      } else {
-        setError(response.error || "Erro ao ativar sessão");
-      }
-    } catch (err) {
-      setError("Erro inesperado ao ativar sessão");
-      console.error("Error activating session:", err);
-    }
-  };
-
-  const handleSuspendSession = async (sessionId: string) => {
-    try {
-      const response = await suspendTreatmentSession(sessionId, {
-        suspension_reason: "Suspenso temporariamente",
-      });
-      if (response.success) {
-        await loadData();
-      } else {
-        setError(response.error || "Erro ao suspender sessão");
-      }
-    } catch (err) {
-      setError("Erro inesperado ao suspender sessão");
-      console.error("Error suspending session:", err);
-    }
-  };
-
-  const handleCompleteSession = async (sessionId: string) => {
-    try {
-      const response = await completeTreatmentSession(sessionId, {
-        completion_notes: "Tratamento completado com sucesso",
-      });
-      if (response.success) {
-        await loadData();
-      } else {
-        setError(response.error || "Erro ao completar sessão");
-      }
-    } catch (err) {
-      setError("Erro inesperado ao completar sessão");
-      console.error("Error completing session:", err);
-    }
-  };
-
-  const getPatientName = (patientId: number) => {
-    const patient = patients.find((p) => p.id === patientId);
-    return patient?.name || `Paciente #${patientId}`;
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-6xl mx-auto">
@@ -175,7 +97,9 @@ export default function TreatmentTrackingPage() {
               <p className="text-red-700">{error}</p>
             </div>
             <button
-              onClick={loadData}
+              onClick={() =>
+                handleActionWithFeedback(refetch, "Erro ao recarregar dados")
+              }
               className="mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
             >
               Tentar novamente
@@ -183,99 +107,135 @@ export default function TreatmentTrackingPage() {
           </div>
         )}
 
+        {/* Filter Bar */}
+        <div className="mb-6">
+          <FilterBar
+            searchTerm={filters.searchTerm}
+            onSearchChange={updateSearchTerm}
+            treatmentTypes={filters.treatmentTypes}
+            onTreatmentTypesChange={updateTreatmentTypes}
+            statuses={filters.statuses}
+            onStatusesChange={updateStatuses}
+            dateRange={filters.dateRange}
+            onDateRangeChange={updateDateRange}
+            onDatePresetChange={setDatePreset}
+            onClearFilters={clearFilters}
+            hasActiveFilters={hasActiveFilters}
+            savedPresets={savedPresets}
+            onSavePreset={savePreset}
+            onLoadPreset={loadPreset}
+            onRemovePreset={deletePreset}
+            resultCount={filteredSessions.length}
+          />
+        </div>
+
         <div className="flex gap-2 mb-6">
           <button
-            onClick={handleCreateSession}
-            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={openCreateModal}
+            disabled={isCreating}
+            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ➕ Criar Nova Sessão
+            {isCreating ? "⏳ Criando..." : "➕ Criar Nova Sessão"}
           </button>
           <button
-            onClick={loadData}
+            onClick={() =>
+              handleActionWithFeedback(refetch, "Erro ao atualizar dados")
+            }
             className="px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors"
           >
             🔄 Atualizar
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Treatment Sessions */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Sessões de Tratamento ({sessions.length})
-            </h2>
+        {/* Treatment Sessions with Expandable Records */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Tratamentos ({filteredSessions.length})
+          </h2>
 
-            {sessions.length === 0 ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-                <p className="text-gray-500">
-                  Nenhuma sessão de tratamento encontrada.
-                </p>
+          {filteredSessions.length === 0 ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+              <p className="text-gray-500">
+                {hasActiveFilters
+                  ? "Nenhum tratamento encontrado com os filtros aplicados."
+                  : "Nenhum tratamento encontrado."}
+              </p>
+              {!hasActiveFilters && (
                 <button
-                  onClick={handleCreateSession}
-                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  onClick={openCreateModal}
+                  disabled={isCreating}
+                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Criar primeira sessão
+                  {isCreating ? "Criando..." : "Criar primeira sessão"}
                 </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {sessions.map((session) => (
-                  <div key={session.id} className="relative">
-                    <TreatmentSessionCard
-                      session={session}
-                      patientName={getPatientName(session.patient_id)}
-                      onActivate={handleActivateSession}
-                      onSuspend={handleSuspendSession}
-                      onComplete={handleCompleteSession}
-                    />
-                    <button
-                      onClick={() => setSelectedSession(session)}
-                      className="absolute top-4 right-16 px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
-                    >
-                      📋 Ver Registros
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Session Records */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Registros de Sessão
-            </h2>
-
-            {selectedSession ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium">
-                    Tratamento {selectedSession.treatment_type} -{" "}
-                    {getPatientName(selectedSession.patient_id)}
-                  </h3>
-                  <button
-                    onClick={() => setSelectedSession(null)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    ✕
-                  </button>
+              )}
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="mt-3 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Limpar filtros
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredSessions.map((session) => (
+                <div
+                  key={session.id}
+                  id={`treatment-card-${session.id}`}
+                  className="relative scroll-mt-24"
+                >
+                  <TreatmentCard
+                    session={session}
+                    patientName={getPatientName(session.patient_id)}
+                    onActivate={(id) =>
+                      handleActionWithFeedback(
+                        () => handleActivateSession(id),
+                        "Erro ao ativar sessão"
+                      )
+                    }
+                    onSuspend={(id) =>
+                      handleActionWithFeedback(
+                        () => handleSuspendSession(id),
+                        "Erro ao suspender sessão"
+                      )
+                    }
+                    onComplete={(id) =>
+                      handleActionWithFeedback(
+                        () => handleCompleteSession(id),
+                        "Erro ao completar sessão"
+                      )
+                    }
+                    onCancel={(id) =>
+                      handleActionWithFeedback(
+                        () => handleCancelSession(id),
+                        "Erro ao cancelar tratamento"
+                      )
+                    }
+                    isExpanded={expandedTreatmentId === session.id.toString()}
+                    onToggleExpanded={handleToggleExpanded}
+                    onRecordUpdate={() =>
+                      handleActionWithFeedback(
+                        refetch,
+                        "Erro ao atualizar dados"
+                      )
+                    }
+                  />
                 </div>
-
-                <SessionRecordsList
-                  treatmentSessionId={selectedSession.id.toString()}
-                  patientName={getPatientName(selectedSession.patient_id)}
-                  onRecordUpdate={loadData}
-                />
-              </div>
-            ) : (
-              <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-                <p className="text-gray-500">
-                  Selecione uma sessão de tratamento para ver os registros.
-                </p>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Create Treatment Session Modal */}
+        <CreateTreatmentSessionModal
+          isOpen={isCreateModalOpen}
+          onClose={closeCreateModal}
+          onSubmit={handleCreateSessionWithFeedback}
+          patients={patients}
+          isLoading={isCreating}
+        />
       </div>
     </div>
   );

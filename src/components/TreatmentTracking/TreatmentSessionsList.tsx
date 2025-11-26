@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { TreatmentSessionRecordResponseDto } from "@/api/types";
-import { TreatmentSessionRecordCard } from "./TreatmentSessionRecordCard";
+import { TreatmentSessionCard } from "./TreatmentSessionCard";
 import {
   getTreatmentSessionRecordsBySession,
   completeTreatmentSessionRecord,
@@ -10,19 +10,19 @@ import {
   rescheduleTreatmentSessionRecord,
 } from "@/api/treatment-session-records";
 
-interface SessionRecordsListProps {
+interface TreatmentSessionsListProps {
   treatmentSessionId: string;
   patientName?: string;
   showActions?: boolean;
   onRecordUpdate?: () => void;
 }
 
-export function SessionRecordsList({
+export function TreatmentSessionsList({
   treatmentSessionId,
   patientName,
   showActions = true,
   onRecordUpdate,
-}: SessionRecordsListProps) {
+}: TreatmentSessionsListProps) {
   const [records, setRecords] = useState<TreatmentSessionRecordResponseDto[]>(
     []
   );
@@ -128,14 +128,14 @@ export function SessionRecordsList({
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="flex items-center gap-2">
-          <span className="text-red-500">❌</span>
+      <div className="flex flex-col py-8 bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-red-500 text-sm">❌</span>
           <p className="text-red-700">{error}</p>
         </div>
         <button
           onClick={loadRecords}
-          className="mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+          className="mt-2 px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 w-48 mx-auto font-medium"
         >
           Tentar novamente
         </button>
@@ -157,14 +157,21 @@ export function SessionRecordsList({
   );
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">
-        Registros de Sessão ({records.length})
-      </h3>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+          Sessões ({records.length})
+        </h3>
+        {records.length > 10 && (
+          <div className="text-xs text-gray-500">
+            Mostrando todas as {records.length} sessões
+          </div>
+        )}
+      </div>
 
-      <div className="grid gap-4">
+      <div className="max-h-96 overflow-y-auto space-y-3">
         {sortedRecords.map((record) => (
-          <TreatmentSessionRecordCard
+          <TreatmentSessionCard
             key={record.id}
             sessionRecord={record}
             patientName={patientName}
@@ -175,6 +182,14 @@ export function SessionRecordsList({
           />
         ))}
       </div>
+
+      {/* {records.length > 10 && (
+        <div className="text-center pt-2 border-t border-gray-200">
+          <p className="text-xs text-gray-500">
+            💡 Dica: Use as ações dos tratamentos para gerenciar várias sessões
+          </p>
+        </div>
+      )} */}
     </div>
   );
 }

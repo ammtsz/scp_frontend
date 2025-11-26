@@ -100,6 +100,16 @@ export const suspendTreatmentSession = async (id: string, suspensionData: Suspen
   }
 };
 
+export const cancelTreatmentSession = async (id: string): Promise<ApiResponse<TreatmentSessionResponseDto>> => {
+  try {
+    const { data } = await api.put(`/treatment-sessions/${id}/cancel`);
+    return { success: true, value: data };
+  } catch (error) {
+    const message = getErrorMessage((error as AxiosError).status);
+    return { success: false, error: message };
+  }
+};
+
 export const deleteTreatmentSession = async (id: string): Promise<ApiResponse<void>> => {
   try {
     await api.delete(`/treatment-sessions/${id}`);
