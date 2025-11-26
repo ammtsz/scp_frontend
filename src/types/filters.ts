@@ -34,7 +34,6 @@ export const TREATMENT_TYPE_OPTIONS = [
 export const STATUS_OPTIONS = [
   { value: 'scheduled', label: 'Agendado', icon: '📅' },
   { value: 'completed', label: 'Concluído', icon: '✅' },
-  { value: 'suspended', label: 'Suspenso', icon: '⏸️' },
   { value: 'cancelled', label: 'Cancelado', icon: '❌' },
 ] as const;
 

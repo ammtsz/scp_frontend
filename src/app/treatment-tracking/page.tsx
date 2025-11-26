@@ -31,8 +31,6 @@ export default function TreatmentTrackingPage() {
     loadPreset,
     deletePreset,
     handleCreateSession,
-    handleActivateSession,
-    handleSuspendSession,
     handleCompleteSession,
     handleCancelSession,
     handleToggleExpanded,
@@ -42,7 +40,9 @@ export default function TreatmentTrackingPage() {
   } = useTreatmentTracking();
 
   // Handle create session with proper error handling
-  const handleCreateSessionWithFeedback = async (sessionData: CreateTreatmentSessionRequest) => {
+  const handleCreateSessionWithFeedback = async (
+    sessionData: CreateTreatmentSessionRequest
+  ) => {
     try {
       await handleCreateSession(sessionData);
     } catch (err) {
@@ -189,18 +189,6 @@ export default function TreatmentTrackingPage() {
                   <TreatmentCard
                     session={session}
                     patientName={getPatientName(session.patient_id)}
-                    onActivate={(id) =>
-                      handleActionWithFeedback(
-                        () => handleActivateSession(id),
-                        "Erro ao ativar sessão"
-                      )
-                    }
-                    onSuspend={(id) =>
-                      handleActionWithFeedback(
-                        () => handleSuspendSession(id),
-                        "Erro ao suspender sessão"
-                      )
-                    }
                     onComplete={(id) =>
                       handleActionWithFeedback(
                         () => handleCompleteSession(id),

@@ -2,8 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getTreatmentSessions,
   createTreatmentSession,
-  activateTreatmentSession,
-  suspendTreatmentSession,
   completeTreatmentSession,
   cancelTreatmentSession,
   deleteTreatmentSession,
@@ -14,7 +12,6 @@ import type {
   PatientResponseDto,
   CreateTreatmentSessionRequest,
   CompleteTreatmentSessionRequest,
-  SuspendTreatmentSessionRequest,
 } from '@/api/types';
 
 // Query keys for treatment tracking
@@ -97,56 +94,6 @@ export function useCreateTreatmentSession() {
       
       if (!response.success) {
         throw new Error(response.error || 'Erro ao criar sessão');
-      }
-
-      return response.value!;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: treatmentTrackingKeys.sessions() });
-    },
-  });
-}
-
-/**
- * Mutation hook for activating treatment sessions
- */
-export function useActivateTreatmentSession() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (sessionId: string): Promise<TreatmentSessionResponseDto> => {
-      const response = await activateTreatmentSession(sessionId);
-      
-      if (!response.success) {
-        throw new Error(response.error || 'Erro ao ativar sessão');
-      }
-
-      return response.value!;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: treatmentTrackingKeys.sessions() });
-    },
-  });
-}
-
-/**
- * Mutation hook for suspending treatment sessions
- */
-export function useSuspendTreatmentSession() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ 
-      sessionId, 
-      suspensionData 
-    }: { 
-      sessionId: string; 
-      suspensionData: SuspendTreatmentSessionRequest 
-    }): Promise<TreatmentSessionResponseDto> => {
-      const response = await suspendTreatmentSession(sessionId, suspensionData);
-      
-      if (!response.success) {
-        throw new Error(response.error || 'Erro ao suspender sessão');
       }
 
       return response.value!;

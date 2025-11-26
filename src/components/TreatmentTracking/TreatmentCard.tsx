@@ -9,8 +9,6 @@ import { ChevronDown, ChevronUp } from "react-feather";
 interface TreatmentCardProps {
   session: TreatmentSessionResponseDto;
   patientName?: string;
-  onActivate?: (sessionId: string) => void;
-  onSuspend?: (sessionId: string) => void;
   onComplete?: (sessionId: string) => void;
   onCancel?: (sessionId: string) => void;
   showActions?: boolean;
@@ -22,8 +20,6 @@ interface TreatmentCardProps {
 export function TreatmentCard({
   session,
   patientName,
-  onActivate,
-  onSuspend,
   onComplete,
   onCancel,
   showActions = true,
@@ -35,12 +31,9 @@ export function TreatmentCard({
     switch (status) {
       case "completed":
         return "bg-green-100 text-green-800 border-green-300";
-      case "suspended":
-        return "bg-orange-100 text-orange-800 border-orange-300";
       case "cancelled":
         return "bg-red-100 text-red-800 border-red-300";
       case "scheduled":
-        return "bg-gray-100 text-gray-800 border-gray-300";
       default:
         return "bg-gray-100 text-gray-800 border-gray-300";
     }
@@ -50,8 +43,6 @@ export function TreatmentCard({
     switch (status) {
       case "completed":
         return "Completo";
-      case "suspended":
-        return "Suspenso";
       case "cancelled":
         return "Cancelado";
       case "scheduled":
@@ -82,11 +73,8 @@ export function TreatmentCard({
         )
       : 0;
 
-  const canActivate = session.status === "suspended";
-  const canSuspend =
-    session.status === "active" || session.status === "scheduled";
   const canComplete =
-    session.status === "active" &&
+    session.status === "scheduled" &&
     session.completed_sessions >= session.planned_sessions;
   const canCancel =
     session.status !== "completed" && session.status !== "cancelled";
@@ -181,41 +169,23 @@ export function TreatmentCard({
         )}
 
         {showActions && (
-          <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-4">
-            {canActivate && (
-              <button
-                onClick={() => onActivate?.(session.id.toString())}
-                className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
-              >
-                ▶️ Ativar
-              </button>
-            )}
-
-            {canSuspend && (
-              <button
-                onClick={() => onSuspend?.(session.id.toString())}
-                className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-yellow-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-yellow-700 transition-colors"
-              >
-                Suspender
-              </button>
-            )}
-
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-4 justify-end">
             {canComplete && (
               <button
                 onClick={() => onComplete?.(session.id.toString())}
-                className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center justify-center gap-1 px-3 py-2 border border-green-600 text-green-600 text-xs sm:text-sm font-bold rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
               >
-                ✅ Marcar como Completo
+                Finalizar Tratamento
               </button>
             )}
 
             {canCancel && (
               <button
                 onClick={() => onCancel?.(session.id.toString())}
-                className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
+                className="inline-flex items-center justify-center gap-1 px-3 py-2 border border-red-600 text-red-600 text-xs sm:text-sm font-bold rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
               >
                 <span className="sm:hidden">❌</span>
-                <span className="hidden sm:inline">Cancelar</span>
+                <span className="hidden sm:inline">Cancelar Tratamento</span>
               </button>
             )}
           </div>
@@ -235,8 +205,7 @@ export function TreatmentCard({
           ) : (
             <>
               <ChevronDown className="w-4 h-4" />
-              Ver sessões ({session.completed_sessions} de{" "}
-              {session.planned_sessions})
+              Ver sessões ({session.planned_sessions})
             </>
           )}
         </button>

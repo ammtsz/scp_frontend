@@ -5,8 +5,6 @@ import {
   createTreatmentSession,
   updateTreatmentSession,
   completeTreatmentSession,
-  activateTreatmentSession,
-  suspendTreatmentSession,
   deleteTreatmentSession
 } from '../index';
 
@@ -198,51 +196,13 @@ describe('Treatment Sessions API', () => {
 
       const result = await completeTreatmentSession('1', completionData);
 
-      expect(mockApi.put).toHaveBeenCalledWith('/treatment-sessions/1/complete', completionData);
+      expect(mockApi.put).toHaveBeenCalledWith('/treatment-sessions/1', {
+        end_date: expect.any(String),
+        notes: 'Patient completed all sessions successfully'
+      });
       expect(result).toEqual({
         success: true,
         value: completedSession
-      });
-    });
-  });
-
-  describe('activateTreatmentSession', () => {
-    it('should activate treatment session successfully', async () => {
-      const activatedSession = {
-        ...mockTreatmentSession,
-        status: 'active' as const
-      };
-      const mockResponse = { data: activatedSession };
-      mockApi.put.mockResolvedValue(mockResponse);
-
-      const result = await activateTreatmentSession('1');
-
-      expect(mockApi.put).toHaveBeenCalledWith('/treatment-sessions/1/activate');
-      expect(result).toEqual({
-        success: true,
-        value: activatedSession
-      });
-    });
-  });
-
-  describe('suspendTreatmentSession', () => {
-    it('should suspend treatment session successfully', async () => {
-      const suspensionData = {
-        suspension_reason: 'Patient requested temporary pause'
-      };
-      const suspendedSession = {
-        ...mockTreatmentSession,
-        status: 'suspended' as const
-      };
-      const mockResponse = { data: suspendedSession };
-      mockApi.put.mockResolvedValue(mockResponse);
-
-      const result = await suspendTreatmentSession('1', suspensionData);
-
-      expect(mockApi.put).toHaveBeenCalledWith('/treatment-sessions/1/suspend', suspensionData);
-      expect(result).toEqual({
-        success: true,
-        value: suspendedSession
       });
     });
   });

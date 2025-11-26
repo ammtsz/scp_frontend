@@ -5,7 +5,6 @@ import type {
   CreateTreatmentSessionRequest,
   UpdateTreatmentSessionRequest,
   CompleteTreatmentSessionRequest,
-  SuspendTreatmentSessionRequest,
   TreatmentSessionResponseDto,
   ApiResponse
 } from '../types';
@@ -72,27 +71,12 @@ export const updateTreatmentSession = async (id: string, sessionData: UpdateTrea
 
 export const completeTreatmentSession = async (id: string, completionData: CompleteTreatmentSessionRequest): Promise<ApiResponse<TreatmentSessionResponseDto>> => {
   try {
-    const { data } = await api.put(`/treatment-sessions/${id}/complete`, completionData);
-    return { success: true, value: data };
-  } catch (error) {
-    const message = getErrorMessage((error as AxiosError).status);
-    return { success: false, error: message };
-  }
-};
-
-export const activateTreatmentSession = async (id: string): Promise<ApiResponse<TreatmentSessionResponseDto>> => {
-  try {
-    const { data } = await api.put(`/treatment-sessions/${id}/activate`);
-    return { success: true, value: data };
-  } catch (error) {
-    const message = getErrorMessage((error as AxiosError).status);
-    return { success: false, error: message };
-  }
-};
-
-export const suspendTreatmentSession = async (id: string, suspensionData: SuspendTreatmentSessionRequest): Promise<ApiResponse<TreatmentSessionResponseDto>> => {
-  try {
-    const { data } = await api.put(`/treatment-sessions/${id}/suspend`, suspensionData);
+    // Use the general update endpoint to mark as completed
+    const updateData = {
+      end_date: new Date().toISOString().split('T')[0],
+      notes: completionData.completion_notes || 'Treatment session completed'
+    };
+    const { data } = await api.put(`/treatment-sessions/${id}`, updateData);
     return { success: true, value: data };
   } catch (error) {
     const message = getErrorMessage((error as AxiosError).status);

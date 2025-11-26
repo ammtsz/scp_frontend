@@ -41,7 +41,7 @@ const mockSessions: TreatmentSessionResponseDto[] = [
     start_date: '2024-01-15',
     planned_sessions: 10,
     completed_sessions: 5,
-    status: 'active',
+    status: 'scheduled',
     created_at: '2024-01-15T10:00:00Z',
     updated_at: '2024-01-15T10:00:00Z',
   },
@@ -69,7 +69,7 @@ const mockSessions: TreatmentSessionResponseDto[] = [
     start_date: '2024-01-20',
     planned_sessions: 12,
     completed_sessions: 2,
-    status: 'suspended',
+    status: 'cancelled',
     notes: 'Patient requested pause',
     created_at: '2024-01-20T10:00:00Z',
     updated_at: '2024-01-22T10:00:00Z',
@@ -137,12 +137,12 @@ describe('useTreatmentFilters', () => {
     const { result } = renderHook(() => useTreatmentFilters());
 
     act(() => {
-      result.current.updateStatuses(['active']);
+      result.current.updateStatuses(['scheduled']);
     });
 
     const filtered = result.current.filterSessions(mockSessions);
     expect(filtered).toHaveLength(1);
-    expect(filtered[0].status).toBe('active');
+    expect(filtered[0].status).toBe('scheduled');
   });
 
   it('should filter sessions by date range', () => {
@@ -165,13 +165,13 @@ describe('useTreatmentFilters', () => {
 
     act(() => {
       result.current.updateTreatmentTypes(['light_bath']);
-      result.current.updateStatuses(['active']);
+      result.current.updateStatuses(['scheduled']);
     });
 
     const filtered = result.current.filterSessions(mockSessions);
     expect(filtered).toHaveLength(1);
     expect(filtered[0].treatment_type).toBe('light_bath');
-    expect(filtered[0].status).toBe('active');
+    expect(filtered[0].status).toBe('scheduled');
   });
 
   it('should detect active filters', () => {
@@ -192,7 +192,7 @@ describe('useTreatmentFilters', () => {
     act(() => {
       result.current.updateSearchTerm('test');
       result.current.updateTreatmentTypes(['light_bath']);
-      result.current.updateStatuses(['active']);
+      result.current.updateStatuses(['scheduled']);
     });
 
     expect(result.current.hasActiveFilters).toBe(true);
@@ -340,7 +340,7 @@ describe('useTreatmentFilters', () => {
       act(() => {
         result.current.updateSearchTerm('João');
         result.current.updateTreatmentTypes(['light_bath', 'rod']);
-        result.current.updateStatuses(['active']);
+        result.current.updateStatuses(['scheduled']);
         result.current.updateDateRange({
           start: new Date('2024-01-01'),
           end: new Date('2024-01-31')

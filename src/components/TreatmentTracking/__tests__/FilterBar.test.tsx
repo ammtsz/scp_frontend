@@ -78,8 +78,8 @@ describe("FilterBar Component", () => {
     it("displays status checkboxes", () => {
       render(<FilterBar {...mockProps} />);
       expect(screen.getByText(/📅.*Agendado/)).toBeInTheDocument();
+      expect(screen.getByText(/⚡.*Em Progresso/)).toBeInTheDocument();
       expect(screen.getByText(/✅.*Concluído/)).toBeInTheDocument();
-      expect(screen.getByText(/⏸️.*Suspenso/)).toBeInTheDocument();
       expect(screen.getByText(/❌.*Cancelado/)).toBeInTheDocument();
     });
   });
@@ -157,8 +157,8 @@ describe("FilterBar Component", () => {
       render(<FilterBar {...mockProps} />);
 
       expect(screen.getByText(/📅.*Agendado/)).toBeInTheDocument();
+      expect(screen.getByText(/⚡.*Em Progresso/)).toBeInTheDocument();
       expect(screen.getByText(/✅.*Concluído/)).toBeInTheDocument();
-      expect(screen.getByText(/⏸️.*Suspenso/)).toBeInTheDocument();
       expect(screen.getByText(/❌.*Cancelado/)).toBeInTheDocument();
     });
 
@@ -350,8 +350,8 @@ describe("FilterBar Component", () => {
 
       // Status checkboxes
       expect(screen.getByText(/📅.*Agendado/)).toBeInTheDocument();
+      expect(screen.getByText(/⚡.*Em Progresso/)).toBeInTheDocument();
       expect(screen.getByText(/✅.*Concluído/)).toBeInTheDocument();
-      expect(screen.getByText(/⏸️.*Suspenso/)).toBeInTheDocument();
       expect(screen.getByText(/❌.*Cancelado/)).toBeInTheDocument();
     });
   });

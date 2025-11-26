@@ -4,8 +4,6 @@ import type { CreateTreatmentSessionRequest } from '@/api/types';
 import {
   useTreatmentTrackingData,
   useCreateTreatmentSession,
-  useActivateTreatmentSession,
-  useSuspendTreatmentSession,
   useCompleteTreatmentSession,
   useCancelTreatmentSession,
 } from './useTreatmentTrackingQueries';
@@ -17,8 +15,6 @@ export function useTreatmentTracking() {
   // Get data and mutations from React Query
   const { sessions, patients, isLoading, error, refetch } = useTreatmentTrackingData();
   const createSessionMutation = useCreateTreatmentSession();
-  const activateSessionMutation = useActivateTreatmentSession();
-  const suspendSessionMutation = useSuspendTreatmentSession();
   const completeSessionMutation = useCompleteTreatmentSession();
   const cancelSessionMutation = useCancelTreatmentSession();
 
@@ -83,21 +79,6 @@ export function useTreatmentTracking() {
     await createSessionMutation.mutateAsync(sessionData);
   };
 
-  // Activate session handler
-  const handleActivateSession = async (sessionId: string) => {
-    await activateSessionMutation.mutateAsync(sessionId);
-  };
-
-  // Suspend session handler
-  const handleSuspendSession = async (sessionId: string) => {
-    await suspendSessionMutation.mutateAsync({
-      sessionId,
-      suspensionData: {
-        suspension_reason: 'Suspenso temporariamente',
-      },
-    });
-  };
-
   // Complete session handler
   const handleCompleteSession = async (sessionId: string) => {
     await completeSessionMutation.mutateAsync({
@@ -128,15 +109,11 @@ export function useTreatmentTracking() {
   // Aggregate loading and error states
   const isAnyMutationLoading = 
     createSessionMutation.isPending ||
-    activateSessionMutation.isPending ||
-    suspendSessionMutation.isPending ||
     completeSessionMutation.isPending ||
     cancelSessionMutation.isPending;
 
   const mutationError = 
     createSessionMutation.error ||
-    activateSessionMutation.error ||
-    suspendSessionMutation.error ||
     completeSessionMutation.error ||
     cancelSessionMutation.error;
 
@@ -174,8 +151,6 @@ export function useTreatmentTracking() {
 
     // Actions
     handleCreateSession,
-    handleActivateSession,
-    handleSuspendSession,
     handleCompleteSession,
     handleCancelSession,
     handleToggleExpanded,
@@ -184,8 +159,6 @@ export function useTreatmentTracking() {
 
     // Mutation states for UI feedback
     isCreating: createSessionMutation.isPending,
-    isActivating: activateSessionMutation.isPending,
-    isSuspending: suspendSessionMutation.isPending,
     isCompleting: completeSessionMutation.isPending,
     isCanceling: cancelSessionMutation.isPending,
   };
