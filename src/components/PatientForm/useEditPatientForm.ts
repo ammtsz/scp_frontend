@@ -4,7 +4,7 @@ import { transformPriorityToApi, transformStatusToApi } from "@/utils/apiTransfo
 import { formatPhoneNumber } from "@/utils/formHelpers";
 import type { UpdatePatientRequest, PatientResponseDto } from "@/api/types";
 
-interface EditPatientFormData {
+export interface EditPatientFormData {
   name: string;
   phone: string;
   birthDate: Date | null;

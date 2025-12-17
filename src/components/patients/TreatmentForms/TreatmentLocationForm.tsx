@@ -85,19 +85,20 @@ const TreatmentLocationForm: React.FC<TreatmentLocationFormProps> = ({
       </div>
 
       {/* Existing Treatments */}
-      {treatments.map((treatment, index) => (
-        <BodyLocationTreatmentCard
-          key={index}
-          locations={treatment.locations}
-          treatmentType={treatmentType}
-          treatment={treatment}
-          onChange={(updatedTreatment) =>
-            handleTreatmentChange(index, updatedTreatment)
-          }
-          onRemove={() => handleTreatmentRemove(index)}
-          disabled={disabled}
-        />
-      ))}
+      {treatments &&
+        treatments.map((treatment, index) => (
+          <BodyLocationTreatmentCard
+            key={index}
+            locations={treatment.locations}
+            treatmentType={treatmentType}
+            treatment={treatment}
+            onChange={(updatedTreatment) =>
+              handleTreatmentChange(index, updatedTreatment)
+            }
+            onRemove={() => handleTreatmentRemove(index)}
+            disabled={disabled}
+          />
+        ))}
 
       {/* Add New Treatment Location */}
       <BodyLocationSelector

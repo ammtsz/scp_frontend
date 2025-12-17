@@ -9,7 +9,18 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import { useAttendanceManagement } from "../useAttendanceManagement";
-import { useAttendanceStore } from "@/stores/attendanceStore";
+import {
+  useAttendancesByDate,
+  useNextAttendanceDate,
+} from "@/hooks/useAttendanceQueries";
+
+// Type the mocked hooks
+const mockUseAttendancesByDate = useAttendancesByDate as jest.MockedFunction<
+  typeof useAttendancesByDate
+>;
+const mockUseNextAttendanceDate = useNextAttendanceDate as jest.MockedFunction<
+  typeof useNextAttendanceDate
+>;
 
 // Mock the React Query hooks
 jest.mock("@/hooks/useAttendanceQueries", () => ({
@@ -57,6 +68,31 @@ jest.mock("@/hooks/useAttendanceQueries", () => ({
   useRefreshAttendances: jest.fn(() => jest.fn()),
 }));
 
+// Mock store hooks (define before jest.mock)
+const mockUseSelectedDate = jest.fn();
+const mockUseAttendanceError = jest.fn();
+const mockSetSelectedDate = jest.fn();
+const mockSetError = jest.fn();
+
+jest.mock("@/stores", () => ({
+  useSelectedDate: () => mockUseSelectedDate(),
+  useAttendanceLoading: jest.fn(() => false),
+  useAttendanceDataLoading: jest.fn(() => false),
+  useAttendanceError: () => mockUseAttendanceError(),
+  useSetSelectedDate: jest.fn(() => mockSetSelectedDate),
+  useSetAttendanceLoading: jest.fn(() => jest.fn()),
+  useSetAttendanceDataLoading: jest.fn(() => jest.fn()),
+  useSetAttendanceError: jest.fn(() => mockSetError),
+  useCheckEndOfDayStatus: jest.fn(() => () => ({ type: "completed" })),
+  useDayFinalized: jest.fn(() => false),
+  useEndOfDayStatus: jest.fn(() => null),
+  useAttendanceStore: {
+    getState: () => ({
+      resetState: jest.fn(),
+    }),
+  },
+}));
+
 describe("useAttendanceManagement", () => {
   let queryClient: QueryClient;
 
@@ -72,8 +108,11 @@ describe("useAttendanceManagement", () => {
       },
     });
 
-    // Reset Zustand store
-    useAttendanceStore.getState().resetState();
+    // Reset mock state
+    mockUseSelectedDate.mockReturnValue("2024-01-15");
+    mockUseAttendanceError.mockReturnValue(null);
+    mockSetSelectedDate.mockClear();
+    mockSetError.mockClear();
   });
 
   it("should provide attendance data from React Query", async () => {
@@ -101,7 +140,7 @@ describe("useAttendanceManagement", () => {
   });
 
   it("should update selected date via Zustand action", () => {
-    const { result } = renderHook(() => useAttendanceManagement(), {
+    const { result, rerender } = renderHook(() => useAttendanceManagement(), {
       wrapper: createWrapper,
     });
 
@@ -109,8 +148,14 @@ describe("useAttendanceManagement", () => {
 
     act(() => {
       result.current.setSelectedDate(newDate);
+      // Simulate Zustand store update
+      mockUseSelectedDate.mockReturnValue(newDate);
     });
 
+    // Rerender to pick up the new mock value
+    rerender();
+
+    expect(mockSetSelectedDate).toHaveBeenCalledWith(newDate);
     expect(result.current.selectedDate).toBe(newDate);
   });
 
@@ -189,7 +234,6 @@ describe("useAttendanceManagement", () => {
     expect(typeof result.current.loadAttendancesByDate).toBe("function");
     expect(typeof result.current.initializeSelectedDate).toBe("function");
     expect(typeof result.current.refreshCurrentDate).toBe("function");
-    expect(typeof result.current.finalizeEndOfDay).toBe("function");
   });
 
   it("should maintain API compatibility with original Context", () => {
@@ -213,7 +257,6 @@ describe("useAttendanceManagement", () => {
       "initializeSelectedDate",
       "refreshCurrentDate",
       "checkEndOfDayStatus",
-      "finalizeEndOfDay",
       "handleIncompleteAttendances",
       "handleAbsenceJustifications",
     ];
@@ -234,5 +277,354 @@ describe("useAttendanceManagement", () => {
 
     // Should use the mocked next date
     expect(result.current.selectedDate).toBe("2024-01-15");
+  });
+
+  describe("error handling", () => {
+    const {
+      useAttendancesByDate,
+      useNextAttendanceDate,
+      useBulkUpdateAttendanceStatus,
+      useHandleIncompleteAttendances,
+      useHandleAbsenceJustifications,
+    } = jest.requireMock("@/hooks/useAttendanceQueries");
+
+    let consoleErrorSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Mock console.error to avoid noise in test output
+      consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    });
+
+    afterEach(() => {
+      if (consoleErrorSpy) {
+        consoleErrorSpy.mockRestore();
+      }
+      // Reset all mocks to their default state
+      useAttendancesByDate.mockReturnValue({
+        data: {
+          spiritual: {
+            scheduled: [],
+            checkedIn: [],
+            onGoing: [],
+            completed: [],
+          },
+          lightBath: {
+            scheduled: [],
+            checkedIn: [],
+            onGoing: [],
+            completed: [],
+          },
+          rod: { scheduled: [], checkedIn: [], onGoing: [], completed: [] },
+        },
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
+      useNextAttendanceDate.mockReturnValue({
+        data: "2024-01-15",
+        isLoading: false,
+      });
+      useBulkUpdateAttendanceStatus.mockReturnValue({
+        mutateAsync: jest.fn().mockResolvedValue({ success: true }),
+      });
+      useHandleIncompleteAttendances.mockReturnValue({
+        mutateAsync: jest.fn().mockResolvedValue({ success: true }),
+      });
+      useHandleAbsenceJustifications.mockReturnValue({
+        mutateAsync: jest.fn().mockResolvedValue({ success: true }),
+      });
+    });
+
+    it("should handle errors in loadAttendancesByDate", async () => {
+      const mockRefetch = jest.fn().mockRejectedValue(new Error("API Error"));
+
+      useAttendancesByDate.mockReturnValue({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: null as any,
+        isLoading: false,
+        error: null,
+        refetch: mockRefetch,
+      });
+
+      const { result } = renderHook(() => useAttendanceManagement(), {
+        wrapper: createWrapper,
+      });
+
+      const resultData = await result.current.loadAttendancesByDate(
+        "2024-01-15"
+      );
+
+      expect(resultData).toBeNull();
+      expect(console.error).toHaveBeenCalledWith(
+        "Error loading attendances by date:",
+        expect.any(Error)
+      );
+    });
+
+    it("should handle errors in initializeSelectedDate without nextDate", async () => {
+      mockUseNextAttendanceDate.mockReturnValue({
+        data: null,
+        isLoading: false,
+        error: null,
+        isError: false,
+        isPending: false,
+        isSuccess: true,
+        status: "success" as const,
+        refetch: jest.fn(),
+        fetchStatus: "idle" as const,
+        isRefetching: false,
+        isStale: false,
+        isFetching: false,
+        isInitialLoading: false,
+        isPlaceholderData: false,
+        isLoadingError: false,
+        isRefetchError: false,
+        dataUpdatedAt: Date.now(),
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        isFetchedAfterMount: true,
+        isPaused: false,
+        errorUpdateCount: 0,
+        isFetched: true,
+        isEnabled: true,
+        promise: Promise.resolve(null),
+      });
+
+      const { result } = renderHook(() => useAttendanceManagement(), {
+        wrapper: createWrapper,
+      });
+
+      const currentDate = new Date().toISOString().slice(0, 10);
+
+      await act(async () => {
+        await result.current.initializeSelectedDate();
+        // Simulate Zustand store update with current date
+        mockUseSelectedDate.mockReturnValue(currentDate);
+      });
+
+      // Should use current date as fallback
+      expect(mockSetSelectedDate).toHaveBeenCalledWith(currentDate);
+    });
+
+    it("should handle errors in initializeSelectedDate with exception", async () => {
+      // Clear the console spy for this specific test
+      consoleErrorSpy.mockClear();
+
+      // Mock setSelectedDate to throw an error only the first time, succeed the second time
+      let callCount = 0;
+      mockSetSelectedDate.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          throw new Error("Date setting failed");
+        }
+        // Second call (in catch block) should succeed
+        return;
+      });
+
+      const { result } = renderHook(() => useAttendanceManagement(), {
+        wrapper: createWrapper,
+      });
+
+      await act(async () => {
+        await result.current.initializeSelectedDate();
+      });
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error initializing selected date:",
+        expect.any(Error)
+      );
+    });
+
+    it("should handle errors in bulkUpdateStatus", async () => {
+      useBulkUpdateAttendanceStatus.mockReturnValue({
+        mutateAsync: jest
+          .fn()
+          .mockRejectedValue(new Error("Bulk update failed")),
+      });
+
+      const { result } = renderHook(() => useAttendanceManagement(), {
+        wrapper: createWrapper,
+      });
+
+      const success = await result.current.bulkUpdateStatus(
+        [1, 2, 3],
+        "completed"
+      );
+
+      expect(success).toBe(false);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error updating attendance status:",
+        expect.any(Error)
+      );
+    });
+
+    it("should handle errors in handleIncompleteAttendances", async () => {
+      useHandleIncompleteAttendances.mockReturnValue({
+        mutateAsync: jest
+          .fn()
+          .mockRejectedValue(new Error("Handle incomplete failed")),
+      });
+
+      const { result } = renderHook(() => useAttendanceManagement(), {
+        wrapper: createWrapper,
+      });
+
+      const incompleteAttendances = [
+        {
+          attendanceId: 1,
+          name: "Patient 1",
+          priority: "2" as const,
+          patientName: "Patient 1",
+        },
+      ];
+
+      const success = await result.current.handleIncompleteAttendances(
+        incompleteAttendances,
+        "complete"
+      );
+
+      expect(success).toBe(false);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error handling incomplete attendances:",
+        expect.any(Error)
+      );
+    });
+
+    it("should handle errors in handleAbsenceJustifications", async () => {
+      useHandleAbsenceJustifications.mockReturnValue({
+        mutateAsync: jest
+          .fn()
+          .mockRejectedValue(new Error("Handle absence failed")),
+      });
+
+      const { result } = renderHook(() => useAttendanceManagement(), {
+        wrapper: createWrapper,
+      });
+
+      const justifications = [
+        {
+          attendanceId: 1,
+          patientName: "Patient 1",
+          justified: true,
+          notes: "Called to reschedule",
+        },
+      ];
+
+      const success = await result.current.handleAbsenceJustifications(
+        justifications
+      );
+
+      expect(success).toBe(false);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error handling absence justifications:",
+        expect.any(Error)
+      );
+    });
+
+    it("should handle error state sync from React Query", async () => {
+      // Clear the console spy for this specific test
+      consoleErrorSpy.mockClear();
+
+      const mockError = new Error("Query failed");
+
+      // First set up the mocked hook to return the error
+      mockUseAttendancesByDate.mockReturnValue({
+        data: {
+          date: new Date(),
+          spiritual: {
+            scheduled: [],
+            checkedIn: [],
+            onGoing: [],
+            completed: [],
+          },
+          lightBath: {
+            scheduled: [],
+            checkedIn: [],
+            onGoing: [],
+            completed: [],
+          },
+          rod: { scheduled: [], checkedIn: [], onGoing: [], completed: [] },
+          combined: {
+            scheduled: [],
+            checkedIn: [],
+            onGoing: [],
+            completed: [],
+          },
+        },
+        isLoading: false,
+        error: mockError,
+        isError: true,
+        isPending: false,
+        isSuccess: false,
+        status: "error" as const,
+        refetch: jest.fn(),
+        fetchStatus: "idle" as const,
+        isRefetching: false,
+        isStale: false,
+        isFetching: false,
+        isInitialLoading: false,
+        isPlaceholderData: false,
+        isLoadingError: false,
+        isRefetchError: true,
+        dataUpdatedAt: Date.now(),
+        errorUpdatedAt: Date.now(),
+        failureCount: 1,
+        failureReason: mockError,
+        isFetchedAfterMount: true,
+        isPaused: false,
+        errorUpdateCount: 1,
+        isFetched: true,
+        isEnabled: true,
+        promise: Promise.resolve(null),
+      });
+
+      renderHook(() => useAttendanceManagement(), {
+        wrapper: createWrapper,
+      });
+
+      // The useEffect in the hook should sync the error
+      await waitFor(() => {
+        expect(mockSetError).toHaveBeenCalledWith("Query failed");
+      });
+    });
+
+    it("should handle loadAttendancesByDate with same date (refetch path)", async () => {
+      const mockRefetch = jest.fn().mockResolvedValue({ data: null });
+
+      useAttendancesByDate.mockReturnValue({
+        data: {
+          spiritual: {
+            scheduled: [],
+            checkedIn: [],
+            onGoing: [],
+            completed: [],
+          },
+          lightBath: {
+            scheduled: [],
+            checkedIn: [],
+            onGoing: [],
+            completed: [],
+          },
+          rod: { scheduled: [], checkedIn: [], onGoing: [], completed: [] },
+        },
+        isLoading: false,
+        error: null,
+        refetch: mockRefetch,
+      });
+
+      const { result } = renderHook(() => useAttendanceManagement(), {
+        wrapper: createWrapper,
+      });
+
+      // Load the same date that's already selected
+      const currentDate = result.current.selectedDate;
+      const resultData = await result.current.loadAttendancesByDate(
+        currentDate
+      );
+
+      expect(mockRefetch).toHaveBeenCalled();
+      expect(resultData).toBeDefined();
+    });
   });
 });

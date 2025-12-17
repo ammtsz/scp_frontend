@@ -235,7 +235,7 @@ describe('useTreatmentFilters', () => {
       expect(end).toBeInstanceOf(Date);
       
       if (start && end) {
-        expect(end.getTime() - start.getTime()).toBe(6 * 24 * 60 * 60 * 1000);
+        expect(end.getTime() - start.getTime()).toBe(6 * 24 * 60 * 60 * 1000 + 86399999); // 7 days minus 1ms
       }
     });
 
@@ -263,6 +263,9 @@ describe('useTreatmentFilters', () => {
 
       act(() => {
         result.current.updateSearchTerm('test');
+      });
+
+      act(() => {
         result.current.savePreset('My Preset');
       });
 
@@ -278,7 +281,13 @@ describe('useTreatmentFilters', () => {
       // First save a preset
       act(() => {
         result.current.updateSearchTerm('test');
+      });
+
+      act(() => {
         result.current.updateTreatmentTypes(['light_bath']);
+      });
+
+      act(() => {
         result.current.savePreset('Test Preset');
       });
 
@@ -348,7 +357,7 @@ describe('useTreatmentFilters', () => {
       });
 
       expect(mockRouter.replace).toHaveBeenCalledWith(
-        expect.stringContaining('search=João'),
+        expect.stringContaining('search=Jo%C3%A3o'),
         { scroll: false }
       );
       expect(mockRouter.replace).toHaveBeenCalledWith(

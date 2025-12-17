@@ -24,8 +24,8 @@ import {
   attendanceKeys,
 } from "../useAttendanceQueries";
 import * as attendancesApi from "@/api/attendances";
-import { AttendanceType } from "@/types/types";
-import { AttendanceStatus as ApiAttendanceStatus } from "@/api/types";
+import { AttendanceStatusDetail } from "@/types/types";
+import { AttendanceType, AttendanceStatus } from "@/api/types";
 
 // Mock the API
 jest.mock("@/api/attendances");
@@ -39,6 +39,29 @@ jest.mock("@/utils/apiTransformers", () => ({
     rod: { scheduled: [], checkedIn: [], onGoing: [], completed: [] },
   })),
 }));
+
+// Helper to create mock attendance response
+const createMockAttendanceResponse = (overrides = {}) => ({
+  id: 123,
+  status: AttendanceStatus.SCHEDULED,
+  patient_id: 1,
+  type: AttendanceType.SPIRITUAL,
+  scheduled_date: "2024-01-15",
+  scheduled_time: "09:00",
+  created_at: "2024-01-15T08:00:00Z",
+  updated_at: "2024-01-15T09:00:00Z",
+  ...overrides,
+});
+
+// Helper to create mock AttendanceStatusDetail
+const createMockAttendanceStatusDetail = (
+  overrides = {}
+): AttendanceStatusDetail => ({
+  attendanceId: 1,
+  name: "Test Patient",
+  priority: "3",
+  ...overrides,
+});
 
 describe("useAttendanceQueries", () => {
   let queryClient: QueryClient;
@@ -65,9 +88,14 @@ describe("useAttendanceQueries", () => {
         value: [
           {
             id: 1,
+            patient_id: 1,
             patient_name: "Test Patient",
-            status: "scheduled",
-            attendance_type: "spiritual",
+            status: AttendanceStatus.SCHEDULED,
+            type: AttendanceType.SPIRITUAL,
+            scheduled_date: "2024-01-15",
+            scheduled_time: "09:00",
+            created_at: "2024-01-15T08:00:00Z",
+            updated_at: "2024-01-15T08:00:00Z",
           },
         ],
       };
@@ -128,8 +156,24 @@ describe("useAttendanceQueries", () => {
     it("should fallback to today when no next date available", async () => {
       mockApi.getNextAttendanceDate.mockResolvedValue({
         success: true,
-        value: null,
+        value: undefined,
       });
+
+      const { result } = renderHook(() => useNextAttendanceDate(), {
+        wrapper: createWrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data).toMatch(/\d{4}-\d{2}-\d{2}/); // Today's date format
+    });
+
+    it("should handle API error and fallback to today", async () => {
+      mockApi.getNextAttendanceDate.mockRejectedValue(
+        new Error("Network error")
+      );
 
       const { result } = renderHook(() => useNextAttendanceDate(), {
         wrapper: createWrapper,
@@ -147,7 +191,7 @@ describe("useAttendanceQueries", () => {
     it("should create new attendance successfully", async () => {
       const mockResponse = {
         success: true,
-        value: { id: 123, patient_id: 1, attendance_type: "spiritual" },
+        value: createMockAttendanceResponse({ id: 123 }),
       };
 
       mockApi.createAttendance.mockResolvedValue(mockResponse);
@@ -158,7 +202,7 @@ describe("useAttendanceQueries", () => {
 
       const createParams = {
         patientId: 1,
-        attendanceType: "spiritual" as AttendanceType,
+        attendanceType: AttendanceType.SPIRITUAL,
         scheduledDate: "2024-01-15",
       };
 
@@ -168,7 +212,7 @@ describe("useAttendanceQueries", () => {
 
       expect(mockApi.createAttendance).toHaveBeenCalledWith({
         patient_id: 1,
-        type: "spiritual",
+        type: AttendanceType.SPIRITUAL,
         scheduled_date: "2024-01-15",
         scheduled_time: "09:00",
       });
@@ -186,7 +230,7 @@ describe("useAttendanceQueries", () => {
 
       const createParams = {
         patientId: 999,
-        attendanceType: "spiritual" as AttendanceType,
+        attendanceType: AttendanceType.SPIRITUAL,
       };
 
       await expect(result.current.mutateAsync(createParams)).rejects.toThrow(
@@ -199,7 +243,10 @@ describe("useAttendanceQueries", () => {
     it("should update attendance status", async () => {
       const mockResponse = {
         success: true,
-        value: { id: "123", status: "checked_in" },
+        value: createMockAttendanceResponse({
+          id: 123,
+          status: AttendanceStatus.CHECKED_IN,
+        }),
       };
 
       mockApi.updateAttendance.mockResolvedValue(mockResponse);
@@ -210,7 +257,7 @@ describe("useAttendanceQueries", () => {
 
       const updateParams = {
         id: "123",
-        status: ApiAttendanceStatus.CHECKED_IN,
+        status: AttendanceStatus.CHECKED_IN,
       };
 
       await waitFor(async () => {
@@ -218,7 +265,7 @@ describe("useAttendanceQueries", () => {
       });
 
       expect(mockApi.updateAttendance).toHaveBeenCalledWith("123", {
-        status: ApiAttendanceStatus.CHECKED_IN,
+        status: AttendanceStatus.CHECKED_IN,
         absence_justified: undefined,
         absence_notes: undefined,
       });
@@ -229,7 +276,10 @@ describe("useAttendanceQueries", () => {
     it("should complete attendance", async () => {
       const mockResponse = {
         success: true,
-        value: { id: "123", status: "completed" },
+        value: createMockAttendanceResponse({
+          id: 123,
+          status: AttendanceStatus.COMPLETED,
+        }),
       };
 
       mockApi.completeAttendance.mockResolvedValue(mockResponse);
@@ -250,7 +300,10 @@ describe("useAttendanceQueries", () => {
     it("should mark attendance as missed with justification", async () => {
       const mockResponse = {
         success: true,
-        value: { id: "123", status: "missed" },
+        value: createMockAttendanceResponse({
+          id: 123,
+          status: AttendanceStatus.MISSED,
+        }),
       };
 
       mockApi.markAttendanceAsMissed.mockResolvedValue(mockResponse);
@@ -279,7 +332,12 @@ describe("useAttendanceQueries", () => {
 
   describe("useBulkUpdateAttendanceStatus", () => {
     it("should update multiple attendances at once", async () => {
-      mockApi.bulkUpdateAttendanceStatus.mockResolvedValue(undefined);
+      const mockResponse = {
+        success: true,
+        value: { updated: 3, success: true },
+      };
+
+      mockApi.bulkUpdateAttendanceStatus.mockResolvedValue(mockResponse);
 
       const { result } = renderHook(() => useBulkUpdateAttendanceStatus(), {
         wrapper: createWrapper,
@@ -305,7 +363,6 @@ describe("useAttendanceQueries", () => {
     it("should delete attendance", async () => {
       const mockResponse = {
         success: true,
-        value: { deleted: true },
       };
 
       mockApi.deleteAttendance.mockResolvedValue(mockResponse);
@@ -315,10 +372,34 @@ describe("useAttendanceQueries", () => {
       });
 
       await waitFor(async () => {
-        await result.current.mutateAsync(123);
+        await result.current.mutateAsync({ attendanceId: 123 });
       });
 
-      expect(mockApi.deleteAttendance).toHaveBeenCalledWith("123");
+      expect(mockApi.deleteAttendance).toHaveBeenCalledWith("123", undefined);
+    });
+
+    it("should delete attendance with cancellation reason", async () => {
+      const mockResponse = {
+        success: true,
+      };
+
+      mockApi.deleteAttendance.mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(() => useDeleteAttendance(), {
+        wrapper: createWrapper,
+      });
+
+      await waitFor(async () => {
+        await result.current.mutateAsync({
+          attendanceId: 123,
+          cancellationReason: "Patient requested cancellation",
+        });
+      });
+
+      expect(mockApi.deleteAttendance).toHaveBeenCalledWith(
+        "123",
+        "Patient requested cancellation"
+      );
     });
   });
 
@@ -326,7 +407,10 @@ describe("useAttendanceQueries", () => {
     it("should check in attendance (alias for status update)", async () => {
       const mockResponse = {
         success: true,
-        value: { id: "123", status: "checked_in" },
+        value: createMockAttendanceResponse({
+          id: 123,
+          status: AttendanceStatus.CHECKED_IN,
+        }),
       };
 
       mockApi.updateAttendance.mockResolvedValue(mockResponse);
@@ -345,7 +429,7 @@ describe("useAttendanceQueries", () => {
       });
 
       expect(mockApi.updateAttendance).toHaveBeenCalledWith("123", {
-        status: ApiAttendanceStatus.CHECKED_IN,
+        status: AttendanceStatus.CHECKED_IN,
         absence_justified: undefined,
         absence_notes: undefined,
       });
@@ -387,7 +471,9 @@ describe("useAttendanceQueries", () => {
     it("should handle incomplete attendances by completing them", async () => {
       mockApi.completeAttendance.mockResolvedValue({
         success: true,
-        value: { status: "completed" },
+        value: createMockAttendanceResponse({
+          status: AttendanceStatus.COMPLETED,
+        }),
       });
 
       const { result } = renderHook(() => useHandleIncompleteAttendances(), {
@@ -395,8 +481,14 @@ describe("useAttendanceQueries", () => {
       });
 
       const incompleteAttendances = [
-        { attendanceId: 1, patientName: "Patient 1" },
-        { attendanceId: 2, patientName: "Patient 2" },
+        createMockAttendanceStatusDetail({
+          attendanceId: 1,
+          name: "Patient 1",
+        }),
+        createMockAttendanceStatusDetail({
+          attendanceId: 2,
+          name: "Patient 2",
+        }),
       ];
 
       const params = {
@@ -416,7 +508,9 @@ describe("useAttendanceQueries", () => {
     it("should handle incomplete attendances by rescheduling them", async () => {
       mockApi.updateAttendance.mockResolvedValue({
         success: true,
-        value: { status: "scheduled" },
+        value: createMockAttendanceResponse({
+          status: AttendanceStatus.SCHEDULED,
+        }),
       });
 
       const { result } = renderHook(() => useHandleIncompleteAttendances(), {
@@ -424,7 +518,10 @@ describe("useAttendanceQueries", () => {
       });
 
       const incompleteAttendances = [
-        { attendanceId: 1, patientName: "Patient 1" },
+        createMockAttendanceStatusDetail({
+          attendanceId: 1,
+          name: "Patient 1",
+        }),
       ];
 
       const params = {
@@ -437,7 +534,7 @@ describe("useAttendanceQueries", () => {
       });
 
       expect(mockApi.updateAttendance).toHaveBeenCalledWith("1", {
-        status: ApiAttendanceStatus.SCHEDULED,
+        status: AttendanceStatus.SCHEDULED,
         absence_justified: undefined,
         absence_notes: undefined,
       });
@@ -448,11 +545,15 @@ describe("useAttendanceQueries", () => {
     it("should handle justified and unjustified absences", async () => {
       mockApi.updateAttendance.mockResolvedValue({
         success: true,
-        value: { status: "missed" },
+        value: createMockAttendanceResponse({
+          status: AttendanceStatus.MISSED,
+        }),
       });
       mockApi.markAttendanceAsMissed.mockResolvedValue({
         success: true,
-        value: { status: "missed" },
+        value: createMockAttendanceResponse({
+          status: AttendanceStatus.MISSED,
+        }),
       });
 
       const { result } = renderHook(() => useHandleAbsenceJustifications(), {
@@ -482,7 +583,7 @@ describe("useAttendanceQueries", () => {
       expect(mockApi.updateAttendance).toHaveBeenCalledWith("1", {
         absence_justified: true,
         absence_notes: "Called to reschedule",
-        status: ApiAttendanceStatus.MISSED,
+        status: AttendanceStatus.MISSED,
       });
 
       // Unjustified absence
@@ -503,6 +604,217 @@ describe("useAttendanceQueries", () => {
         "2024-01-15",
       ]);
       expect(attendanceKeys.nextDate()).toEqual(["attendances", "nextDate"]);
+    });
+  });
+
+  describe("Error Handling and Edge Cases", () => {
+    it("should handle network timeout errors", async () => {
+      mockApi.getAttendancesByDate.mockRejectedValue(new Error("ETIMEDOUT"));
+
+      const { result } = renderHook(() => useAttendancesByDate("2024-01-15"), {
+        wrapper: createWrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+
+      expect(result.current.error?.message).toBe("ETIMEDOUT");
+    });
+
+    it("should handle server error responses", async () => {
+      mockApi.updateAttendance.mockResolvedValue({
+        success: false,
+        error: "Internal server error",
+      });
+
+      const { result } = renderHook(() => useUpdateAttendance(), {
+        wrapper: createWrapper,
+      });
+
+      await expect(
+        result.current.mutateAsync({
+          id: "123",
+          status: AttendanceStatus.COMPLETED,
+        })
+      ).rejects.toThrow("Internal server error");
+    });
+
+    it("should handle malformed API responses", async () => {
+      mockApi.getNextAttendanceDate.mockResolvedValue({
+        success: true,
+        // @ts-expect-error - Intentionally malformed data for testing
+        value: { invalid: "data" },
+      });
+
+      const { result } = renderHook(() => useNextAttendanceDate(), {
+        wrapper: createWrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      // Should fallback to today when API returns malformed data
+      expect(result.current.data).toMatch(/\d{4}-\d{2}-\d{2}/);
+    });
+
+    it("should handle concurrent mutations gracefully", async () => {
+      mockApi.updateAttendance.mockImplementation(() =>
+        Promise.resolve({
+          success: true,
+          value: createMockAttendanceResponse({
+            status: AttendanceStatus.COMPLETED,
+          }),
+        })
+      );
+
+      const { result } = renderHook(() => useUpdateAttendance(), {
+        wrapper: createWrapper,
+      });
+
+      // Trigger multiple concurrent mutations
+      const promises = [
+        result.current.mutateAsync({
+          id: "1",
+          status: AttendanceStatus.COMPLETED,
+        }),
+        result.current.mutateAsync({
+          id: "2",
+          status: AttendanceStatus.COMPLETED,
+        }),
+        result.current.mutateAsync({
+          id: "3",
+          status: AttendanceStatus.COMPLETED,
+        }),
+      ];
+
+      await Promise.all(promises);
+
+      expect(mockApi.updateAttendance).toHaveBeenCalledTimes(3);
+    });
+
+    it("should handle partial batch operation failures", async () => {
+      // Mock first call succeeds, second fails
+      mockApi.completeAttendance
+        .mockResolvedValueOnce({
+          success: true,
+          value: createMockAttendanceResponse({
+            status: AttendanceStatus.COMPLETED,
+          }),
+        })
+        .mockResolvedValueOnce({
+          success: false,
+          error: "Attendance not found",
+        });
+
+      const { result } = renderHook(() => useHandleIncompleteAttendances(), {
+        wrapper: createWrapper,
+      });
+
+      const incompleteAttendances = [
+        createMockAttendanceStatusDetail({
+          attendanceId: 1,
+          name: "Patient 1",
+        }),
+        createMockAttendanceStatusDetail({
+          attendanceId: 2,
+          name: "Patient 2",
+        }),
+      ];
+
+      // Should handle mixed success/failure in batch operations
+      await expect(
+        result.current.mutateAsync({
+          attendances: incompleteAttendances,
+          action: "complete",
+        })
+      ).rejects.toThrow();
+
+      expect(mockApi.completeAttendance).toHaveBeenCalledTimes(2);
+    });
+
+    it("should validate query invalidation on successful mutations", async () => {
+      mockApi.updateAttendance.mockResolvedValue({
+        success: true,
+        value: createMockAttendanceResponse({
+          status: AttendanceStatus.COMPLETED,
+        }),
+      });
+
+      const invalidateSpy = jest.spyOn(queryClient, "invalidateQueries");
+
+      const { result } = renderHook(() => useUpdateAttendance(), {
+        wrapper: createWrapper,
+      });
+
+      await result.current.mutateAsync({
+        id: "123",
+        status: AttendanceStatus.COMPLETED,
+      });
+
+      // Should invalidate attendance queries
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: attendanceKeys.all,
+      });
+
+      // Should also invalidate agenda queries
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ["agenda"],
+      });
+    });
+
+    it("should handle empty batch operations", async () => {
+      const { result } = renderHook(() => useHandleIncompleteAttendances(), {
+        wrapper: createWrapper,
+      });
+
+      const emptyParams = {
+        attendances: [],
+        action: "complete" as const,
+      };
+
+      await waitFor(async () => {
+        const response = await result.current.mutateAsync(emptyParams);
+        expect(response.success).toBe(true);
+      });
+
+      expect(mockApi.completeAttendance).not.toHaveBeenCalled();
+    });
+
+    it("should handle attendances without IDs in batch operations", async () => {
+      const { result } = renderHook(() => useHandleIncompleteAttendances(), {
+        wrapper: createWrapper,
+      });
+
+      const attendancesWithoutIds = [
+        createMockAttendanceStatusDetail({
+          attendanceId: undefined,
+          name: "Patient 1",
+        }),
+        createMockAttendanceStatusDetail({
+          attendanceId: 2,
+          name: "Patient 2",
+        }),
+      ];
+
+      mockApi.completeAttendance.mockResolvedValue({
+        success: true,
+        value: createMockAttendanceResponse({
+          status: AttendanceStatus.COMPLETED,
+        }),
+      });
+
+      await waitFor(async () => {
+        await result.current.mutateAsync({
+          attendances: attendancesWithoutIds,
+          action: "complete",
+        });
+      });
+
+      // Should only call API for attendance with valid ID
+      expect(mockApi.completeAttendance).toHaveBeenCalledTimes(1);
+      expect(mockApi.completeAttendance).toHaveBeenCalledWith("2");
     });
   });
 });

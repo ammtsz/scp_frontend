@@ -1,7 +1,32 @@
-import { renderHook, act } from '@testing-library/react';
-import { useModalStore } from '@/stores/modalStore';
+/**
+ * @jest-environment jsdom
+ */
 
-describe('Modal Store - Cancellation Modal', () => {
+import { renderHook, act } from '@testing-library/react';
+import { 
+  useModalStore,
+  useCancellationModal,
+  usePostTreatmentModal,
+  useMultiSectionModal,
+  useNewPatientCheckInModal,
+  usePostAttendanceModal,
+  useEndOfDayModal,
+  useOpenCancellation,
+  useOpenMultiSection,
+  useOpenPostTreatment,
+  useOpenNewPatientCheckIn,
+  useOpenPostAttendance,
+  useOpenEndOfDay,
+  useCloseModal,
+  useSetCancellationLoading,
+  useSetPostTreatmentSessions,
+  useSetPostTreatmentLoading,
+  useSetPostAttendanceLoading,
+  TreatmentSession
+} from '@/stores/modalStore';
+import { PatientBasic } from '@/types/types';
+
+describe('Modal Store', () => {
   beforeEach(() => {
     // Reset store before each test
     const { result } = renderHook(() => useModalStore());
@@ -16,73 +41,443 @@ describe('Modal Store - Cancellation Modal', () => {
     });
   });
 
-  test('should open cancellation modal with correct data', () => {
-    const { result } = renderHook(() => useModalStore());
+  describe('Cancellation Modal', () => {
+    test('should open cancellation modal with correct data', () => {
+      const { result } = renderHook(() => useModalStore());
 
-    act(() => {
-      result.current.openCancellation(123, 'John Doe');
+      act(() => {
+        result.current.openCancellation(123, 'John Doe');
+      });
+
+      expect(result.current.cancellation.isOpen).toBe(true);
+      expect(result.current.cancellation.attendanceId).toBe(123);
+      expect(result.current.cancellation.patientName).toBe('John Doe');
+      expect(result.current.cancellation.isLoading).toBe(false);
     });
 
-    expect(result.current.cancellation.isOpen).toBe(true);
-    expect(result.current.cancellation.attendanceId).toBe(123);
-    expect(result.current.cancellation.patientName).toBe('John Doe');
-    expect(result.current.cancellation.isLoading).toBe(false);
+    test('should close cancellation modal', () => {
+      const { result } = renderHook(() => useModalStore());
+
+      // First open the modal
+      act(() => {
+        result.current.openCancellation(123, 'John Doe');
+      });
+
+      expect(result.current.cancellation.isOpen).toBe(true);
+
+      // Then close it
+      act(() => {
+        result.current.closeModal('cancellation');
+      });
+
+      expect(result.current.cancellation.isOpen).toBe(false);
+      expect(result.current.cancellation.isLoading).toBe(false);
+    });
+
+    test('should set loading state', () => {
+      const { result } = renderHook(() => useModalStore());
+
+      act(() => {
+        result.current.setCancellationLoading(true);
+      });
+
+      expect(result.current.cancellation.isLoading).toBe(true);
+
+      act(() => {
+        result.current.setCancellationLoading(false);
+      });
+
+      expect(result.current.cancellation.isLoading).toBe(false);
+    });
   });
 
-  test('should close cancellation modal', () => {
-    const { result } = renderHook(() => useModalStore());
+  describe('Multi Section Modal', () => {
+    test('should open multi section modal with callbacks', () => {
+      const { result } = renderHook(() => useModalStore());
+      const onConfirm = jest.fn();
+      const onCancel = jest.fn();
 
-    // First open the modal
-    act(() => {
-      result.current.openCancellation(123, 'John Doe');
+      act(() => {
+        result.current.openMultiSection(onConfirm, onCancel);
+      });
+
+      expect(result.current.multiSection.isOpen).toBe(true);
+      expect(result.current.multiSection.onConfirm).toBe(onConfirm);
+      expect(result.current.multiSection.onCancel).toBe(onCancel);
     });
 
-    expect(result.current.cancellation.isOpen).toBe(true);
+    test('should close multi section modal and reset callbacks', () => {
+      const { result } = renderHook(() => useModalStore());
+      const onConfirm = jest.fn();
+      const onCancel = jest.fn();
 
-    // Then close it
-    act(() => {
-      result.current.closeModal('cancellation');
+      // Open modal first
+      act(() => {
+        result.current.openMultiSection(onConfirm, onCancel);
+      });
+
+      expect(result.current.multiSection.isOpen).toBe(true);
+
+      // Close modal
+      act(() => {
+        result.current.closeModal('multiSection');
+      });
+
+      expect(result.current.multiSection.isOpen).toBe(false);
+      expect(result.current.multiSection.onConfirm).toBeUndefined();
+      expect(result.current.multiSection.onCancel).toBeUndefined();
     });
-
-    expect(result.current.cancellation.isOpen).toBe(false);
-    expect(result.current.cancellation.isLoading).toBe(false);
   });
 
-  test('should set loading state', () => {
-    const { result } = renderHook(() => useModalStore());
+  describe('Post Treatment Modal', () => {
+    test('should open post treatment modal with correct data', () => {
+      const { result } = renderHook(() => useModalStore());
+      const onComplete = jest.fn();
+      const data = {
+        attendanceId: 123,
+        patientId: 456,
+        patientName: 'John Doe',
+        attendanceType: 'spiritual' as const,
+        onComplete
+      };
 
-    act(() => {
-      result.current.setCancellationLoading(true);
+      act(() => {
+        result.current.openPostTreatment(data);
+      });
+
+      expect(result.current.postTreatment.isOpen).toBe(true);
+      expect(result.current.postTreatment.attendanceId).toBe(123);
+      expect(result.current.postTreatment.patientId).toBe(456);
+      expect(result.current.postTreatment.patientName).toBe('John Doe');
+      expect(result.current.postTreatment.attendanceType).toBe('spiritual');
+      expect(result.current.postTreatment.treatmentSessions).toEqual([]);
+      expect(result.current.postTreatment.isLoadingSessions).toBe(false);
+      expect(result.current.postTreatment.onComplete).toBe(onComplete);
     });
 
-    expect(result.current.cancellation.isLoading).toBe(true);
+    test('should close post treatment modal and reset data', () => {
+      const { result } = renderHook(() => useModalStore());
+      const onComplete = jest.fn();
+      const data = {
+        attendanceId: 123,
+        patientId: 456,
+        patientName: 'John Doe',
+        attendanceType: 'spiritual' as const,
+        onComplete
+      };
 
-    act(() => {
-      result.current.setCancellationLoading(false);
+      // Open modal first
+      act(() => {
+        result.current.openPostTreatment(data);
+      });
+
+      expect(result.current.postTreatment.isOpen).toBe(true);
+
+      // Close modal
+      act(() => {
+        result.current.closeModal('postTreatment');
+      });
+
+      expect(result.current.postTreatment.isOpen).toBe(false);
+      expect(result.current.postTreatment.attendanceId).toBeUndefined();
+      expect(result.current.postTreatment.patientId).toBeUndefined();
+      expect(result.current.postTreatment.patientName).toBeUndefined();
+      expect(result.current.postTreatment.attendanceType).toBeUndefined();
+      expect(result.current.postTreatment.treatmentSessions).toEqual([]);
+      expect(result.current.postTreatment.isLoadingSessions).toBe(false);
+      expect(result.current.postTreatment.onComplete).toBeUndefined();
     });
 
-    expect(result.current.cancellation.isLoading).toBe(false);
+    test('should set post treatment sessions', () => {
+      const { result } = renderHook(() => useModalStore());
+      const sessions: TreatmentSession[] = [
+        { 
+          id: 1, 
+          treatmentType: 'light_bath',
+          bodyLocations: ['head'],
+          startDate: '2024-01-01',
+          plannedSessions: 5,
+          completedSessions: 1,
+          status: 'in_progress'
+        },
+        { 
+          id: 2, 
+          treatmentType: 'rod',
+          bodyLocations: ['back'],
+          startDate: '2024-01-02',
+          plannedSessions: 3,
+          completedSessions: 0,
+          status: 'scheduled'
+        }
+      ];
+
+      act(() => {
+        result.current.setPostTreatmentSessions(sessions);
+      });
+
+      expect(result.current.postTreatment.treatmentSessions).toEqual(sessions);
+    });
+
+    test('should set post treatment loading state', () => {
+      const { result } = renderHook(() => useModalStore());
+
+      act(() => {
+        result.current.setPostTreatmentLoading(true);
+      });
+
+      expect(result.current.postTreatment.isLoadingSessions).toBe(true);
+
+      act(() => {
+        result.current.setPostTreatmentLoading(false);
+      });
+
+      expect(result.current.postTreatment.isLoadingSessions).toBe(false);
+    });
   });
 
-  test('should close all modals', () => {
-    const { result } = renderHook(() => useModalStore());
+  describe('New Patient Check-In Modal', () => {
+    test('should open new patient check-in modal with correct data', () => {
+      const { result } = renderHook(() => useModalStore());
+      const patient: PatientBasic = {
+        id: '1',
+        name: 'Jane Doe',
+        phone: '(11) 99999-9999',
+        priority: '2',
+        status: 'A'
+      };
+      const onComplete = jest.fn();
 
-    // Open multiple modals
-    act(() => {
-      result.current.openCancellation(123, 'John Doe');
-      result.current.openMultiSection(() => {}, () => {});
+      act(() => {
+        result.current.openNewPatientCheckIn({
+          patient,
+          attendanceId: 789,
+          onComplete
+        });
+      });
+
+      expect(result.current.newPatientCheckIn.isOpen).toBe(true);
+      expect(result.current.newPatientCheckIn.patient).toBe(patient);
+      expect(result.current.newPatientCheckIn.attendanceId).toBe(789);
+      expect(result.current.newPatientCheckIn.onComplete).toBe(onComplete);
     });
 
-    expect(result.current.cancellation.isOpen).toBe(true);
-    expect(result.current.multiSection.isOpen).toBe(true);
+    test('should close new patient check-in modal and reset data', () => {
+      const { result } = renderHook(() => useModalStore());
+      const patient: PatientBasic = {
+        id: '1',
+        name: 'Jane Doe',
+        phone: '(11) 99999-9999',
+        priority: '2',
+        status: 'A'
+      };
+      const onComplete = jest.fn();
 
-    // Close all modals individually
-    act(() => {
-      result.current.closeModal('cancellation');
-      result.current.closeModal('multiSection');
+      // Open modal first
+      act(() => {
+        result.current.openNewPatientCheckIn({
+          patient,
+          attendanceId: 789,
+          onComplete
+        });
+      });
+
+      expect(result.current.newPatientCheckIn.isOpen).toBe(true);
+
+      // Close modal
+      act(() => {
+        result.current.closeModal('newPatientCheckIn');
+      });
+
+      expect(result.current.newPatientCheckIn.isOpen).toBe(false);
+      expect(result.current.newPatientCheckIn.patient).toBeUndefined();
+      expect(result.current.newPatientCheckIn.attendanceId).toBeUndefined();
+      expect(result.current.newPatientCheckIn.onComplete).toBeUndefined();
+    });
+  });
+
+  describe('Post Attendance Modal', () => {
+    test('should open post attendance modal with correct data', () => {
+      const { result } = renderHook(() => useModalStore());
+      const onComplete = jest.fn();
+      const data = {
+        attendanceId: 123,
+        patientId: 456,
+        patientName: 'John Doe',
+        attendanceType: 'spiritual' as const,
+        currentTreatmentStatus: 'Active',
+        currentStartDate: new Date('2024-01-01'),
+        currentReturnWeeks: 4,
+        isFirstAttendance: true,
+        isLoading: false,
+        initialData: undefined,
+        onComplete
+      };
+
+      act(() => {
+        result.current.openPostAttendance(data);
+      });
+
+      expect(result.current.postAttendance.isOpen).toBe(true);
+      expect(result.current.postAttendance.attendanceId).toBe(123);
+      expect(result.current.postAttendance.patientId).toBe(456);
+      expect(result.current.postAttendance.patientName).toBe('John Doe');
+      expect(result.current.postAttendance.attendanceType).toBe('spiritual');
+      expect(result.current.postAttendance.currentTreatmentStatus).toBe('Active');
+      expect(result.current.postAttendance.currentStartDate).toEqual(new Date('2024-01-01'));
+      expect(result.current.postAttendance.currentReturnWeeks).toBe(4);
+      expect(result.current.postAttendance.isFirstAttendance).toBe(true);
+      expect(result.current.postAttendance.isLoading).toBe(false);
+      expect(result.current.postAttendance.initialData).toBeUndefined();
+      expect(result.current.postAttendance.onComplete).toBe(onComplete);
     });
 
-    expect(result.current.cancellation.isOpen).toBe(false);
-    expect(result.current.multiSection.isOpen).toBe(false);
+    test('should close post attendance modal and reset data', () => {
+      const { result } = renderHook(() => useModalStore());
+      const onComplete = jest.fn();
+      const data = {
+        attendanceId: 123,
+        patientId: 456,
+        patientName: 'John Doe',
+        attendanceType: 'spiritual' as const,
+        currentTreatmentStatus: 'Active',
+        currentStartDate: new Date('2024-01-01'),
+        currentReturnWeeks: 4,
+        isFirstAttendance: true,
+        isLoading: false,
+        initialData: undefined,
+        onComplete
+      };
+
+      // Open modal first
+      act(() => {
+        result.current.openPostAttendance(data);
+      });
+
+      expect(result.current.postAttendance.isOpen).toBe(true);
+
+      // Close modal
+      act(() => {
+        result.current.closeModal('postAttendance');
+      });
+
+      expect(result.current.postAttendance.isOpen).toBe(false);
+      expect(result.current.postAttendance.attendanceId).toBeUndefined();
+      expect(result.current.postAttendance.patientId).toBeUndefined();
+      expect(result.current.postAttendance.patientName).toBeUndefined();
+      expect(result.current.postAttendance.attendanceType).toBeUndefined();
+      expect(result.current.postAttendance.currentTreatmentStatus).toBeUndefined();
+      expect(result.current.postAttendance.currentStartDate).toBeUndefined();
+      expect(result.current.postAttendance.currentReturnWeeks).toBeUndefined();
+      expect(result.current.postAttendance.isFirstAttendance).toBeUndefined();
+      expect(result.current.postAttendance.isLoading).toBeUndefined();
+      expect(result.current.postAttendance.initialData).toBeUndefined();
+      expect(result.current.postAttendance.onComplete).toBeUndefined();
+    });
+
+    test('should set post attendance loading state', () => {
+      const { result } = renderHook(() => useModalStore());
+
+      act(() => {
+        result.current.setPostAttendanceLoading(true);
+      });
+
+      expect(result.current.postAttendance.isLoading).toBe(true);
+
+      act(() => {
+        result.current.setPostAttendanceLoading(false);
+      });
+
+      expect(result.current.postAttendance.isLoading).toBe(false);
+    });
+  });
+
+  describe('End of Day Modal', () => {
+    test('should open end of day modal with correct data', () => {
+      const { result } = renderHook(() => useModalStore());
+      const onFinalizeClick = jest.fn();
+      const data = {
+        onFinalizeClick,
+        selectedDate: '2024-01-01'
+      };
+
+      act(() => {
+        result.current.openEndOfDay(data);
+      });
+
+      expect(result.current.endOfDay.isOpen).toBe(true);
+      expect(result.current.endOfDay.onFinalizeClick).toBe(onFinalizeClick);
+      expect(result.current.endOfDay.selectedDate).toBe('2024-01-01');
+    });
+
+    test('should close end of day modal and reset data', () => {
+      const { result } = renderHook(() => useModalStore());
+      const onFinalizeClick = jest.fn();
+      const data = {
+        onFinalizeClick,
+        selectedDate: '2024-01-01'
+      };
+
+      // Open modal first
+      act(() => {
+        result.current.openEndOfDay(data);
+      });
+
+      expect(result.current.endOfDay.isOpen).toBe(true);
+
+      // Close modal
+      act(() => {
+        result.current.closeModal('endOfDay');
+      });
+
+      expect(result.current.endOfDay.isOpen).toBe(false);
+      expect(result.current.endOfDay.selectedDate).toBeUndefined();
+      expect(typeof result.current.endOfDay.onFinalizeClick).toBe('function'); // Reset to empty function
+    });
+  });
+
+  describe('Selector Hooks', () => {
+    test('should work with individual selector hooks', () => {
+      const { result: cancellationResult } = renderHook(() => useCancellationModal());
+      const { result: postTreatmentResult } = renderHook(() => usePostTreatmentModal());
+      const { result: multiSectionResult } = renderHook(() => useMultiSectionModal());
+      const { result: newPatientResult } = renderHook(() => useNewPatientCheckInModal());
+      const { result: postAttendanceResult } = renderHook(() => usePostAttendanceModal());
+      const { result: endOfDayResult } = renderHook(() => useEndOfDayModal());
+
+      // Test that hooks return the correct initial state
+      expect(cancellationResult.current.isOpen).toBe(false);
+      expect(postTreatmentResult.current.isOpen).toBe(false);
+      expect(multiSectionResult.current.isOpen).toBe(false);
+      expect(newPatientResult.current.isOpen).toBe(false);
+      expect(postAttendanceResult.current.isOpen).toBe(false);
+      expect(endOfDayResult.current.isOpen).toBe(false);
+    });
+
+    test('should work with action hooks', () => {
+      const { result: openCancellation } = renderHook(() => useOpenCancellation());
+      const { result: openMultiSection } = renderHook(() => useOpenMultiSection());
+      const { result: openPostTreatment } = renderHook(() => useOpenPostTreatment());
+      const { result: openNewPatient } = renderHook(() => useOpenNewPatientCheckIn());
+      const { result: openPostAttendance } = renderHook(() => useOpenPostAttendance());
+      const { result: openEndOfDay } = renderHook(() => useOpenEndOfDay());
+      const { result: closeModal } = renderHook(() => useCloseModal());
+      const { result: setCancellationLoading } = renderHook(() => useSetCancellationLoading());
+      const { result: setPostTreatmentSessions } = renderHook(() => useSetPostTreatmentSessions());
+      const { result: setPostTreatmentLoading } = renderHook(() => useSetPostTreatmentLoading());
+      const { result: setPostAttendanceLoading } = renderHook(() => useSetPostAttendanceLoading());
+
+      // Test that all action hooks return functions
+      expect(typeof openCancellation.current).toBe('function');
+      expect(typeof openMultiSection.current).toBe('function');
+      expect(typeof openPostTreatment.current).toBe('function');
+      expect(typeof openNewPatient.current).toBe('function');
+      expect(typeof openPostAttendance.current).toBe('function');
+      expect(typeof openEndOfDay.current).toBe('function');
+      expect(typeof closeModal.current).toBe('function');
+      expect(typeof setCancellationLoading.current).toBe('function');
+      expect(typeof setPostTreatmentSessions.current).toBe('function');
+      expect(typeof setPostTreatmentLoading.current).toBe('function');
+      expect(typeof setPostAttendanceLoading.current).toBe('function');
+    });
   });
 });

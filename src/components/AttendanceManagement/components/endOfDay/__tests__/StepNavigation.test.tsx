@@ -70,4 +70,54 @@ describe("StepNavigation", () => {
     const step2 = screen.getByText("2");
     expect(step2).toHaveClass("bg-gray-300", "text-gray-600");
   });
+
+  it("shows confirm step as current when on confirm step", () => {
+    render(
+      <StepNavigation
+        {...defaultProps}
+        currentStep="confirm"
+        incompleteAttendancesCount={0}
+        scheduledAbsencesCount={0}
+      />
+    );
+
+    const step3 = screen.getByText("3");
+    expect(step3).toHaveClass("bg-blue-500", "text-white");
+  });
+
+  it("shows absences step as completed when on confirm step", () => {
+    render(
+      <StepNavigation
+        {...defaultProps}
+        currentStep="confirm"
+        scheduledAbsencesCount={1}
+      />
+    );
+
+    const step2 = screen.getByText("2");
+    expect(step2).toHaveClass("bg-green-500", "text-white");
+  });
+
+  it("shows default pending state correctly", () => {
+    render(
+      <StepNavigation
+        {...defaultProps}
+        currentStep="incomplete"
+        incompleteAttendancesCount={1}
+        scheduledAbsencesCount={1}
+      />
+    );
+
+    // Step 1 should be current (blue)
+    const step1 = screen.getByText("1");
+    expect(step1).toHaveClass("bg-blue-500", "text-white");
+
+    // Step 2 should be pending (gray) since we're not on it and have absences
+    const step2 = screen.getByText("2");
+    expect(step2).toHaveClass("bg-gray-300", "text-gray-600");
+
+    // Step 3 should be pending (gray)
+    const step3 = screen.getByText("3");
+    expect(step3).toHaveClass("bg-gray-300", "text-gray-600");
+  });
 });

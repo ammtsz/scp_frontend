@@ -211,30 +211,28 @@ export function TreatmentCard({
         </button>
 
         {/* Expanded Sessions List */}
-        <div
-          className={`bg-gray-50 rounded-b-lg overflow-hidden transition-all duration-300 ease-in-out ${
-            isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
-          }`}
-        >
-          <div className="mt-4 p-4 rounded-lg">
-            <TreatmentSessionsList
-              treatmentSessionId={session.id.toString()}
-              patientName={patientName}
-              onRecordUpdate={onRecordUpdate}
-            />
+        {isExpanded && (
+          <div className="bg-gray-50 rounded-b-lg overflow-hidden transition-all duration-300 ease-in-out max-h-[800px] opacity-100">
+            <div className="mt-4 p-4 rounded-lg">
+              <TreatmentSessionsList
+                treatmentSessionId={session.id.toString()}
+                patientName={patientName}
+                onRecordUpdate={onRecordUpdate}
+              />
 
-            {/* Collapse Button */}
-            <div className="mt-4 pt-3 border-t border-gray-200">
-              <button
-                onClick={() => onToggleExpanded?.(session.id.toString())}
-                className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-200 text-sm rounded hover:bg-gray-300 w-full cursor-pointer transition-colors"
-              >
-                <ChevronUp className="w-4 h-4" />
-                Ocultar sessões
-              </button>
+              {/* Collapse Button */}
+              <div className="mt-4 pt-3 border-t border-gray-200">
+                <button
+                  onClick={() => onToggleExpanded?.(session.id.toString())}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-200 text-sm rounded hover:bg-gray-300 w-full cursor-pointer transition-colors"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                  Ocultar sessões
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

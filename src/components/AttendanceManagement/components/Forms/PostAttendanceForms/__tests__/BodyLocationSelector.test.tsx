@@ -492,4 +492,133 @@ describe("BodyLocationSelector", () => {
       expect(newSearchInput).toHaveValue("");
     });
   });
+
+  describe("Custom Location Edge Cases", () => {
+    it("should clear custom location when toggling custom location checkbox off", () => {
+      render(
+        <BodyLocationSelector onLocationsSubmit={mockOnLocationsSubmit} />
+      );
+
+      // Open dropdown
+      const dropdownButton = screen.getByRole("button");
+      fireEvent.click(dropdownButton);
+
+      // Enable custom location
+      const customLocationCheckbox = screen
+        .getAllByRole("checkbox")
+        .find((checkbox) => {
+          const parentLabel = checkbox.closest("label");
+          return parentLabel?.textContent?.includes("Local Personalizado");
+        });
+      fireEvent.click(customLocationCheckbox!);
+
+      // Type custom location
+      const customLocationInput = screen.getByPlaceholderText(
+        "Digite o local específico..."
+      );
+      fireEvent.change(customLocationInput, {
+        target: { value: "Custom Test Location" },
+      });
+
+      // Toggle custom location off
+      fireEvent.click(customLocationCheckbox!);
+
+      // Toggle back on to verify input was cleared
+      fireEvent.click(customLocationCheckbox!);
+      const newCustomLocationInput = screen.getByPlaceholderText(
+        "Digite o local específico..."
+      );
+      expect(newCustomLocationInput).toHaveValue("");
+    });
+
+    it("should remove custom location tag when close button is clicked", () => {
+      render(
+        <BodyLocationSelector onLocationsSubmit={mockOnLocationsSubmit} />
+      );
+
+      // Open dropdown
+      const dropdownButton = screen.getByRole("button");
+      fireEvent.click(dropdownButton);
+
+      // Enable custom location
+      const customLocationCheckbox = screen
+        .getAllByRole("checkbox")
+        .find((checkbox) => {
+          const parentLabel = checkbox.closest("label");
+          return parentLabel?.textContent?.includes("Local Personalizado");
+        });
+      fireEvent.click(customLocationCheckbox!);
+
+      // Type custom location
+      const customLocationInput = screen.getByPlaceholderText(
+        "Digite o local específico..."
+      );
+      fireEvent.change(customLocationInput, {
+        target: { value: "Custom Test Location" },
+      });
+
+      // Verify custom location tag appears (use getAllByText since it appears in multiple places)
+      const customLocationElements = screen.getAllByText(
+        "Custom Test Location"
+      );
+      expect(customLocationElements).toHaveLength(2); // In dropdown button and in tag
+
+      // Click close button on custom location tag (find within the tag element)
+      const customLocationTags = screen.getAllByText("Custom Test Location");
+      const tagElement = customLocationTags.find((el) =>
+        el.closest("span")?.querySelector("button")
+      );
+      expect(tagElement).toBeInTheDocument();
+
+      const closeButton = tagElement!.closest("span")!.querySelector("button");
+      expect(closeButton).toBeInTheDocument();
+      fireEvent.click(closeButton!);
+
+      // Custom location should be removed
+      expect(
+        screen.queryByText("Custom Test Location")
+      ).not.toBeInTheDocument();
+      expect(customLocationCheckbox).not.toBeChecked();
+    });
+  });
+
+  describe("Click Outside Functionality", () => {
+    it("should close dropdown when clicking outside", () => {
+      render(
+        <BodyLocationSelector onLocationsSubmit={mockOnLocationsSubmit} />
+      );
+
+      // Open dropdown
+      const dropdownButton = screen.getByRole("button");
+      fireEvent.click(dropdownButton);
+
+      // Verify dropdown is open
+      expect(screen.getByText("Região Central")).toBeInTheDocument();
+
+      // Click outside (on document body)
+      fireEvent.mouseDown(document.body);
+
+      // Dropdown should be closed
+      expect(screen.queryByText("Região Central")).not.toBeInTheDocument();
+    });
+
+    it("should not close dropdown when clicking on search input", () => {
+      render(
+        <BodyLocationSelector onLocationsSubmit={mockOnLocationsSubmit} />
+      );
+
+      // Open dropdown
+      const dropdownButton = screen.getByRole("button");
+      fireEvent.click(dropdownButton);
+
+      // Click on search input
+      const searchInput = screen.getByPlaceholderText(
+        "Buscar local do corpo..."
+      );
+      fireEvent.click(searchInput);
+
+      // Dropdown should remain open
+      expect(screen.getByText("Região Central")).toBeInTheDocument();
+    });
+  });
 });

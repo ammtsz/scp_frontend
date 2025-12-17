@@ -42,12 +42,6 @@ export const TreatmentCompletionBadge: React.FC<
           icon: "▶️",
           label: "Em Andamento",
         };
-      case "active":
-        return {
-          color: "bg-blue-100 text-blue-800 border-blue-200",
-          icon: "🔄",
-          label: "Ativo",
-        };
       case "suspended":
         return {
           color: "bg-orange-100 text-orange-800 border-orange-200",

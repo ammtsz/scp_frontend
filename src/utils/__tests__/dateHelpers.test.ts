@@ -1,6 +1,17 @@
-import { formatDateBR, formatDateWithDayOfWeekBR } from '../dateHelpers';
+import { formatDateBR, formatDateWithDayOfWeekBR, getNextAvailableDate, formatDateSafe, getDaysUntil } from '../dateHelpers';
+
+// Mock the getNextAttendanceDate API function
+jest.mock('@/api/attendances', () => ({
+  getNextAttendanceDate: jest.fn(),
+}));
+
+import { getNextAttendanceDate } from '@/api/attendances';
+const mockGetNextAttendanceDate = getNextAttendanceDate as jest.MockedFunction<typeof getNextAttendanceDate>;
 
 describe('dateHelpers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   describe('formatDateBR', () => {
     it('should format date strings correctly in Brazilian format', () => {
       expect(formatDateBR('2025-08-12')).toBe('12/08/2025');
@@ -82,6 +93,125 @@ describe('dateHelpers', () => {
       expect(testDate.getMonth() + 1).toBe(8);
       expect(testDate.getFullYear()).toBe(2025);
       expect(testDate.getDay()).toBe(2); // Tuesday
+    });
+  });
+
+  describe('getNextAvailableDate', () => {
+    it('should return API result when successful', async () => {
+      mockGetNextAttendanceDate.mockResolvedValue({
+        success: true,
+        value: { next_date: '2025-08-19' }
+      });
+
+      const result = await getNextAvailableDate();
+      expect(result).toBe('2025-08-19');
+      expect(mockGetNextAttendanceDate).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fallback to next Tuesday when API fails', async () => {
+      mockGetNextAttendanceDate.mockRejectedValue(new Error('API Error'));
+
+      const result = await getNextAvailableDate();
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+
+    it('should fallback when API returns unsuccessful response', async () => {
+      mockGetNextAttendanceDate.mockResolvedValue({
+        success: false,
+        value: undefined
+      });
+
+      const result = await getNextAvailableDate();
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+
+    it('should fallback when API returns no next_date', async () => {
+      mockGetNextAttendanceDate.mockResolvedValue({
+        success: true,
+        value: undefined
+      });
+
+      const result = await getNextAvailableDate();
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+  });
+
+  describe('formatDateSafe', () => {
+    it('should format valid Date objects correctly', () => {
+      const date = new Date('2025-08-12T10:30:00');
+      expect(formatDateSafe(date)).toBe('12/08/2025');
+    });
+
+    it('should format valid date strings correctly', () => {
+      // Use timezone-safe format for testing
+      expect(formatDateSafe('2025-08-12T10:30:00')).toContain('/08/2025');
+      expect(formatDateSafe('2025-08-12')).toContain('/08/2025');
+    });
+
+    it('should handle invalid Date objects', () => {
+      const invalidDate = new Date('invalid');
+      expect(formatDateSafe(invalidDate)).toBe('Data inválida');
+    });
+
+    it('should handle invalid date strings', () => {
+      expect(formatDateSafe('invalid-date')).toBe('Data inválida');
+      expect(formatDateSafe('not-a-date')).toBe('Data inválida');
+    });
+
+    it('should handle empty strings', () => {
+      expect(formatDateSafe('')).toBe('Data inválida');
+    });
+
+    it('should test both Date and string paths', () => {
+      const validDate = new Date('2025-01-01T12:00:00');
+      const formattedFromDate = formatDateSafe(validDate);
+      const formattedFromString = formatDateSafe('2025-01-01');
+      
+      // Both should produce valid formatted dates
+      expect(formattedFromDate).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+      expect(formattedFromString).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+      expect(formattedFromDate).not.toBe('Data inválida');
+      expect(formattedFromString).not.toBe('Data inválida');
+    });
+  });
+
+  describe('getDaysUntil', () => {
+    it('should calculate days until future dates correctly', () => {
+      expect(getDaysUntil('2030-08-15')).toBeGreaterThan(0);
+      expect(getDaysUntil('2030-09-12')).toBeGreaterThan(0);
+    });
+
+    it('should return 0 for past dates', () => {
+      expect(getDaysUntil('2020-08-10')).toBe(0);
+      expect(getDaysUntil('2020-07-01')).toBe(0);
+    });
+
+    it('should handle Date objects correctly', () => {
+      const futureDate = new Date('2030-08-15T10:30:00');
+      expect(getDaysUntil(futureDate)).toBeGreaterThan(0);
+      
+      const pastDate = new Date('2020-08-10T10:30:00');
+      expect(getDaysUntil(pastDate)).toBe(0);
+    });
+
+    it('should handle invalid dates by returning 0', () => {
+      expect(getDaysUntil('invalid-date')).toBe(0);
+      expect(getDaysUntil('not-a-date')).toBe(0);
+      expect(getDaysUntil('')).toBe(0);
+    });
+
+    it('should handle invalid Date objects by returning 0', () => {
+      const invalidDate = new Date('invalid');
+      expect(getDaysUntil(invalidDate)).toBe(0);
+    });
+
+    it('should handle exceptions during calculation', () => {
+      expect(getDaysUntil('2025-13-45')).toBe(0);
+    });
+
+    it('should test Math.max behavior for negative values', () => {
+      expect(getDaysUntil('2020-08-01')).toBe(0);
+      expect(getDaysUntil('2030-08-20')).toBeGreaterThan(0);
     });
   });
 });

@@ -69,6 +69,65 @@ describe('useTreatmentSessions', () => {
       expect(result.current.treatmentSessions).toEqual([]);
       expect(result.current.error).toBe(null);
     });
+
+    it('handles undefined value in successful response', async () => {
+      mockGetTreatmentSessionsByPatient.mockResolvedValue({
+        success: true,
+        value: undefined,
+      });
+
+      const { result } = renderHook(() => useTreatmentSessions(1));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.treatmentSessions).toEqual([]);
+      expect(result.current.error).toBe(null);
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('handles API error response with message', async () => {
+      mockGetTreatmentSessionsByPatient.mockResolvedValue({
+        success: false,
+        error: 'Paciente não encontrado',
+      });
+
+      const { result } = renderHook(() => useTreatmentSessions(1));
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('Paciente não encontrado');
+      }, { timeout: 5000 });
+
+      expect(result.current.treatmentSessions).toEqual([]);
+    });
+
+    it('handles API error response without message', async () => {
+      mockGetTreatmentSessionsByPatient.mockResolvedValue({
+        success: false,
+      });
+
+      const { result } = renderHook(() => useTreatmentSessions(1));
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('Erro ao carregar sessões de tratamento');
+      }, { timeout: 5000 });
+
+      expect(result.current.treatmentSessions).toEqual([]);
+    });
+
+    it('handles API rejection', async () => {
+      mockGetTreatmentSessionsByPatient.mockRejectedValue(new Error('Network error'));
+
+      const { result } = renderHook(() => useTreatmentSessions(1));
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('Network error');
+      }, { timeout: 5000 });
+
+      expect(result.current.treatmentSessions).toEqual([]);
+    });
   });
 
 
@@ -173,6 +232,20 @@ describe('useDeleteTreatmentSession', () => {
           await result.current.mutateAsync('1');
         });
       }).rejects.toThrow('Sessão não encontrada');
+    });
+
+    it('handles API error response without message', async () => {
+      mockDeleteTreatmentSession.mockResolvedValue({
+        success: false,
+      });
+
+      const { result } = renderHook(() => useDeleteTreatmentSession());
+
+      await expect(async () => {
+        await act(async () => {
+          await result.current.mutateAsync('1');
+        });
+      }).rejects.toThrow('Erro ao remover sessão de tratamento');
     });
 
     it('handles API rejection', async () => {

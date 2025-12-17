@@ -32,7 +32,7 @@ const mockLightBathSession = {
   body_location: "Cabeça",
   planned_sessions: 10,
   completed_sessions: 3,
-  status: "active",
+  status: "in_progress",
   duration_minutes: 30,
   color: "azul",
   sessionRecords: [{ status: "scheduled" }, { status: "completed" }],
@@ -44,7 +44,7 @@ const mockRodSession = {
   body_location: "Ombro direito",
   planned_sessions: 5,
   completed_sessions: 2,
-  status: "active",
+  status: "in_progress",
 };
 
 describe("TreatmentSessionCard", () => {

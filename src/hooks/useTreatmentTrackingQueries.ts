@@ -37,7 +37,7 @@ export function useTreatmentSessions() {
       return response.value || [];
     },
     staleTime: 2 * 60 * 1000, // 2 minutes - treatment data changes frequently
-    retry: 2,
+    retry: process.env.NODE_ENV === 'test' ? false : 2, // Don't retry in tests, but retry in production
   });
 }
 
@@ -57,7 +57,7 @@ export function useTreatmentTrackingPatients() {
       return response.value || [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - patient data is more stable
-    retry: 2,
+    retry: process.env.NODE_ENV === 'test' ? false : 2, // Don't retry in tests, but retry in production
   });
 }
 

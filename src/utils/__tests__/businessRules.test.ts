@@ -1,4 +1,5 @@
-import { sortPatientsByPriority, PRIORITY_LEVELS, PRIORITY_LABELS } from '../businessRules';
+import { sortPatientsByPriority, PRIORITY_LEVELS, PRIORITY_LABELS, isPatientAlreadyScheduled } from '../businessRules';
+import type { AttendanceByDate, AttendanceStatus } from '../../types/types';
 
 // Test patient interface with name property
 interface TestPatient {
@@ -82,6 +83,268 @@ describe('businessRules', () => {
       expect(PRIORITY_LABELS['1']).toBe('Exceção');
       expect(PRIORITY_LABELS['2']).toBe('Idoso/crianças');
       expect(PRIORITY_LABELS['3']).toBe('Padrão');
+    });
+  });
+
+  describe('isPatientAlreadyScheduled', () => {
+    const mockAttendancesByDate: AttendanceByDate = {
+      date: new Date('2025-01-15'),
+      spiritual: {
+        scheduled: [
+          { name: 'João Silva', priority: '1' },
+          { name: 'Maria Santos', priority: '2' }
+        ],
+        checkedIn: [
+          { name: 'Pedro Oliveira', priority: '1' }
+        ],
+        onGoing: [
+          { name: 'Ana Costa', priority: '2' }
+        ],
+        completed: [
+          { name: 'Carlos Ferreira', priority: '3' }
+        ]
+      } as AttendanceStatus,
+      lightBath: {
+        scheduled: [
+          { name: 'Lucia Pereira', priority: '2' }
+        ],
+        checkedIn: [],
+        onGoing: [],
+        completed: []
+      } as AttendanceStatus,
+      rod: {
+        scheduled: [],
+        checkedIn: [
+          { name: 'Roberto Lima', priority: '1' }
+        ],
+        onGoing: [],
+        completed: []
+      } as AttendanceStatus,
+      combined: {
+        scheduled: [],
+        checkedIn: [],
+        onGoing: [],
+        completed: []
+      } as AttendanceStatus
+    };
+
+    it('should return true when patient is found in spiritual scheduled', () => {
+      const result = isPatientAlreadyScheduled(
+        'João Silva',
+        ['spiritual'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should return true when patient is found in checkedIn status', () => {
+      const result = isPatientAlreadyScheduled(
+        'Pedro Oliveira',
+        ['spiritual'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should return true when patient is found in onGoing status', () => {
+      const result = isPatientAlreadyScheduled(
+        'Ana Costa',
+        ['spiritual'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should return true when patient is found in completed status', () => {
+      const result = isPatientAlreadyScheduled(
+        'Carlos Ferreira',
+        ['spiritual'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should return true when patient is found in different attendance type', () => {
+      const result = isPatientAlreadyScheduled(
+        'Lucia Pereira',
+        ['lightBath'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should return true when patient is found in rod attendance type', () => {
+      const result = isPatientAlreadyScheduled(
+        'Roberto Lima',
+        ['rod'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should return false when patient is not found', () => {
+      const result = isPatientAlreadyScheduled(
+        'Nome Inexistente',
+        ['spiritual'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should return false when attendancesByDate is null', () => {
+      const result = isPatientAlreadyScheduled(
+        'João Silva',
+        ['spiritual'],
+        null
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should handle case-insensitive name matching', () => {
+      const result = isPatientAlreadyScheduled(
+        'joão silva',  // lowercase with correct accent
+        ['spiritual'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should handle multiple attendance types in search', () => {
+      const result = isPatientAlreadyScheduled(
+        'João Silva',
+        ['spiritual', 'lightBath'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should return false when searching in wrong attendance type', () => {
+      const result = isPatientAlreadyScheduled(
+        'João Silva',  // in spiritual, not lightBath
+        ['lightBath'],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should handle empty selected attendance types', () => {
+      const result = isPatientAlreadyScheduled(
+        'João Silva',
+        [],
+        mockAttendancesByDate
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should handle attendance type with empty status arrays', () => {
+      const emptyAttendances: AttendanceByDate = {
+        date: new Date('2025-01-15'),
+        spiritual: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus,
+        lightBath: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus,
+        rod: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus,
+        combined: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus
+      };
+
+      const result = isPatientAlreadyScheduled(
+        'João Silva',
+        ['spiritual'],
+        emptyAttendances
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should handle partially defined attendance types', () => {
+      const partialAttendances: AttendanceByDate = {
+        date: new Date('2025-01-15'),
+        spiritual: {
+          scheduled: [{ name: 'Test Patient', priority: '1' }],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus,
+        lightBath: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus,
+        rod: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus,
+        combined: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus
+      };
+
+      const result = isPatientAlreadyScheduled(
+        'Test Patient',
+        ['spiritual'],
+        partialAttendances
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should handle attendance with undefined status arrays', () => {
+      const attendancesWithNulls: AttendanceByDate = {
+        date: new Date('2025-01-15'),
+        spiritual: {
+          scheduled: undefined as unknown as [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus,
+        lightBath: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus,
+        rod: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus,
+        combined: {
+          scheduled: [],
+          checkedIn: [],
+          onGoing: [],
+          completed: []
+        } as AttendanceStatus
+      };
+
+      const result = isPatientAlreadyScheduled(
+        'Test Patient',
+        ['spiritual'],
+        attendancesWithNulls
+      );
+      expect(result).toBe(false);
     });
   });
 });

@@ -500,7 +500,7 @@ export const TreatmentRecommendationsModal: React.FC<
               <button
                 type="button"
                 onClick={handleClose}
-                className="ds-button-outline"
+                className="button ds-button-outline"
                 disabled={
                   createTreatmentRecordMutation.isPending ||
                   updateTreatmentRecordMutation.isPending ||

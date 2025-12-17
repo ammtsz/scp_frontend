@@ -2,17 +2,20 @@
  * Agenda React Query Hooks Tests
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import {
-  useScheduledAgenda,
   useAgendaAttendances,
+  useAgenda,
+  useScheduledAgenda,
   useRemovePatientFromAgenda,
   useAddPatientToAgenda,
   useRefreshAgenda,
 } from "../useAgendaQueries";
 import * as attendancesApi from "@/api/attendances";
+import { AttendanceType, AttendanceStatus } from "@/api/types";
+import { Priority } from "@/types/types";
 
 // Mock the API
 jest.mock("@/api/attendances");
@@ -20,16 +23,22 @@ const mockedAttendancesApi = attendancesApi as jest.Mocked<
   typeof attendancesApi
 >;
 
+// Mock console methods
+const originalConsoleError = console.error;
+beforeAll(() => {
+  console.error = jest.fn();
+});
+
+afterAll(() => {
+  console.error = originalConsoleError;
+});
+
 // Create wrapper with QueryClient
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: {
-        retry: false,
-      },
-      mutations: {
-        retry: false,
-      },
+      queries: { retry: false },
+      mutations: { retry: false },
     },
   });
 
@@ -40,6 +49,30 @@ const createWrapper = () => {
   return Wrapper;
 };
 
+// Mock data factories
+const createMockAttendanceAgendaDto = (overrides = {}) => ({
+  id: 1,
+  patient_id: 1,
+  patient_name: "Test Patient",
+  patient_priority: "1" as Priority,
+  type: AttendanceType.SPIRITUAL,
+  scheduled_date: "2025-10-27",
+  status: AttendanceStatus.SCHEDULED,
+  ...overrides,
+});
+
+const createMockAttendanceResponseDto = (overrides = {}) => ({
+  id: 1,
+  patient_id: 1,
+  type: AttendanceType.SPIRITUAL,
+  scheduled_date: "2025-10-27",
+  scheduled_time: "09:00",
+  status: AttendanceStatus.SCHEDULED,
+  created_at: "2025-10-27T08:00:00Z",
+  updated_at: "2025-10-27T08:00:00Z",
+  ...overrides,
+});
+
 describe("useAgendaQueries", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -47,16 +80,7 @@ describe("useAgendaQueries", () => {
 
   describe("useAgendaAttendances", () => {
     it("should fetch agenda attendances successfully", async () => {
-      const mockData = [
-        {
-          id: 1,
-          patient_id: 1,
-          patient_name: "Test Patient",
-          patient_priority: "1",
-          type: "spiritual",
-          scheduled_date: "2025-10-27",
-        },
-      ];
+      const mockData = [createMockAttendanceAgendaDto()];
 
       mockedAttendancesApi.getAttendancesForAgenda.mockResolvedValueOnce({
         success: true,
@@ -77,11 +101,43 @@ describe("useAgendaQueries", () => {
       );
     });
 
-    it.skip("should handle API errors", async () => {
+    it("should fetch agenda attendances with filters", async () => {
+      const filters = { status: "scheduled", type: "spiritual", limit: 10 };
+      const mockData = [createMockAttendanceAgendaDto()];
+
       mockedAttendancesApi.getAttendancesForAgenda.mockResolvedValueOnce({
-        success: false,
-        error: "Failed to fetch",
+        success: true,
+        value: mockData,
       });
+
+      const { result } = renderHook(() => useAgendaAttendances(filters), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data).toEqual(mockData);
+      expect(mockedAttendancesApi.getAttendancesForAgenda).toHaveBeenCalledWith(
+        filters
+      );
+    });
+
+    it("should handle API error", async () => {
+      mockedAttendancesApi.getAttendancesForAgenda
+        .mockResolvedValueOnce({
+          success: false,
+          error: "API Error",
+        })
+        .mockResolvedValueOnce({
+          success: false,
+          error: "API Error",
+        })
+        .mockResolvedValueOnce({
+          success: false,
+          error: "API Error",
+        });
 
       const { result } = renderHook(() => useAgendaAttendances(), {
         wrapper: createWrapper(),
@@ -91,41 +147,287 @@ describe("useAgendaQueries", () => {
         () => {
           expect(result.current.isError).toBe(true);
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
-      expect(result.current.error?.message).toBe("Failed to fetch");
+      expect(result.current.error).toEqual(new Error("API Error"));
     });
 
-    it("should accept filters", async () => {
-      const filters = { status: "scheduled", type: "spiritual" };
+    it("should handle API error without message", async () => {
+      mockedAttendancesApi.getAttendancesForAgenda
+        .mockResolvedValueOnce({
+          success: false,
+        })
+        .mockResolvedValueOnce({
+          success: false,
+        })
+        .mockResolvedValueOnce({
+          success: false,
+        });
 
+      const { result } = renderHook(() => useAgendaAttendances(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(
+        () => {
+          expect(result.current.isError).toBe(true);
+        },
+        { timeout: 5000 }
+      );
+
+      expect(result.current.error).toEqual(
+        new Error("Erro ao carregar agenda")
+      );
+    });
+  });
+
+  describe("useAgenda", () => {
+    it("should transform spiritual attendances data", async () => {
+      const mockData = [
+        createMockAttendanceAgendaDto({
+          id: 1,
+          patient_id: 1,
+          patient_name: "Patient 1",
+          patient_priority: "1",
+          type: AttendanceType.SPIRITUAL,
+          scheduled_date: "2025-10-27",
+        }),
+        createMockAttendanceAgendaDto({
+          id: 2,
+          patient_id: 2,
+          patient_name: "Patient 2",
+          patient_priority: "2",
+          type: AttendanceType.SPIRITUAL,
+          scheduled_date: "2025-10-28",
+        }),
+      ];
+
+      mockedAttendancesApi.getAttendancesForAgenda.mockResolvedValueOnce({
+        success: true,
+        value: mockData,
+      });
+
+      const { result } = renderHook(() => useAgenda(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data).toEqual({
+        spiritual: [
+          {
+            date: new Date("2025-10-27T00:00:00"),
+            patients: [
+              {
+                id: "1",
+                name: "Patient 1",
+                priority: "1",
+                attendanceId: 1,
+                attendanceType: "spiritual",
+              },
+            ],
+          },
+          {
+            date: new Date("2025-10-28T00:00:00"),
+            patients: [
+              {
+                id: "2",
+                name: "Patient 2",
+                priority: "2",
+                attendanceId: 2,
+                attendanceType: "spiritual",
+              },
+            ],
+          },
+        ],
+        lightBath: [],
+      });
+
+      expect(result.current.agenda).toEqual({
+        spiritual: [
+          {
+            date: new Date("2025-10-27T00:00:00"),
+            patients: [
+              {
+                id: "1",
+                name: "Patient 1",
+                priority: "1",
+                attendanceId: 1,
+                attendanceType: "spiritual",
+              },
+            ],
+          },
+          {
+            date: new Date("2025-10-28T00:00:00"),
+            patients: [
+              {
+                id: "2",
+                name: "Patient 2",
+                priority: "2",
+                attendanceId: 2,
+                attendanceType: "spiritual",
+              },
+            ],
+          },
+        ],
+        lightBath: [],
+      });
+    });
+
+    it("should transform lightBath and rod attendances data", async () => {
+      const mockData = [
+        createMockAttendanceAgendaDto({
+          id: 1,
+          patient_id: 1,
+          patient_name: "Light Bath Patient",
+          patient_priority: "1",
+          type: AttendanceType.LIGHT_BATH,
+          scheduled_date: "2025-10-27",
+        }),
+        createMockAttendanceAgendaDto({
+          id: 2,
+          patient_id: 2,
+          patient_name: "Rod Patient",
+          patient_priority: "2",
+          type: AttendanceType.ROD,
+          scheduled_date: "2025-10-27",
+        }),
+      ];
+
+      mockedAttendancesApi.getAttendancesForAgenda.mockResolvedValueOnce({
+        success: true,
+        value: mockData,
+      });
+
+      const { result } = renderHook(() => useAgenda(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data).toEqual({
+        spiritual: [],
+        lightBath: [
+          {
+            date: new Date("2025-10-27T00:00:00"),
+            patients: [
+              {
+                id: "1",
+                name: "Light Bath Patient",
+                priority: "1",
+                attendanceId: 1,
+                attendanceType: "lightBath",
+              },
+              {
+                id: "2",
+                name: "Rod Patient",
+                priority: "2",
+                attendanceId: 2,
+                attendanceType: "rod",
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("should return empty agenda when no data", async () => {
       mockedAttendancesApi.getAttendancesForAgenda.mockResolvedValueOnce({
         success: true,
         value: [],
       });
 
-      renderHook(() => useAgendaAttendances(filters), {
+      const { result } = renderHook(() => useAgenda(), {
         wrapper: createWrapper(),
       });
 
-      expect(mockedAttendancesApi.getAttendancesForAgenda).toHaveBeenCalledWith(
-        filters
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data).toEqual({ spiritual: [], lightBath: [] });
+      expect(result.current.agenda).toEqual({ spiritual: [], lightBath: [] });
+    });
+
+    it("should return default agenda when data is undefined", async () => {
+      mockedAttendancesApi.getAttendancesForAgenda
+        .mockResolvedValueOnce({
+          success: false,
+          error: "Network error",
+        })
+        .mockResolvedValueOnce({
+          success: false,
+          error: "Network error",
+        })
+        .mockResolvedValueOnce({
+          success: false,
+          error: "Network error",
+        });
+
+      const { result } = renderHook(() => useAgenda(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(
+        () => {
+          expect(result.current.isError).toBe(true);
+        },
+        { timeout: 5000 }
       );
+
+      expect(result.current.data).toBeUndefined();
+      expect(result.current.agenda).toEqual({ spiritual: [], lightBath: [] });
+    });
+
+    it("should group multiple patients on same date", async () => {
+      const mockData = [
+        createMockAttendanceAgendaDto({
+          id: 1,
+          patient_id: 1,
+          patient_name: "Patient 1",
+          patient_priority: "1",
+          type: AttendanceType.SPIRITUAL,
+          scheduled_date: "2025-10-27",
+        }),
+        createMockAttendanceAgendaDto({
+          id: 2,
+          patient_id: 2,
+          patient_name: "Patient 2",
+          patient_priority: "2",
+          type: AttendanceType.SPIRITUAL,
+          scheduled_date: "2025-10-27",
+        }),
+      ];
+
+      mockedAttendancesApi.getAttendancesForAgenda.mockResolvedValueOnce({
+        success: true,
+        value: mockData,
+      });
+
+      const { result } = renderHook(() => useAgenda(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data?.spiritual).toHaveLength(1);
+      expect(result.current.data?.spiritual[0].patients).toHaveLength(2);
     });
   });
 
   describe("useScheduledAgenda", () => {
-    it("should fetch scheduled agenda with transformed data", async () => {
+    it("should fetch scheduled agenda with correct filters", async () => {
       const mockData = [
-        {
-          id: 1,
-          patient_id: 1,
-          patient_name: "Test Patient",
-          patient_priority: "1" as const,
-          type: "spiritual" as const,
-          scheduled_date: "2025-10-27",
-        },
+        createMockAttendanceAgendaDto({
+          status: AttendanceStatus.SCHEDULED,
+        }),
       ];
 
       mockedAttendancesApi.getAttendancesForAgenda.mockResolvedValueOnce({
@@ -141,24 +443,6 @@ describe("useAgendaQueries", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(result.current.agenda).toEqual({
-        spiritual: [
-          {
-            date: new Date("2025-10-27T00:00:00"),
-            patients: [
-              {
-                id: "1",
-                name: "Test Patient",
-                priority: "1",
-                attendanceId: 1,
-                attendanceType: "spiritual",
-              },
-            ],
-          },
-        ],
-        lightBath: [],
-      });
-
       expect(mockedAttendancesApi.getAttendancesForAgenda).toHaveBeenCalledWith(
         {
           status: "scheduled",
@@ -168,25 +452,41 @@ describe("useAgendaQueries", () => {
   });
 
   describe("useRemovePatientFromAgenda", () => {
-    it("should remove patient successfully", async () => {
+    it("should remove patient successfully and invalidate queries", async () => {
+      const queryClient = new QueryClient({
+        defaultOptions: { mutations: { retry: false } },
+      });
+      const invalidateQueriesSpy = jest.spyOn(queryClient, "invalidateQueries");
+
       mockedAttendancesApi.deleteAttendance.mockResolvedValueOnce({
         success: true,
-        value: {},
+        value: undefined,
       });
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      );
 
       const { result } = renderHook(() => useRemovePatientFromAgenda(), {
-        wrapper: createWrapper(),
+        wrapper,
       });
 
-      await result.current.mutateAsync(1);
+      await act(async () => {
+        await result.current.mutateAsync(1);
+      });
 
       expect(mockedAttendancesApi.deleteAttendance).toHaveBeenCalledWith("1");
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ["agenda"],
+      });
     });
 
-    it("should handle removal errors", async () => {
+    it("should handle API error", async () => {
       mockedAttendancesApi.deleteAttendance.mockResolvedValueOnce({
         success: false,
-        error: "Failed to delete",
+        error: "Delete failed",
       });
 
       const { result } = renderHook(() => useRemovePatientFromAgenda(), {
@@ -194,45 +494,98 @@ describe("useAgendaQueries", () => {
       });
 
       await expect(result.current.mutateAsync(1)).rejects.toThrow(
-        "Failed to delete"
+        "Delete failed"
       );
+    });
+
+    it("should handle API error without message", async () => {
+      mockedAttendancesApi.deleteAttendance.mockResolvedValueOnce({
+        success: false,
+      });
+
+      const { result } = renderHook(() => useRemovePatientFromAgenda(), {
+        wrapper: createWrapper(),
+      });
+
+      await expect(result.current.mutateAsync(1)).rejects.toThrow(
+        "Failed to remove patient from agenda"
+      );
+    });
+
+    it("should handle onError callback", async () => {
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+
+      mockedAttendancesApi.deleteAttendance.mockResolvedValueOnce({
+        success: false,
+        error: "Delete failed",
+      });
+
+      const { result } = renderHook(() => useRemovePatientFromAgenda(), {
+        wrapper: createWrapper(),
+      });
+
+      try {
+        await result.current.mutateAsync(1);
+      } catch {
+        // Error expected
+      }
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "Error removing patient from agenda:",
+          new Error("Delete failed")
+        );
+      });
+
+      consoleSpy.mockRestore();
     });
   });
 
   describe("useAddPatientToAgenda", () => {
-    it("should add patient successfully", async () => {
-      const attendanceData = {
-        patient_id: 1,
-        type: "spiritual" as const,
-        scheduled_date: "2025-10-27",
-      };
+    const attendanceData = {
+      patient_id: 1,
+      type: AttendanceType.SPIRITUAL,
+      scheduled_date: "2025-10-27",
+      scheduled_time: "09:00",
+    };
+
+    it("should add patient successfully and invalidate queries", async () => {
+      const queryClient = new QueryClient({
+        defaultOptions: { mutations: { retry: false } },
+      });
+      const invalidateQueriesSpy = jest.spyOn(queryClient, "invalidateQueries");
 
       mockedAttendancesApi.createAttendance.mockResolvedValueOnce({
         success: true,
-        value: { id: 1, ...attendanceData },
+        value: createMockAttendanceResponseDto(),
       });
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      );
 
       const { result } = renderHook(() => useAddPatientToAgenda(), {
-        wrapper: createWrapper(),
+        wrapper,
       });
 
-      await result.current.mutateAsync(attendanceData);
+      await act(async () => {
+        await result.current.mutateAsync(attendanceData);
+      });
 
       expect(mockedAttendancesApi.createAttendance).toHaveBeenCalledWith(
         attendanceData
       );
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ["agenda"],
+      });
     });
 
-    it("should handle addition errors", async () => {
-      const attendanceData = {
-        patient_id: 1,
-        type: "spiritual" as const,
-        scheduled_date: "2025-10-27",
-      };
-
+    it("should handle API error", async () => {
       mockedAttendancesApi.createAttendance.mockResolvedValueOnce({
         success: false,
-        error: "Failed to create",
+        error: "Creation failed",
       });
 
       const { result } = renderHook(() => useAddPatientToAgenda(), {
@@ -240,8 +593,50 @@ describe("useAgendaQueries", () => {
       });
 
       await expect(result.current.mutateAsync(attendanceData)).rejects.toThrow(
-        "Failed to create"
+        "Creation failed"
       );
+    });
+
+    it("should handle API error without message", async () => {
+      mockedAttendancesApi.createAttendance.mockResolvedValueOnce({
+        success: false,
+      });
+
+      const { result } = renderHook(() => useAddPatientToAgenda(), {
+        wrapper: createWrapper(),
+      });
+
+      await expect(result.current.mutateAsync(attendanceData)).rejects.toThrow(
+        "Failed to add patient to agenda"
+      );
+    });
+
+    it("should handle onError callback", async () => {
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+
+      mockedAttendancesApi.createAttendance.mockResolvedValueOnce({
+        success: false,
+        error: "Creation failed",
+      });
+
+      const { result } = renderHook(() => useAddPatientToAgenda(), {
+        wrapper: createWrapper(),
+      });
+
+      try {
+        await result.current.mutateAsync(attendanceData);
+      } catch {
+        // Error expected
+      }
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "Error adding patient to agenda:",
+          new Error("Creation failed")
+        );
+      });
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -250,17 +645,17 @@ describe("useAgendaQueries", () => {
       const queryClient = new QueryClient();
       const invalidateQueriesSpy = jest.spyOn(queryClient, "invalidateQueries");
 
-      const TestWrapper = ({ children }: { children: ReactNode }) => (
+      const wrapper = ({ children }: { children: ReactNode }) => (
         <QueryClientProvider client={queryClient}>
           {children}
         </QueryClientProvider>
       );
 
-      const { result } = renderHook(() => useRefreshAgenda(), {
-        wrapper: TestWrapper,
-      });
+      const { result } = renderHook(() => useRefreshAgenda(), { wrapper });
 
-      result.current();
+      act(() => {
+        result.current();
+      });
 
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({
         queryKey: ["agenda"],

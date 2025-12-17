@@ -159,6 +159,38 @@ describe("NewPatientCheckInForm", () => {
     });
   });
 
+  it("validates phone is required", async () => {
+    renderComponent();
+
+    // Clear phone field
+    const phoneInput = screen.getByDisplayValue("(11) 99999-9999");
+    fireEvent.change(phoneInput, { target: { value: "" } });
+
+    // Try to submit
+    fireEvent.click(screen.getByText("Fazer Check-in"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Telefone é obrigatório.")).toBeInTheDocument();
+    });
+  });
+
+  it("validates birth date is required", async () => {
+    renderComponent();
+
+    // Clear birth date field
+    const birthDateInput = screen.getByDisplayValue("1990-01-01");
+    fireEvent.change(birthDateInput, { target: { value: "" } });
+
+    // Try to submit
+    fireEvent.click(screen.getByText("Fazer Check-in"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Data de nascimento é obrigatória.")
+      ).toBeInTheDocument();
+    });
+  });
+
   it("handles phone number formatting", () => {
     renderComponent();
 
@@ -166,6 +198,25 @@ describe("NewPatientCheckInForm", () => {
     fireEvent.change(phoneInput, { target: { value: "11988887777" } });
 
     expect(phoneInput).toHaveValue("(11) 98888-7777");
+  });
+
+  it("handles priority field changes", () => {
+    renderComponent();
+
+    // The mock patient has priority "2", which corresponds to "2 - Idoso/crianças"
+    const prioritySelect = screen.getByDisplayValue("2 - Idoso/crianças");
+    fireEvent.change(prioritySelect, { target: { value: "1" } });
+
+    expect(prioritySelect).toHaveValue("1");
+  });
+
+  it("handles birth date field changes", () => {
+    renderComponent();
+
+    const birthDateInput = screen.getByDisplayValue("1990-01-01");
+    fireEvent.change(birthDateInput, { target: { value: "1985-05-15" } });
+
+    expect(birthDateInput).toHaveValue("1985-05-15");
   });
 
   it("creates new attendance when no attendanceId provided", async () => {

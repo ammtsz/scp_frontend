@@ -3,7 +3,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import { useAgendaCalendarState, useAgendaActions, useAgendaDateFilter } from '../agendaSelectors';
+import { useAgendaCalendarState, useAgendaActions, useAgendaDateFilter, useAgendaModals, useAgendaAccordions } from '../agendaSelectors';
 import { useAgendaStore } from '../agendaStore';
 
 describe('agendaSelectors', () => {
@@ -123,6 +123,62 @@ describe('agendaSelectors', () => {
       
       expect(dateFilterRenders).toBe(2); // No change
       expect(calendarStateRenders).toBe(3); // Re-rendered
+    });
+  });
+
+  describe('useAgendaModals', () => {
+    it('should return modal-specific state', () => {
+      const { result } = renderHook(() => useAgendaModals());
+      
+      expect(result.current).toEqual({
+        confirmRemove: null,
+        showNewAttendance: false,
+      });
+    });
+
+    it('should update when modal state changes', () => {
+      const { result: modalsResult } = renderHook(() => useAgendaModals());
+      const { result: actionsResult } = renderHook(() => useAgendaActions());
+      
+      const confirmRemoveData = {
+        id: '123',
+        date: new Date('2024-01-01'),
+        name: 'Test',
+        type: 'spiritual' as const,
+        attendanceId: 456
+      };
+
+      act(() => {
+        actionsResult.current.setConfirmRemove(confirmRemoveData);
+        actionsResult.current.setShowNewAttendance(true);
+      });
+      
+      expect(modalsResult.current.confirmRemove).toEqual(confirmRemoveData);
+      expect(modalsResult.current.showNewAttendance).toBe(true);
+    });
+  });
+
+  describe('useAgendaAccordions', () => {
+    it('should return accordion-specific state', () => {
+      const { result } = renderHook(() => useAgendaAccordions());
+      
+      expect(result.current).toEqual({
+        openSpiritualIdx: null,
+        openLightBathIdx: null,
+      });
+    });
+
+    it('should update when accordion state changes', () => {
+      const { result: accordionsResult } = renderHook(() => useAgendaAccordions());
+      const { result: actionsResult } = renderHook(() => useAgendaActions());
+      
+      act(() => {
+        actionsResult.current.setOpenSpiritualIdx(0);
+        actionsResult.current.setOpenLightBathIdx(2);
+      });
+      
+      expect(accordionsResult.current.openSpiritualIdx).toBe(0);
+      expect(accordionsResult.current.openLightBathIdx).toBe(2);
     });
   });
 });

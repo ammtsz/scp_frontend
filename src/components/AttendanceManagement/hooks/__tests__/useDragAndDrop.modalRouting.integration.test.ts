@@ -121,10 +121,10 @@ describe('Modal Routing Logic Integration Tests', () => {
       );
       
       // Verify that the implementation contains the correct modal routing logic
-      expect(useDragAndDropFile).toContain('if (attendanceType === "spiritual")');
-      expect(useDragAndDropFile).toContain('onTreatmentFormOpen');
-      expect(useDragAndDropFile).toContain('else if (attendanceType === "lightBath" || attendanceType === "rod")');
-      expect(useDragAndDropFile).toContain('onTreatmentCompletionOpen');
+      expect(useDragAndDropFile).toContain('if(attendanceType === "spiritual")');
+      expect(useDragAndDropFile).toContain('openPostAttendance');
+      expect(useDragAndDropFile).toContain('if(attendanceType !== "spiritual")');
+      expect(useDragAndDropFile).toContain('openPostTreatment');
       
       // This test ensures that our modal routing implementation
       // contains the correct conditional logic for different attendance types

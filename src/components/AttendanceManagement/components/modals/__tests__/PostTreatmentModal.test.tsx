@@ -6,6 +6,7 @@ import PostTreatmentModal from "../PostTreatmentModal";
 import * as modalStore from "@/stores/modalStore";
 import * as treatmentSessionsHooks from "@/hooks/useTreatmentSessionsQueries";
 import * as treatmentSessionRecordsHooks from "@/hooks/useTreatmentSessionRecordsQueries";
+
 import { TreatmentSessionResponseDto } from "@/api/types";
 
 // Mock dependencies
@@ -34,7 +35,7 @@ const mockTreatmentSessions: TreatmentSessionResponseDto[] = [
     start_date: "2024-01-01",
     planned_sessions: 10,
     completed_sessions: 3,
-    status: "active",
+    status: "in_progress",
     duration_minutes: 15,
     color: "Azul",
     notes: undefined,
@@ -52,7 +53,7 @@ const mockTreatmentSessions: TreatmentSessionResponseDto[] = [
     start_date: "2024-01-01",
     planned_sessions: 5,
     completed_sessions: 1,
-    status: "active",
+    status: "in_progress",
     duration_minutes: undefined,
     color: undefined,
     notes: undefined,
@@ -449,11 +450,12 @@ describe("PostTreatmentModal", () => {
     it("should call API and onComplete when treatment is submitted successfully", async () => {
       renderModal();
 
-      // Mark one treatment as completed
+      // Mark both treatments as completed
       const treatmentButtons = screen.getAllByRole("button", {
         name: /marcar como realizado nesta sessão/i,
       });
-      fireEvent.click(treatmentButtons[0]);
+      fireEvent.click(treatmentButtons[0]); // Light bath
+      fireEvent.click(treatmentButtons[1]); // Rod
 
       // Add notes
       const notesTextarea = screen.getByPlaceholderText(
@@ -469,15 +471,28 @@ describe("PostTreatmentModal", () => {
       });
       fireEvent.click(submitButton);
 
+      // Get the mocked mutation function
+      const mockMutateAsync =
+        mockTreatmentSessionRecordsHooks.useBulkCompleteTreatmentSessionRecords()
+          .mutateAsync;
+
       await waitFor(() => {
-        expect(
-          mockTreatmentSessionRecordsApi.getTreatmentSessionRecordsBySession
-        ).toHaveBeenCalledWith("1");
-        expect(
-          mockTreatmentSessionRecordsApi.completeTreatmentSessionRecord
-        ).toHaveBeenCalledWith("1", {
-          completion_notes: "Test treatment notes",
-        });
+        expect(mockMutateAsync).toHaveBeenCalledWith([
+          {
+            sessionId: "1",
+            completionData: {
+              notes: "Test treatment notes",
+            },
+            newCompletedCount: 4,
+          },
+          {
+            sessionId: "2",
+            completionData: {
+              notes: "Test treatment notes",
+            },
+            newCompletedCount: 2,
+          },
+        ]);
       });
 
       await waitFor(() => {
@@ -486,8 +501,17 @@ describe("PostTreatmentModal", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      mockTreatmentSessionRecordsApi.completeTreatmentSessionRecord.mockRejectedValue(
-        new Error("API Error")
+      // Mock the React Query mutation to reject
+      const mockMutateAsync = jest
+        .fn()
+        .mockRejectedValue(new Error("API Error"));
+      mockTreatmentSessionRecordsHooks.useBulkCompleteTreatmentSessionRecords.mockReturnValue(
+        {
+          mutateAsync: mockMutateAsync,
+          isPending: false,
+        } as unknown as ReturnType<
+          typeof treatmentSessionRecordsHooks.useBulkCompleteTreatmentSessionRecords
+        >
       );
 
       renderModal();
@@ -506,7 +530,7 @@ describe("PostTreatmentModal", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/erro ao completar o tratamento/i)
+          screen.getByText(/erro ao completar o tratamento.*tente novamente/i)
         ).toBeInTheDocument();
       });
 
@@ -514,29 +538,15 @@ describe("PostTreatmentModal", () => {
       expect(mockPostTreatmentModal.onComplete).not.toHaveBeenCalled();
     });
 
-    it("should show loading state during submission", async () => {
-      // Make API call take some time
-      mockTreatmentSessionRecordsApi.completeTreatmentSessionRecord.mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(
-              () =>
-                resolve({
-                  success: true,
-                  value: {
-                    id: 1,
-                    treatment_session_id: 1,
-                    attendance_id: 1,
-                    session_number: 4,
-                    scheduled_date: "2024-01-01",
-                    status: "completed" as const,
-                    created_at: "2024-01-01T10:00:00Z",
-                    updated_at: "2024-01-01T10:00:00Z",
-                  },
-                }),
-              100
-            )
-          )
+    it("should show loading state when isPending is true", () => {
+      // Mock the React Query mutation to show loading state
+      mockTreatmentSessionRecordsHooks.useBulkCompleteTreatmentSessionRecords.mockReturnValue(
+        {
+          mutateAsync: jest.fn(),
+          isPending: true,
+        } as unknown as ReturnType<
+          typeof treatmentSessionRecordsHooks.useBulkCompleteTreatmentSessionRecords
+        >
       );
 
       renderModal();
@@ -547,23 +557,12 @@ describe("PostTreatmentModal", () => {
       });
       fireEvent.click(treatmentButtons[0]);
 
-      // Submit
-      const submitButton = screen.getByRole("button", {
-        name: /registrar sessão/i,
+      // Should show loading text since isPending is true
+      const loadingButton = screen.getByRole("button", {
+        name: /registrando\.\.\./i,
       });
-      fireEvent.click(submitButton);
-
-      // Should show loading text
-      expect(
-        screen.getByRole("button", { name: /registrando/i })
-      ).toBeInTheDocument();
-      expect(submitButton).toBeDisabled();
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole("button", { name: /registrar sessão/i })
-        ).toBeInTheDocument();
-      });
+      expect(loadingButton).toBeInTheDocument();
+      expect(loadingButton).toBeDisabled();
     });
 
     it("should create records for multiple treatment sessions when multiple treatments are selected", async () => {
@@ -599,14 +598,14 @@ describe("PostTreatmentModal", () => {
           {
             sessionId: "1",
             completionData: {
-              completion_notes: "Tratamento realizado para: Coronário",
+              notes: "Tratamento realizado para: Coronário",
             },
             newCompletedCount: 4,
           },
           {
             sessionId: "2",
             completionData: {
-              completion_notes: "Tratamento realizado para: Plexo Solar",
+              notes: "Tratamento realizado para: Plexo Solar",
             },
             newCompletedCount: 2,
           },

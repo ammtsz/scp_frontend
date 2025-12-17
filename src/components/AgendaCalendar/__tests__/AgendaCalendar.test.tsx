@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AgendaCalendar from "../index";
 import { useAgendaCalendar } from "../useAgendaCalendar";
@@ -10,6 +10,28 @@ jest.mock("../useAgendaCalendar");
 const mockUseAgendaCalendar = useAgendaCalendar as jest.MockedFunction<
   typeof useAgendaCalendar
 >;
+
+// Mock the NewAttendanceFormModal component to test integration
+jest.mock("../NewAttendanceFormModal", () => {
+  return function MockNewAttendanceFormModal({
+    onClose,
+    onSuccess,
+  }: {
+    onClose: () => void;
+    onSuccess: () => void;
+  }) {
+    return (
+      <div data-testid="new-attendance-form-modal">
+        <button onClick={onClose} data-testid="modal-close">
+          Close Modal
+        </button>
+        <button onClick={onSuccess} data-testid="modal-success">
+          Success
+        </button>
+      </div>
+    );
+  };
+});
 
 // Mock date formatters
 jest.mock("@/utils/dateHelpers", () => ({
@@ -183,13 +205,13 @@ describe("AgendaCalendar - Basic Functionality", () => {
     expect(refreshButton).toBeInTheDocument();
     expect(refreshButton).toBeDisabled();
     expect(refreshButton).toHaveAttribute("title", "Atualizando...");
-    
+
     // Button text should change to "Atualizando..."
     expect(refreshButton).toHaveTextContent("Atualizando...");
-    
+
     // Should have loading styles
     expect(refreshButton).toHaveClass("opacity-50", "cursor-not-allowed");
-    
+
     // Feather icon should have spinning animation
     const icon = refreshButton.querySelector("svg");
     expect(icon).toHaveClass("animate-spin");
@@ -207,15 +229,18 @@ describe("AgendaCalendar - Basic Functionality", () => {
     const refreshButton = screen.getByRole("button", { name: /atualizar$/i });
     expect(refreshButton).toBeInTheDocument();
     expect(refreshButton).toBeEnabled();
-    expect(refreshButton).toHaveAttribute("title", "Atualizar dados dos agendamentos");
-    
+    expect(refreshButton).toHaveAttribute(
+      "title",
+      "Atualizar dados dos agendamentos"
+    );
+
     // Button text should be "Atualizar"
     expect(refreshButton).toHaveTextContent("Atualizar");
-    
+
     // Should not have loading styles
     expect(refreshButton).not.toHaveClass("opacity-50", "cursor-not-allowed");
     expect(refreshButton).toHaveClass("hover:bg-gray-50");
-    
+
     // Feather icon should not be spinning
     const icon = refreshButton.querySelector("svg");
     expect(icon).not.toHaveClass("animate-spin");
@@ -232,14 +257,18 @@ describe("AgendaCalendar - Basic Functionality", () => {
 
     // Should show "Atualizando..." text in both columns
     const refreshingTexts = screen.getAllByText("Atualizando...");
-    
+
     // Should have at least 2 instances - one in each column (plus the button makes 3)
     expect(refreshingTexts.length).toBeGreaterThanOrEqual(2);
-    
+
     // Check that columns have reduced opacity when refreshing
-    const spiritualColumnContent = screen.getByText("Consultas Espirituais").closest('.border');
-    const lightBathColumnContent = screen.getByText("Banhos de Luz / Bastão").closest('.border');
-    
+    const spiritualColumnContent = screen
+      .getByText("Consultas Espirituais")
+      .closest(".border");
+    const lightBathColumnContent = screen
+      .getByText("Banhos de Luz / Bastão")
+      .closest(".border");
+
     expect(spiritualColumnContent).toHaveClass("opacity-75");
     expect(lightBathColumnContent).toHaveClass("opacity-75");
   });
@@ -255,15 +284,344 @@ describe("AgendaCalendar - Basic Functionality", () => {
 
     // Should not show overlay "Atualizando..." text in columns
     const refreshingTexts = screen.queryAllByText("Atualizando...");
-    
+
     // Should only have the button text, not column overlays
     expect(refreshingTexts.length).toBeLessThanOrEqual(1);
-    
+
     // Check that columns don't have reduced opacity
-    const spiritualColumnContent = screen.getByText("Consultas Espirituais").closest('.border');
-    const lightBathColumnContent = screen.getByText("Banhos de Luz / Bastão").closest('.border');
-    
+    const spiritualColumnContent = screen
+      .getByText("Consultas Espirituais")
+      .closest(".border");
+    const lightBathColumnContent = screen
+      .getByText("Banhos de Luz / Bastão")
+      .closest(".border");
+
     expect(spiritualColumnContent).not.toHaveClass("opacity-75");
     expect(lightBathColumnContent).not.toHaveClass("opacity-75");
+  });
+
+  describe("Date Input and Controls", () => {
+    it("renders date input with correct value", () => {
+      render(<AgendaCalendar />);
+
+      const dateInput = screen.getByLabelText(
+        "Selecione uma data para filtrar"
+      );
+      expect(dateInput).toBeInTheDocument();
+      expect(dateInput).toHaveValue("2025-08-07");
+    });
+
+    it("calls setSelectedDate when date input changes", () => {
+      const mockSetSelectedDate = jest.fn();
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        setSelectedDate: mockSetSelectedDate,
+      });
+
+      render(<AgendaCalendar />);
+
+      const dateInput = screen.getByLabelText(
+        "Selecione uma data para filtrar"
+      );
+      fireEvent.change(dateInput, { target: { value: "2025-08-15" } });
+
+      expect(mockSetSelectedDate).toHaveBeenCalledWith("2025-08-15");
+    });
+
+    it('renders and handles "Hoje" button click', () => {
+      const mockSetSelectedDate = jest.fn();
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        setSelectedDate: mockSetSelectedDate,
+      });
+
+      render(<AgendaCalendar />);
+
+      const todayButton = screen.getByRole("button", { name: /hoje/i });
+      expect(todayButton).toBeInTheDocument();
+
+      todayButton.click();
+      expect(mockSetSelectedDate).toHaveBeenCalled();
+      // The exact date will be today's date, which we can't predict exactly
+      expect(mockSetSelectedDate).toHaveBeenCalledWith(
+        expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
+      );
+    });
+
+    it("renders Switch component and calls setShowNext5Dates on change", () => {
+      const mockSetShowNext5Dates = jest.fn();
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        setShowNext5Dates: mockSetShowNext5Dates,
+        showNext5Dates: false,
+      });
+
+      render(<AgendaCalendar />);
+
+      const switchElement = screen.getByLabelText(
+        "Mostrar todos os atendimentos futuros"
+      );
+      expect(switchElement).toBeInTheDocument();
+      expect(switchElement).not.toBeChecked();
+
+      switchElement.click();
+      expect(mockSetShowNext5Dates).toHaveBeenCalledWith(true);
+    });
+
+    it("displays correct date range text when showNext5Dates is false", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        showNext5Dates: false,
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(
+        screen.getByText(/Próximas 5 datas a partir de/)
+      ).toBeInTheDocument();
+    });
+
+    it("displays correct date range text when showNext5Dates is true", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        showNext5Dates: true,
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(
+        screen.getByText(/Todos os atendimentos a partir de/)
+      ).toBeInTheDocument();
+    });
+
+    it("displays default text when no selectedDate", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        selectedDate: "",
+        showNext5Dates: false,
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(
+        screen.getByText("Mostrando próximas 5 datas")
+      ).toBeInTheDocument();
+    });
+
+    it("displays all future attendances text when no selectedDate and showNext5Dates true", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        selectedDate: "",
+        showNext5Dates: true,
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(
+        screen.getByText("Mostrando todos os atendimentos futuros")
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("Modal Rendering", () => {
+    it("renders ConfirmModal when confirmRemove is set", () => {
+      const mockConfirmRemove = {
+        id: "1",
+        name: "João Silva",
+        date: new Date("2025-08-07"),
+        type: "spiritual" as AttendanceType,
+        attendanceId: 123,
+      };
+
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        confirmRemove: mockConfirmRemove,
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(screen.getByText("Remover paciente")).toBeInTheDocument();
+      expect(screen.getByText("João Silva")).toBeInTheDocument();
+      expect(
+        screen.getByText(/Tem certeza que deseja remover/)
+      ).toBeInTheDocument();
+    });
+
+    it("does not render ConfirmModal when confirmRemove is null", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        confirmRemove: null,
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(screen.queryByText("Remover paciente")).not.toBeInTheDocument();
+    });
+
+    it("calls setConfirmRemove(null) when ConfirmModal is cancelled", () => {
+      const mockSetConfirmRemove = jest.fn();
+      const mockConfirmRemove = {
+        id: "1",
+        name: "João Silva",
+        date: new Date("2025-08-07"),
+        type: "spiritual" as AttendanceType,
+        attendanceId: 123,
+      };
+
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        confirmRemove: mockConfirmRemove,
+        setConfirmRemove: mockSetConfirmRemove,
+      });
+
+      render(<AgendaCalendar />);
+
+      const cancelButton = screen.getByText("Cancelar");
+      cancelButton.click();
+
+      expect(mockSetConfirmRemove).toHaveBeenCalledWith(null);
+    });
+
+    it("calls handleConfirmRemove when ConfirmModal is confirmed", () => {
+      const mockHandleConfirmRemove = jest.fn();
+      const mockConfirmRemove = {
+        id: "1",
+        name: "João Silva",
+        date: new Date("2025-08-07"),
+        type: "spiritual" as AttendanceType,
+        attendanceId: 123,
+      };
+
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        confirmRemove: mockConfirmRemove,
+        handleConfirmRemove: mockHandleConfirmRemove,
+      });
+
+      render(<AgendaCalendar />);
+
+      const confirmButton = screen.getByText("Remover");
+      confirmButton.click();
+
+      expect(mockHandleConfirmRemove).toHaveBeenCalled();
+    });
+
+    it("renders NewAttendanceFormModal when showNewAttendance is true", async () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        showNewAttendance: true,
+      });
+
+      render(<AgendaCalendar />);
+
+      // First, it should show the loading fallback
+      expect(
+        screen.getByText("Carregando formulário de agendamento...")
+      ).toBeInTheDocument();
+    });
+
+    it("does not render NewAttendanceFormModal when showNewAttendance is false", () => {
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        showNewAttendance: false,
+      });
+
+      render(<AgendaCalendar />);
+
+      expect(
+        screen.queryByText("Carregando formulário de agendamento...")
+      ).not.toBeInTheDocument();
+    });
+
+    it("calls setShowNewAttendance(true) when new attendance button is clicked", () => {
+      const mockSetShowNewAttendance = jest.fn();
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        setShowNewAttendance: mockSetShowNewAttendance,
+      });
+
+      render(<AgendaCalendar />);
+
+      const newAttendanceButton = screen.getByText("+ Novo Agendamento");
+      newAttendanceButton.click();
+
+      expect(mockSetShowNewAttendance).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe("Patient Mapping Coverage", () => {
+    it("renders light bath patients with correct attendanceType mapping", () => {
+      const mockFilteredAgenda = {
+        spiritual: [],
+        lightBath: [
+          {
+            date: new Date("2025-08-07"),
+            patients: [
+              {
+                id: "1",
+                name: "Maria Santos",
+                attendanceId: 2,
+                priority: "2" as Priority,
+                // No attendanceType - should default to 'lightBath'
+              },
+            ],
+          },
+        ],
+      };
+
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        filteredAgenda: mockFilteredAgenda,
+      });
+
+      render(<AgendaCalendar />);
+
+      // Should render the light bath column with the patient
+      expect(screen.getByText("Banhos de Luz / Bastão")).toBeInTheDocument();
+    });
+  });
+
+  describe("NewAttendanceFormModal Integration", () => {
+    it("calls setShowNewAttendance(false) when modal onClose is triggered", async () => {
+      const mockSetShowNewAttendance = jest.fn();
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        showNewAttendance: true,
+        setShowNewAttendance: mockSetShowNewAttendance,
+      });
+
+      const { findByTestId } = render(<AgendaCalendar />);
+
+      // Wait for the modal to render (it's lazy loaded)
+      const modal = await findByTestId("new-attendance-form-modal");
+      expect(modal).toBeInTheDocument();
+
+      // Click the close button
+      const closeButton = await findByTestId("modal-close");
+      closeButton.click();
+
+      expect(mockSetShowNewAttendance).toHaveBeenCalledWith(false);
+    });
+
+    it("calls handleFormSuccess when modal onSuccess is triggered", async () => {
+      const mockHandleFormSuccess = jest.fn();
+      mockUseAgendaCalendar.mockReturnValue({
+        ...defaultHookReturn,
+        showNewAttendance: true,
+        handleFormSuccess: mockHandleFormSuccess,
+      });
+
+      const { findByTestId } = render(<AgendaCalendar />);
+
+      // Wait for the modal to render (it's lazy loaded)
+      const modal = await findByTestId("new-attendance-form-modal");
+      expect(modal).toBeInTheDocument();
+
+      // Click the success button
+      const successButton = await findByTestId("modal-success");
+      successButton.click();
+
+      expect(mockHandleFormSuccess).toHaveBeenCalled();
+    });
   });
 });

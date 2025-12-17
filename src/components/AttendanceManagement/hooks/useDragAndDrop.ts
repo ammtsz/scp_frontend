@@ -132,7 +132,12 @@ export const useDragAndDrop = () => {
       
       let treatmentTypes: AttendanceType[] = [type];
       if (isCombinedTreatment) {  
+        // For combined lightBath+rod, include both
         treatmentTypes = ["lightBath", "rod"];
+        // Also include the original dragged type if it's not already there
+        if (type !== "lightBath" && type !== "rod") {
+          treatmentTypes.unshift(type);
+        }
       }
       if (lightBathPatient?.treatmentAttendanceIds?.length) {
         for (let i = 1; i < lightBathPatient.treatmentAttendanceIds?.length; i++) {
@@ -252,11 +257,13 @@ export const useDragAndDrop = () => {
       // Find patient by ID using helper function
       const patient = findPatient(dragged.type, dragged.status, dragged.patientId);
       if (!patient) return; // Patient not found
-
       if (dragged.isCombinedTreatment) {
         // Combined treatments: lightBath/rod cards can move between lightBath and rod sections
-        // but each card type should stay within its own type for status progression
-        if (dragged.type !== toType) {
+        // Allow moves between lightBath and rod, but not to/from spiritual
+        const isLightBathRodMove = (dragged.type === "lightBath" || dragged.type === "rod") && 
+                                  (toType === "lightBath" || toType === "rod");
+        
+        if (!isLightBathRodMove && dragged.type !== toType) {
           setDragged(null);
           return;
         }
@@ -274,6 +281,7 @@ export const useDragAndDrop = () => {
         const patientData = patients.find(
           (p) => p.id === patient.patientId?.toString()
         );
+        
         if (patientData?.status === "N") {
           // This is a new patient - trigger new patient check-in modal
           openNewPatientCheckIn({
@@ -342,9 +350,9 @@ export const useDragAndDrop = () => {
 
       // TODO: update to rod and combined types or remove feature
       // Check if patient is scheduled in both consultation types
-      const isInBothTypes =
-        !!findPatient("spiritual", "scheduled", dragged.patientId) &&
-        !!findPatient("lightBath", "scheduled", dragged.patientId);
+      const spiritualPatient = findPatient("spiritual", "scheduled", dragged.patientId);
+      const lightBathPatient = findPatient("lightBath", "scheduled", dragged.patientId);
+      const isInBothTypes = !!spiritualPatient && !!lightBathPatient;
 
       // If patient is in both types and we're moving from scheduled to checkedIn, show multi-section modal
       if (
@@ -456,11 +464,17 @@ export const useDragAndDrop = () => {
             setDragged(null);
           }
         );
+        setDragged(null);
         return;
       }
 
       // For combined treatments or same-type moves (not involving multi-type scenarios)
-      const isValidMove = dragged.type === toType && dragged.status !== toStatus;
+      const isCombinedLightBathRodMove = dragged.isCombinedTreatment && 
+                                        (dragged.type === "lightBath" || dragged.type === "rod") &&
+                                        (toType === "lightBath" || toType === "rod");
+      
+      const isValidMove = (dragged.type === toType && dragged.status !== toStatus) || 
+                          (isCombinedLightBathRodMove && dragged.status !== toStatus);
 
       if (isValidMove) {
         // Perform the move - modal logic is handled in updatePatientTimestamps

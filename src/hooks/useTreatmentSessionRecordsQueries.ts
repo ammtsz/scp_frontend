@@ -30,7 +30,7 @@ export const useTreatmentSessionRecords = (sessionId: number) => {
     },
     enabled: sessionId > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
+    retry: process.env.NODE_ENV === 'test' ? false : 2, // Don't retry in tests, but retry in production
   });
 };
 

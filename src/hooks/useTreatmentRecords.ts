@@ -39,8 +39,7 @@ export function useTreatmentRecords() {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - treatment records change less frequently
     gcTime: 10 * 60 * 1000, // 10 minutes in cache
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: process.env.NODE_ENV === 'test' ? false : 3, // Don't retry in tests, but retry 3 times in production
   });
 }
 
@@ -68,12 +67,12 @@ export function useTreatmentRecordByAttendance(attendanceId: string | number) {
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    retry: (failureCount, error) => {
-      // Don't retry if it's a 404 (not found)
+    retry: process.env.NODE_ENV === 'test' ? false : (failureCount, error) => {
+      // Don't retry if it's a 404 (not found) - this is expected behavior
       if (error?.message.includes('404') || error?.message.includes('not found')) {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 3; // Retry up to 3 times for other errors
     },
     enabled: !!attendanceId, // Only run query if attendanceId is provided
   });

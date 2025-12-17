@@ -42,26 +42,6 @@ jest.mock("../components/AttendanceCards/AttendanceTimes", () => {
   };
 });
 
-// Mock the TreatmentSessionProgress component
-jest.mock("../../TreatmentSessionProgress", () => {
-  return function MockTreatmentSessionProgress({
-    patientId,
-    attendanceType,
-    showDetails,
-  }: {
-    patientId: number;
-    attendanceType: string;
-    showDetails: boolean;
-  }) {
-    return (
-      <div data-testid="treatment-session-progress">
-        Progress for patient {patientId} - Type: {attendanceType} - Details:{" "}
-        {showDetails.toString()}
-      </div>
-    );
-  };
-});
-
 describe("AttendanceCard Component", () => {
   const mockPatient: AttendanceStatusDetail = {
     name: "João Silva",

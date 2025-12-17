@@ -185,7 +185,7 @@ describe("CurrentTreatmentCard", () => {
       start_date: "2025-01-01",
       planned_sessions: 10,
       completed_sessions: 3,
-      status: "active" as const,
+      status: "in_progress" as const,
       duration_minutes: 30,
       color: "azul",
       notes: "Tratamento indo bem",

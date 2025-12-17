@@ -3,7 +3,11 @@ import {
   getPatientById,
   createPatient,
   updatePatient,
-  deletePatient
+  deletePatient,
+  getPatientNotes,
+  createPatientNote,
+  updatePatientNote,
+  deletePatientNote
 } from '../index';
 import { PatientPriority } from '../../types';
 
@@ -233,6 +237,183 @@ describe('Patients API', () => {
       expect(result).toEqual({
         success: false,
         error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+      });
+    });
+  });
+
+  describe('Patient Notes API', () => {
+    const mockNote = {
+      id: 1,
+      patient_id: 1,
+      content: 'Patient has been improving well',
+      created_by: 'Dr. Smith',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z'
+    };
+
+    describe('getPatientNotes', () => {
+      it('should return patient notes on success', async () => {
+        const mockResponse = { data: [mockNote] };
+        mockApi.get.mockResolvedValue(mockResponse);
+
+        const result = await getPatientNotes('1');
+
+        expect(mockApi.get).toHaveBeenCalledWith('/patients/1/notes');
+        expect(result).toEqual({
+          success: true,
+          value: [mockNote]
+        });
+      });
+
+      it('should return specific error for patient not found', async () => {
+        const mockError = { status: 404 };
+        mockApi.get.mockRejectedValue(mockError);
+
+        const result = await getPatientNotes('999');
+
+        expect(result).toEqual({
+          success: false,
+          error: 'Paciente não encontrado'
+        });
+      });
+
+      it('should return generic error on server error', async () => {
+        const mockError = { status: 500 };
+        mockApi.get.mockRejectedValue(mockError);
+
+        const result = await getPatientNotes('1');
+
+        expect(result).toEqual({
+          success: false,
+          error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+        });
+      });
+    });
+
+    describe('createPatientNote', () => {
+      it('should create patient note on success', async () => {
+        const noteData = {
+          note_content: 'Patient has been improving well'
+        };
+        const mockResponse = { data: mockNote };
+        mockApi.post.mockResolvedValue(mockResponse);
+
+        const result = await createPatientNote('1', noteData);
+
+        expect(mockApi.post).toHaveBeenCalledWith('/patients/1/notes', noteData);
+        expect(result).toEqual({
+          success: true,
+          value: mockNote
+        });
+      });
+
+      it('should return specific error for patient not found', async () => {
+        const noteData = {
+          note_content: 'Patient has been improving well'
+        };
+        const mockError = { status: 404 };
+        mockApi.post.mockRejectedValue(mockError);
+
+        const result = await createPatientNote('999', noteData);
+
+        expect(result).toEqual({
+          success: false,
+          error: 'Paciente não encontrado'
+        });
+      });
+
+      it('should return error on validation failure', async () => {
+        const noteData = {
+          note_content: '' // Empty content
+        };
+        const mockError = { status: 400 };
+        mockApi.post.mockRejectedValue(mockError);
+
+        const result = await createPatientNote('1', noteData);
+
+        expect(result).toEqual({
+          success: false,
+          error: 'Requisição inválida'
+        });
+      });
+    });
+
+    describe('updatePatientNote', () => {
+      it('should update patient note on success', async () => {
+        const updateData = { note_content: 'Updated note content' };
+        const mockResponse = { data: { ...mockNote, content: 'Updated note content' } };
+        mockApi.patch.mockResolvedValue(mockResponse);
+
+        const result = await updatePatientNote('1', '1', updateData);
+
+        expect(mockApi.patch).toHaveBeenCalledWith('/patients/1/notes/1', updateData);
+        expect(result).toEqual({
+          success: true,
+          value: { ...mockNote, content: 'Updated note content' }
+        });
+      });
+
+      it('should return specific error for note not found', async () => {
+        const updateData = { note_content: 'Updated note content' };
+        const mockError = { status: 404 };
+        mockApi.patch.mockRejectedValue(mockError);
+
+        const result = await updatePatientNote('1', '999', updateData);
+
+        expect(result).toEqual({
+          success: false,
+          error: 'Nota não encontrada'
+        });
+      });
+
+      it('should return error on validation failure', async () => {
+        const updateData = { note_content: '' }; // Empty content
+        const mockError = { status: 400 };
+        mockApi.patch.mockRejectedValue(mockError);
+
+        const result = await updatePatientNote('1', '1', updateData);
+
+        expect(result).toEqual({
+          success: false,
+          error: 'Requisição inválida'
+        });
+      });
+    });
+
+    describe('deletePatientNote', () => {
+      it('should delete patient note on success', async () => {
+        mockApi.delete.mockResolvedValue({});
+
+        const result = await deletePatientNote('1', '1');
+
+        expect(mockApi.delete).toHaveBeenCalledWith('/patients/1/notes/1');
+        expect(result).toEqual({
+          success: true
+        });
+      });
+
+      it('should return specific error for note not found', async () => {
+        const mockError = { status: 404 };
+        mockApi.delete.mockRejectedValue(mockError);
+
+        const result = await deletePatientNote('1', '999');
+
+        expect(result).toEqual({
+          success: false,
+          error: 'Nota não encontrada'
+        });
+      });
+
+      it('should return error on server error', async () => {
+        const mockError = { status: 500 };
+        mockApi.delete.mockRejectedValue(mockError);
+
+        const result = await deletePatientNote('1', '1');
+
+        expect(result).toEqual({
+          success: false,
+          error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+        });
       });
     });
   });

@@ -15,6 +15,9 @@ const STORAGE_KEYS = {
   LAST_FILTERS: 'treatment-last-filters'
 } as const;
 
+// Counter to ensure unique IDs when Date.now() might return the same value
+let idCounter = 0;
+
 export function useTreatmentFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -33,11 +36,13 @@ export function useTreatmentFilters() {
         setFilters(lastFilters);
       }
     }
+  }, [searchParams]);
 
-    // Load saved presets
+  // Load saved presets on mount only (not when searchParams change)
+  useEffect(() => {
     const presets = loadSavedPresets();
     setSavedPresets(presets);
-  }, [searchParams]);
+  }, []); // Empty dependency array - only run on mount
 
   // Update URL when filters change
   useEffect(() => {
@@ -169,17 +174,21 @@ export function useTreatmentFilters() {
 
   // Preset management
   const savePreset = useCallback((name: string) => {
-    const preset: FilterPreset = {
-      id: `preset-${Date.now()}`,
-      name,
-      filters: { ...filters },
-      createdAt: new Date()
-    };
+    try {
+      const preset: FilterPreset = {
+        id: `preset-${Date.now()}-${++idCounter}`,
+        name,
+        filters: { ...filters },
+        createdAt: new Date()
+      };
 
-    const updatedPresets = [...savedPresets, preset];
-    setSavedPresets(updatedPresets);
-    
-    localStorage.setItem(STORAGE_KEYS.PRESETS, JSON.stringify(updatedPresets));
+      const updatedPresets = [...savedPresets, preset];
+      setSavedPresets(updatedPresets);
+      
+      localStorage.setItem(STORAGE_KEYS.PRESETS, JSON.stringify(updatedPresets));
+    } catch (error) {
+      console.error('Error saving preset:', error);
+    }
   }, [filters, savedPresets]);
 
   const loadPreset = useCallback((preset: FilterPreset) => {
@@ -187,11 +196,16 @@ export function useTreatmentFilters() {
   }, []);
 
   const deletePreset = useCallback((presetId: string) => {
-    const updatedPresets = savedPresets.filter(p => p.id !== presetId);
-    setSavedPresets(updatedPresets);
-    
-    localStorage.setItem(STORAGE_KEYS.PRESETS, JSON.stringify(updatedPresets));
-  }, [savedPresets]);
+    try {
+      setSavedPresets(currentPresets => {
+        const updatedPresets = currentPresets.filter(p => p.id !== presetId);
+        localStorage.setItem(STORAGE_KEYS.PRESETS, JSON.stringify(updatedPresets));
+        return updatedPresets;
+      });
+    } catch (error) {
+      console.error('Error deleting preset:', error);
+    }
+  }, []);
 
   // Check if filters are active (not default)
   const hasActiveFilters = useMemo(() => {
@@ -264,11 +278,11 @@ function buildURLWithFilters(filters: SessionFilters): string {
     params.set('statuses', filters.statuses.join(','));
   }
   
-  if (filters.dateRange.start) {
+  if (filters.dateRange.start && !isNaN(filters.dateRange.start.getTime())) {
     params.set('startDate', filters.dateRange.start.toISOString().split('T')[0]);
   }
   
-  if (filters.dateRange.end) {
+  if (filters.dateRange.end && !isNaN(filters.dateRange.end.getTime())) {
     params.set('endDate', filters.dateRange.end.toISOString().split('T')[0]);
   }
 

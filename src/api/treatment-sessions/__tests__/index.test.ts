@@ -2,9 +2,11 @@ import {
   getTreatmentSessions,
   getTreatmentSessionById,
   getTreatmentSessionsByPatient,
+  getTreatmentSessionsByDate,
   createTreatmentSession,
   updateTreatmentSession,
   completeTreatmentSession,
+  cancelTreatmentSession,
   deleteTreatmentSession
 } from '../index';
 
@@ -108,6 +110,45 @@ describe('Treatment Sessions API', () => {
     });
   });
 
+  describe('getTreatmentSessionsByDate', () => {
+    it('should fetch treatment sessions by date successfully', async () => {
+      const mockResponse = { data: [mockTreatmentSession] };
+      mockApi.get.mockResolvedValue(mockResponse);
+
+      const result = await getTreatmentSessionsByDate('2025-01-15');
+
+      expect(mockApi.get).toHaveBeenCalledWith('/treatment-sessions/date/2025-01-15');
+      expect(result).toEqual({
+        success: true,
+        value: [mockTreatmentSession]
+      });
+    });
+
+    it('should return empty array when no sessions found for date', async () => {
+      const mockResponse = { data: [] };
+      mockApi.get.mockResolvedValue(mockResponse);
+
+      const result = await getTreatmentSessionsByDate('2025-12-31');
+
+      expect(result).toEqual({
+        success: true,
+        value: []
+      });
+    });
+
+    it('should return error on API failure', async () => {
+      const mockError = { status: 500 };
+      mockApi.get.mockRejectedValue(mockError);
+
+      const result = await getTreatmentSessionsByDate('2025-01-15');
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+      });
+    });
+  });
+
   describe('createTreatmentSession', () => {
     it('should create treatment session successfully', async () => {
       const sessionData = {
@@ -203,6 +244,86 @@ describe('Treatment Sessions API', () => {
       expect(result).toEqual({
         success: true,
         value: completedSession
+      });
+    });
+
+    it('should use default notes when completion_notes not provided', async () => {
+      const completionData = {};
+      const completedSession = {
+        ...mockTreatmentSession,
+        status: 'completed' as const,
+        notes: 'Treatment session completed'
+      };
+      const mockResponse = { data: completedSession };
+      mockApi.put.mockResolvedValue(mockResponse);
+
+      const result = await completeTreatmentSession('1', completionData);
+
+      expect(mockApi.put).toHaveBeenCalledWith('/treatment-sessions/1', {
+        end_date: expect.any(String),
+        notes: 'Treatment session completed'
+      });
+      expect(result).toEqual({
+        success: true,
+        value: completedSession
+      });
+    });
+
+    it('should return error on completion failure', async () => {
+      const completionData = {
+        completion_notes: 'Failed completion'
+      };
+      const mockError = { status: 400 };
+      mockApi.put.mockRejectedValue(mockError);
+
+      const result = await completeTreatmentSession('1', completionData);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Requisição inválida'
+      });
+    });
+  });
+
+  describe('cancelTreatmentSession', () => {
+    it('should cancel treatment session successfully', async () => {
+      const cancelledSession = {
+        ...mockTreatmentSession,
+        status: 'cancelled' as const
+      };
+      const mockResponse = { data: cancelledSession };
+      mockApi.put.mockResolvedValue(mockResponse);
+
+      const result = await cancelTreatmentSession('1');
+
+      expect(mockApi.put).toHaveBeenCalledWith('/treatment-sessions/1/cancel');
+      expect(result).toEqual({
+        success: true,
+        value: cancelledSession
+      });
+    });
+
+    it('should return error when cancellation fails', async () => {
+      const mockError = { status: 409 };
+      mockApi.put.mockRejectedValue(mockError);
+
+      const result = await cancelTreatmentSession('1');
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Erro interno do servidor, por favor tente novamente mais tarde'
+      });
+    });
+
+    it('should return error when session not found', async () => {
+      const mockError = { status: 404 };
+      mockApi.put.mockRejectedValue(mockError);
+
+      const result = await cancelTreatmentSession('999');
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Recurso não encontrado'
       });
     });
   });
